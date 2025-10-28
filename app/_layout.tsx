@@ -5,8 +5,11 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { Platform } from 'react-native';
 
-SplashScreen.preventAutoHideAsync();
+if (Platform.OS !== 'web') {
+  SplashScreen.preventAutoHideAsync().catch(() => {});
+}
 
 const queryClient = new QueryClient();
 
@@ -25,7 +28,17 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useEffect(() => {
-    SplashScreen.hideAsync();
+    const hideSplash = async () => {
+      try {
+        if (Platform.OS !== 'web') {
+          await SplashScreen.hideAsync();
+        }
+      } catch (error) {
+        console.log('Error hiding splash:', error);
+      }
+    };
+    
+    setTimeout(hideSplash, 100);
   }, []);
 
   return (

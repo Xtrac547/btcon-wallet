@@ -21,4 +21,14 @@ if (Platform.OS === 'web') {
   }
 }
 
+if (Platform.OS === 'android') {
+  if (typeof global.crypto === 'undefined') {
+    global.crypto = {} as any;
+  }
+}
+
+if (typeof global.process === 'undefined') {
+  global.process = { env: {} } as any;
+}
+
 export {};
