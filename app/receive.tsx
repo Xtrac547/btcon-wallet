@@ -1,10 +1,9 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ScrollView, Modal, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { Copy, Share2, ExternalLink, ArrowLeft, X } from 'lucide-react-native';
-import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 
@@ -214,8 +213,7 @@ export default function ReceiveScreen() {
                 <Image
                   source={{ uri: currentArt.imageUrl }}
                   style={styles.artworkImage}
-                  contentFit="cover"
-                  transition={300}
+                  resizeMode="cover"
                 />
                 <View style={styles.artOverlay} />
               </View>
