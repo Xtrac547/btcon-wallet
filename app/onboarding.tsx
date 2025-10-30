@@ -96,7 +96,7 @@ export default function OnboardingScreen() {
     const cleanUsername = usernameInput.trim().toLowerCase();
     
     if (!cleanUsername) {
-      router.replace('/wallet');
+      Alert.alert('Erreur', 'Le pseudo est obligatoire');
       return;
     }
 
@@ -203,7 +203,7 @@ export default function OnboardingScreen() {
       <View style={styles.container}>
         <View style={styles.content}>
           <Text style={styles.title}>Choisir un Pseudo</Text>
-          <Text style={styles.subtitle}>Créez un pseudo unique commençant par @</Text>
+          <Text style={styles.subtitle}>Créez un pseudo unique commençant par @ (obligatoire)</Text>
 
           <View style={styles.usernameInputContainer}>
             <Text style={styles.atSymbol}>@</Text>
@@ -237,12 +237,7 @@ export default function OnboardingScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.linkButton}
-              onPress={() => router.replace('/wallet')}
-            >
-              <Text style={styles.linkText}>Passer</Text>
-            </TouchableOpacity>
+
           </View>
         </View>
       </View>

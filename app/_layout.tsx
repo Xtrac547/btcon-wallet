@@ -19,6 +19,7 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="set-username" options={{ headerShown: false }} />
       <Stack.Screen name="wallet" options={{ headerShown: false }} />
       <Stack.Screen name="receive" options={{ headerShown: false }} />
       <Stack.Screen name="send" options={{ headerShown: false }} />

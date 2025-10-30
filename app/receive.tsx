@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ScrollView, Modal, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
+import { useUsername } from '@/contexts/UsernameContext';
 import { Copy, Share2, ExternalLink, ArrowLeft, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
@@ -10,9 +11,16 @@ import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg'
 export default function ReceiveScreen() {
   const router = useRouter();
   const { address, esploraService } = useWallet();
+  const { username } = useUsername();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
+
+  useEffect(() => {
+    if (!username) {
+      router.replace('/set-username');
+    }
+  }, [username]);
 
   const artworks = [
     {

@@ -2,17 +2,25 @@ import '@/utils/shim';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
+import { useUsername } from '@/contexts/UsernameContext';
 import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw, TrendingUp, TrendingDown, Clock } from 'lucide-react-native';
 import { useState, useEffect, useRef } from 'react';
 
 export default function WalletScreen() {
   const router = useRouter();
   const { balance, address, refreshBalance, transactions } = useWallet();
+  const { username } = useUsername();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (!username) {
+      router.replace('/set-username');
+    }
+  }, [username]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

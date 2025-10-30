@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
@@ -10,9 +10,15 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 export default function SendScreen() {
   const router = useRouter();
   const { balance, signAndBroadcastTransaction, esploraService } = useWallet();
-  const { getAddressForUsername } = useUsername();
+  const { username, getAddressForUsername } = useUsername();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
+
+  useEffect(() => {
+    if (!username) {
+      router.replace('/set-username');
+    }
+  }, [username]);
   const [toAddress, setToAddress] = useState('');
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
