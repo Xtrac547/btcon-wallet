@@ -204,6 +204,7 @@ export default function SendScreen() {
                   style={[
                     token.shape === 'circle' ? styles.tokenCircle : styles.tokenSquare,
                     tokenCounts[token.value] > 0 && styles.tokenSelected,
+                    token.value === 5000 && styles.tokenRotated,
                   ]}
                   onPress={() => handleTokenPress(token.value)}
                   onLongPress={() => handleTokenLongPress(token.value)}
@@ -410,6 +411,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: '#3a3a3a',
+  },
+  tokenRotated: {
+    transform: [{ rotate: '180deg' }],
   },
   tokenSquare: {
     flex: 1,
