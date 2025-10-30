@@ -73,8 +73,13 @@ export default function ReceiveScreen() {
     },
   ];
 
-  const [currentArtIndex, setCurrentArtIndex] = useState(0);
-  const currentArt = artworks[currentArtIndex];
+  const getArtworkForAddress = (addr: string | null): typeof artworks[0] => {
+    if (!addr) return artworks[0];
+    const hash = addr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return artworks[hash % artworks.length];
+  };
+
+  const currentArt = getArtworkForAddress(address);
 
   const generateQRMatrix = (text: string): number[][] => {
     try {
@@ -110,9 +115,7 @@ export default function ReceiveScreen() {
     }
   }, [address]);
 
-  const handleArtChange = () => {
-    setCurrentArtIndex((prev) => (prev + 1) % artworks.length);
-  };
+
 
   const handleCopy = async () => {
     if (address) {
@@ -168,10 +171,8 @@ export default function ReceiveScreen() {
             <View style={[styles.decorativeRing, { width: 70, height: 70, top: 280, right: -25 }]} />
             <View style={[styles.decorativeRing, { width: 50, height: 50, bottom: -15, left: 15 }]} />
           </View>
-          <TouchableOpacity 
+          <View 
             style={[styles.qrContainer, { backgroundColor: currentArt.bg, borderColor: currentArt.accent }]}
-            onPress={handleArtChange}
-            activeOpacity={0.8}
           >
             {qrMatrix.length > 0 ? (
               <View style={styles.qrCode}>
@@ -215,11 +216,11 @@ export default function ReceiveScreen() {
                 <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
               </View>
             )}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleArtChange} style={styles.artChangeButton}>
-            <Text style={[styles.artChangeText, { color: currentArt.accent }]}>🎨 {currentArt.name}</Text>
-            <Text style={[styles.artChangeSubtext, { color: currentArt.accent, opacity: 0.7 }]}>Appuyer pour changer d'œuvre</Text>
-          </TouchableOpacity>
+          </View>
+          <View style={styles.artInfoContainer}>
+            <Text style={[styles.artInfoText, { color: currentArt.accent }]}>🎨 {currentArt.name}</Text>
+            <Text style={[styles.artInfoSubtext, { color: currentArt.accent, opacity: 0.7 }]}>Style unique de votre portefeuille</Text>
+          </View>
         </View>
 
 
@@ -361,21 +362,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
   },
-  artChangeButton: {
+  artInfoContainer: {
     marginTop: 16,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 16,
     alignItems: 'center',
     gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  artChangeText: {
+  artInfoText: {
     fontSize: 16,
     fontWeight: '700' as const,
     letterSpacing: 0.5,
   },
-  artChangeSubtext: {
+  artInfoSubtext: {
     fontSize: 11,
     fontWeight: '500' as const,
     textTransform: 'uppercase' as const,
