@@ -178,7 +178,12 @@ export default function SendScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Solde disponible</Text>
           <View style={styles.balanceRow}>
@@ -401,6 +406,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
     paddingTop: 12,
+    paddingBottom: 40,
   },
   balanceCard: {
     backgroundColor: '#1a1a1a',
@@ -480,6 +486,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     gap: 16,
     marginTop: 8,
+    marginBottom: 12,
   },
   topTokensRow: {
     flexDirection: 'row',

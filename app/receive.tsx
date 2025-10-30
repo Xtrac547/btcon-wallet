@@ -1,6 +1,6 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ImageBackground, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { Copy, Share2, ExternalLink, ArrowLeft } from 'lucide-react-native';
@@ -151,7 +151,10 @@ export default function ReceiveScreen() {
   };
 
   const contentMaxWidth = isWideScreen ? 600 : width;
-  const contentPadding = isWideScreen ? 40 : 24;
+  const contentPadding = isWideScreen ? 40 : 20;
+  
+  const qrArtSize = Math.min(width - (contentPadding * 2), 360);
+  const qrCodeSize = qrArtSize * 0.6;
 
   return (
     <View style={styles.container}>
@@ -170,7 +173,11 @@ export default function ReceiveScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <View style={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.qrArtContainer}>
           <View style={styles.qrBackdrop}>
             <View style={[styles.glowOrb, { 
@@ -192,16 +199,18 @@ export default function ReceiveScreen() {
           <View style={[styles.qrFrame, { 
             shadowColor: currentArt.accent,
             borderColor: currentArt.accent,
+            width: qrArtSize,
+            height: qrArtSize,
           }]}>
             <ImageBackground
               source={{ uri: currentArt.imageUrl }}
-              style={styles.artworkBackground}
+              style={[styles.artworkBackground, { width: qrArtSize, height: qrArtSize }]}
               imageStyle={styles.artworkImage}
             >
               <View style={styles.qrOverlay}>
                 {qrMatrix.length > 0 ? (
-                  <View style={styles.qrCode}>
-                    <Svg width={240} height={240} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                  <View style={[styles.qrCode, { width: qrCodeSize, height: qrCodeSize }]}>
+                    <Svg width={qrCodeSize} height={qrCodeSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
                       <Defs>
                         <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
                           <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="0.85" />
@@ -242,7 +251,7 @@ export default function ReceiveScreen() {
                     </Svg>
                   </View>
                 ) : (
-                  <View style={styles.qrPlaceholder}>
+                  <View style={[styles.qrPlaceholder, { width: qrCodeSize, height: qrCodeSize }]}>
                     <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
                   </View>
                 )}
@@ -289,7 +298,7 @@ export default function ReceiveScreen() {
           <Text style={styles.infoText}>3. Attendez les confirmations du réseau</Text>
           <Text style={styles.infoText}>4. Les fonds apparaîtront dans votre portefeuille</Text>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -340,15 +349,19 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  content: {
+  scrollView: {
     flex: 1,
-    padding: 24,
-    paddingTop: 32,
+  },
+  content: {
+    padding: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
     alignItems: 'center',
   },
   qrArtContainer: {
     position: 'relative' as const,
-    marginBottom: 32,
+    marginBottom: 28,
+    alignItems: 'center',
   },
   qrBackdrop: {
     position: 'absolute' as const,
@@ -372,8 +385,8 @@ const styles = StyleSheet.create({
     borderWidth: 6,
   },
   artworkBackground: {
-    width: 320,
-    height: 320,
+    width: '100%',
+    height: '100%',
   },
   artworkImage: {
     opacity: 0.65,
@@ -381,20 +394,15 @@ const styles = StyleSheet.create({
   },
   qrOverlay: {
     flex: 1,
-    padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
   qrCode: {
-    width: 240,
-    height: 240,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrPlaceholder: {
-    width: 240,
-    height: 240,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -434,9 +442,9 @@ const styles = StyleSheet.create({
   addressCard: {
     backgroundColor: '#1a1a1a',
     borderRadius: 20,
-    padding: 24,
+    padding: 20,
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -459,7 +467,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   actionButton: {
     flex: 1,
