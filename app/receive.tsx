@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { Copy, Share2, ExternalLink, ArrowLeft } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
-import Svg, { Rect } from 'react-native-svg';
+import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -13,6 +13,18 @@ export default function ReceiveScreen() {
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
+
+  const futuristicColors = [
+    { id: 1, bg: '#0D0221', fg: ['#7209B7', '#F72585'], accent: '#F72585', glow: 'rgba(247, 37, 133, 0.6)' },
+    { id: 2, bg: '#001219', fg: ['#00B4D8', '#90E0EF'], accent: '#00B4D8', glow: 'rgba(0, 180, 216, 0.6)' },
+    { id: 3, bg: '#1A0B2E', fg: ['#16FF00', '#7EFF00'], accent: '#16FF00', glow: 'rgba(22, 255, 0, 0.6)' },
+    { id: 4, bg: '#1F0318', fg: ['#FF006E', '#FFBE0B'], accent: '#FF006E', glow: 'rgba(255, 0, 110, 0.6)' },
+    { id: 5, bg: '#03071E', fg: ['#FFB703', '#FB5607'], accent: '#FFB703', glow: 'rgba(255, 183, 3, 0.6)' },
+  ];
+
+  const [currentColorIndex, setCurrentColorIndex] = useState(0);
+
+  const currentColors = futuristicColors[currentColorIndex];
 
   const generateQRMatrix = (text: string): number[][] => {
     try {
@@ -47,6 +59,10 @@ export default function ReceiveScreen() {
       }
     }
   }, [address]);
+
+  const handleColorChange = () => {
+    setCurrentColorIndex((prev) => (prev + 1) % futuristicColors.length);
+  };
 
   const handleCopy = async () => {
     if (address) {
@@ -102,34 +118,57 @@ export default function ReceiveScreen() {
             <View style={[styles.decorativeRing, { width: 70, height: 70, top: 280, right: -25 }]} />
             <View style={[styles.decorativeRing, { width: 50, height: 50, bottom: -15, left: 15 }]} />
           </View>
-          <View style={styles.qrContainer}>
+          <TouchableOpacity 
+            style={[styles.qrContainer, { backgroundColor: currentColors.bg, borderColor: currentColors.accent }]}
+            onPress={handleColorChange}
+            activeOpacity={0.8}
+          >
             {qrMatrix.length > 0 ? (
               <View style={styles.qrCode}>
                 <Svg width={280} height={280} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
-                  <Rect width={qrMatrix.length} height={qrMatrix.length} fill="#FFFFFF" rx={2} />
+                  <Defs>
+                    <LinearGradient id={`qrGradient-${currentColors.id}`} x1="0" y1="0" x2="1" y2="1">
+                      <Stop offset="0" stopColor={currentColors.fg[0]} stopOpacity="1" />
+                      <Stop offset="1" stopColor={currentColors.fg[1]} stopOpacity="1" />
+                    </LinearGradient>
+                  </Defs>
+                  <Rect width={qrMatrix.length} height={qrMatrix.length} fill={currentColors.bg} rx={2} />
                   {qrMatrix.map((row, y) => 
-                    row.map((cell, x) => 
-                      cell === 1 ? (
-                        <Rect
-                          key={`${y}-${x}`}
-                          x={x}
-                          y={y}
-                          width={1}
-                          height={1}
-                          fill="#000000"
-                          rx={0.1}
-                        />
-                      ) : null
-                    )
+                    row.map((cell, x) => {
+                      if (cell === 1) {
+                        const isCorner = 
+                          (y < 8 && x < 8) ||
+                          (y < 8 && x >= qrMatrix.length - 8) ||
+                          (y >= qrMatrix.length - 8 && x < 8);
+                        
+                        return (
+                          <Rect
+                            key={`${y}-${x}`}
+                            x={x}
+                            y={y}
+                            width={1}
+                            height={1}
+                            fill={isCorner ? currentColors.accent : `url(#qrGradient-${currentColors.id})`}
+                            rx={0.15}
+                          />
+                        );
+                      }
+                      return null;
+                    })
                   )}
+                  <Circle cx={qrMatrix.length / 2} cy={qrMatrix.length / 2} r="4" fill={currentColors.bg} />
+                  <Circle cx={qrMatrix.length / 2} cy={qrMatrix.length / 2} r="2.5" fill={currentColors.accent} />
                 </Svg>
               </View>
             ) : (
               <View style={styles.qrPlaceholder}>
-                <Text style={styles.qrPlaceholderText}>Génération du QR...</Text>
+                <Text style={[styles.qrPlaceholderText, { color: currentColors.accent }]}>Génération du QR...</Text>
               </View>
             )}
-          </View>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleColorChange} style={styles.colorChangeButton}>
+            <Text style={[styles.colorChangeText, { color: currentColors.accent }]}>Appuyer pour changer la couleur</Text>
+          </TouchableOpacity>
         </View>
 
 
@@ -247,16 +286,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 215, 0, 0.4)',
   },
   qrContainer: {
-    backgroundColor: '#FFF',
     padding: 32,
     borderRadius: 32,
-    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.5,
     shadowRadius: 24,
     elevation: 12,
-    borderWidth: 4,
-    borderColor: '#FF8C00',
+    borderWidth: 5,
   },
   qrCode: {
     width: 280,
@@ -271,8 +307,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   qrPlaceholderText: {
-    color: '#666',
     fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  colorChangeButton: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  colorChangeText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
   },
   addressCard: {
     backgroundColor: '#1a1a1a',
