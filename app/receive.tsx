@@ -14,17 +14,67 @@ export default function ReceiveScreen() {
   const isWideScreen = width > 768;
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
 
-  const futuristicColors = [
-    { id: 1, bg: '#0D0221', fg: ['#7209B7', '#F72585'], accent: '#F72585', glow: 'rgba(247, 37, 133, 0.6)' },
-    { id: 2, bg: '#001219', fg: ['#00B4D8', '#90E0EF'], accent: '#00B4D8', glow: 'rgba(0, 180, 216, 0.6)' },
-    { id: 3, bg: '#1A0B2E', fg: ['#16FF00', '#7EFF00'], accent: '#16FF00', glow: 'rgba(22, 255, 0, 0.6)' },
-    { id: 4, bg: '#1F0318', fg: ['#FF006E', '#FFBE0B'], accent: '#FF006E', glow: 'rgba(255, 0, 110, 0.6)' },
-    { id: 5, bg: '#03071E', fg: ['#FFB703', '#FB5607'], accent: '#FFB703', glow: 'rgba(255, 183, 3, 0.6)' },
+  const artworks = [
+    {
+      id: 1,
+      name: 'Mona Lisa',
+      bg: '#3D2817',
+      fg: ['#8B7355', '#D4AF37'],
+      accent: '#D4AF37',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg',
+    },
+    {
+      id: 2,
+      name: 'La Nuit étoilée',
+      bg: '#1B2845',
+      fg: ['#4169E1', '#FFD700'],
+      accent: '#FFD700',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1200px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg',
+    },
+    {
+      id: 3,
+      name: 'La Création d\'Adam',
+      bg: '#E8D5C4',
+      fg: ['#8B6F47', '#CD853F'],
+      accent: '#CD853F',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Creación_de_Adán_%28Miguel_Ángel%29.jpg/1200px-Creación_de_Adán_%28Miguel_Ángel%29.jpg',
+    },
+    {
+      id: 4,
+      name: 'La Jeune Fille à la perle',
+      bg: '#1C1C1C',
+      fg: ['#FFD700', '#4682B4'],
+      accent: '#FFD700',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/1665_Girl_with_a_Pearl_Earring.jpg/800px-1665_Girl_with_a_Pearl_Earring.jpg',
+    },
+    {
+      id: 5,
+      name: 'Le Cri',
+      bg: '#FF6B35',
+      fg: ['#FF8C42', '#004E89'],
+      accent: '#FF8C42',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg/800px-Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg',
+    },
+    {
+      id: 6,
+      name: 'Le Baiser',
+      bg: '#D4AF37',
+      fg: ['#FFD700', '#FF6B35'],
+      accent: '#FFD700',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Gustav_Klimt_016.jpg/800px-Gustav_Klimt_016.jpg',
+    },
+    {
+      id: 7,
+      name: 'Guernica',
+      bg: '#2C2C2C',
+      fg: ['#FFFFFF', '#808080'],
+      accent: '#FFFFFF',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/74/PicassoGuernica.jpg/1200px-PicassoGuernica.jpg',
+    },
   ];
 
-  const [currentColorIndex, setCurrentColorIndex] = useState(0);
-
-  const currentColors = futuristicColors[currentColorIndex];
+  const [currentArtIndex, setCurrentArtIndex] = useState(0);
+  const currentArt = artworks[currentArtIndex];
 
   const generateQRMatrix = (text: string): number[][] => {
     try {
@@ -60,8 +110,8 @@ export default function ReceiveScreen() {
     }
   }, [address]);
 
-  const handleColorChange = () => {
-    setCurrentColorIndex((prev) => (prev + 1) % futuristicColors.length);
+  const handleArtChange = () => {
+    setCurrentArtIndex((prev) => (prev + 1) % artworks.length);
   };
 
   const handleCopy = async () => {
@@ -119,20 +169,20 @@ export default function ReceiveScreen() {
             <View style={[styles.decorativeRing, { width: 50, height: 50, bottom: -15, left: 15 }]} />
           </View>
           <TouchableOpacity 
-            style={[styles.qrContainer, { backgroundColor: currentColors.bg, borderColor: currentColors.accent }]}
-            onPress={handleColorChange}
+            style={[styles.qrContainer, { backgroundColor: currentArt.bg, borderColor: currentArt.accent }]}
+            onPress={handleArtChange}
             activeOpacity={0.8}
           >
             {qrMatrix.length > 0 ? (
               <View style={styles.qrCode}>
                 <Svg width={280} height={280} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
                   <Defs>
-                    <LinearGradient id={`qrGradient-${currentColors.id}`} x1="0" y1="0" x2="1" y2="1">
-                      <Stop offset="0" stopColor={currentColors.fg[0]} stopOpacity="1" />
-                      <Stop offset="1" stopColor={currentColors.fg[1]} stopOpacity="1" />
+                    <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
+                      <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="1" />
+                      <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="1" />
                     </LinearGradient>
                   </Defs>
-                  <Rect width={qrMatrix.length} height={qrMatrix.length} fill={currentColors.bg} rx={2} />
+                  <Rect width={qrMatrix.length} height={qrMatrix.length} fill={currentArt.bg} rx={2} />
                   {qrMatrix.map((row, y) => 
                     row.map((cell, x) => {
                       if (cell === 1) {
@@ -148,7 +198,7 @@ export default function ReceiveScreen() {
                             y={y}
                             width={1}
                             height={1}
-                            fill={isCorner ? currentColors.accent : `url(#qrGradient-${currentColors.id})`}
+                            fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
                             rx={0.15}
                           />
                         );
@@ -156,18 +206,19 @@ export default function ReceiveScreen() {
                       return null;
                     })
                   )}
-                  <Circle cx={qrMatrix.length / 2} cy={qrMatrix.length / 2} r="4" fill={currentColors.bg} />
-                  <Circle cx={qrMatrix.length / 2} cy={qrMatrix.length / 2} r="2.5" fill={currentColors.accent} />
+                  <Circle cx={qrMatrix.length / 2} cy={qrMatrix.length / 2} r="5" fill={currentArt.bg} />
+                  <Circle cx={qrMatrix.length / 2} cy={qrMatrix.length / 2} r="3" fill={currentArt.accent} />
                 </Svg>
               </View>
             ) : (
               <View style={styles.qrPlaceholder}>
-                <Text style={[styles.qrPlaceholderText, { color: currentColors.accent }]}>Génération du QR...</Text>
+                <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
               </View>
             )}
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleColorChange} style={styles.colorChangeButton}>
-            <Text style={[styles.colorChangeText, { color: currentColors.accent }]}>Appuyer pour changer la couleur</Text>
+          <TouchableOpacity onPress={handleArtChange} style={styles.artChangeButton}>
+            <Text style={[styles.artChangeText, { color: currentArt.accent }]}>🎨 {currentArt.name}</Text>
+            <Text style={[styles.artChangeSubtext, { color: currentArt.accent, opacity: 0.7 }]}>Appuyer pour changer d'œuvre</Text>
           </TouchableOpacity>
         </View>
 
@@ -310,17 +361,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
   },
-  colorChangeButton: {
-    marginTop: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
+  artChangeButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
     alignItems: 'center',
+    gap: 4,
   },
-  colorChangeText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
+  artChangeText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    letterSpacing: 0.5,
+  },
+  artChangeSubtext: {
+    fontSize: 11,
+    fontWeight: '500' as const,
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
   },
