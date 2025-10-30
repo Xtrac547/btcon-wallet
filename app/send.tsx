@@ -20,6 +20,7 @@ export default function SendScreen() {
   const [isSending, setIsSending] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  const [showTokens, setShowTokens] = useState(false);
 
   const tokenAmounts = [
     { value: 1000, shape: 'circle' as const },
@@ -202,6 +203,14 @@ export default function SendScreen() {
                 </TouchableOpacity>
               )}
             </View>
+            {!showTokens ? (
+              <TouchableOpacity 
+                style={styles.showTokensButton}
+                onPress={() => setShowTokens(true)}
+              >
+                <Text style={styles.showTokensText}>Afficher les jetons</Text>
+              </TouchableOpacity>
+            ) : (
             <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
               <View style={styles.topTokensRow}>
                 {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => (
@@ -212,7 +221,7 @@ export default function SendScreen() {
                         token.value === 1000 && styles.token1000,
                         token.value === 5000 && styles.token5000,
                         tokenCounts[token.value] > 0 && styles.tokenSelected,
-
+                        token.value === 5000 && { transform: [{ rotate: '180deg' }] },
                       ]}
                       onPress={() => handleTokenPress(token.value)}
                       onLongPress={() => handleTokenLongPress(token.value)}
@@ -253,7 +262,8 @@ export default function SendScreen() {
                 ))}
               </View>
             </View>
-            {getTotalAmount() > 0 && (
+            )}
+            {showTokens && getTotalAmount() > 0 && (
               <View style={styles.totalContainer}>
                 <Text style={styles.totalLabel}>Total:</Text>
                 <View style={styles.totalRow}>
@@ -663,5 +673,17 @@ const styles = StyleSheet.create({
     maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
+  },
+  showTokensButton: {
+    backgroundColor: '#FF8C00',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  showTokensText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '700' as const,
   },
 });
