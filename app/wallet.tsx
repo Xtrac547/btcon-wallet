@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw } from 'lucide-react-native';
@@ -8,6 +8,8 @@ import { useState, useEffect, useRef } from 'react';
 export default function WalletScreen() {
   const router = useRouter();
   const { balance, address, refreshBalance } = useWallet();
+  const { width } = useWindowDimensions();
+  const isWideScreen = width > 768;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -44,9 +46,12 @@ export default function WalletScreen() {
     ]).start();
   }, []);
 
+  const contentMaxWidth = isWideScreen ? 800 : width;
+  const contentPadding = isWideScreen ? 40 : 24;
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>₿</Text>
           <Text style={styles.appName}>Btcon</Text>
@@ -66,7 +71,7 @@ export default function WalletScreen() {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -280,5 +285,8 @@ const styles = StyleSheet.create({
   infoText: {
     color: '#666',
     fontSize: 14,
+  },
+  headerWide: {
+    paddingHorizontal: 40,
   },
 });

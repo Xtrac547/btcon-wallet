@@ -1,6 +1,6 @@
 import '@/utils/shim';
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowRight, Key, RefreshCw } from 'lucide-react-native';
@@ -8,6 +8,8 @@ import { ArrowRight, Key, RefreshCw } from 'lucide-react-native';
 export default function OnboardingScreen() {
   const router = useRouter();
   const { createWallet, restoreWallet, isLoading } = useWallet();
+  const { width } = useWindowDimensions();
+  const isWideScreen = width > 768;
   const [mode, setMode] = useState<'choose' | 'create' | 'restore'>('choose');
   const [mnemonic, setMnemonic] = useState<string>('');
   const [restorePhrase, setRestorePhrase] = useState<string>('');
@@ -201,6 +203,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     justifyContent: 'center',
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
   },
   logo: {
     fontSize: 88,

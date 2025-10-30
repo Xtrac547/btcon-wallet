@@ -1,6 +1,6 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, Animated, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { Copy, Share2, ExternalLink, ArrowLeft, Sparkles } from 'lucide-react-native';
@@ -48,6 +48,8 @@ function getStyleColors(style: ArtStyle): { bg: string; primary: string; seconda
 export default function ReceiveScreen() {
   const router = useRouter();
   const { address, esploraService } = useWallet();
+  const { width } = useWindowDimensions();
+  const isWideScreen = width > 768;
   const [qrMatrix, setQrMatrix] = useState<boolean[][]>([]);
   const [artStyle, setArtStyle] = useState<ArtStyle>('starry-night');
   const shimmerAnim = useState(() => new Animated.Value(0))[0];
@@ -102,9 +104,12 @@ export default function ReceiveScreen() {
     }
   };
 
+  const contentMaxWidth = isWideScreen ? 600 : width;
+  const contentPadding = isWideScreen ? 40 : 24;
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
@@ -112,7 +117,7 @@ export default function ReceiveScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}>
         <View style={styles.qrContainer}>
           {qrMatrix.length > 0 ? (
             <ArtisticQRCode matrix={qrMatrix} style={artStyle} />
@@ -289,6 +294,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     marginBottom: 4,
+  },
+  headerWide: {
+    paddingHorizontal: 40,
   },
   styleIndicator: {
     flexDirection: 'row',

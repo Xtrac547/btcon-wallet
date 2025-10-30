@@ -1,6 +1,6 @@
 import '@/utils/shim';
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Alert, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Alert, Pressable, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle } from 'lucide-react-native';
@@ -12,6 +12,8 @@ export default function SettingsScreen() {
   const { mnemonic, deleteWallet } = useWallet();
   const [showSeed, setShowSeed] = useState(false);
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isWideScreen = width > 768;
 
 
 
@@ -89,7 +91,7 @@ export default function SettingsScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40, maxWidth: isWideScreen ? 700 : width, width: '100%', alignSelf: 'center' }]}>
         <View style={styles.topGradient} />
         
         <View style={styles.settingsCard}>

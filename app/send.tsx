@@ -1,6 +1,6 @@
 import '@/utils/shim';
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowLeft, Send, QrCode, X } from 'lucide-react-native';
@@ -9,6 +9,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 export default function SendScreen() {
   const router = useRouter();
   const { balance, signAndBroadcastTransaction, esploraService } = useWallet();
+  const { width } = useWindowDimensions();
+  const isWideScreen = width > 768;
   const [toAddress, setToAddress] = useState('');
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
@@ -145,9 +147,12 @@ export default function SendScreen() {
     setToAddress(address);
   };
 
+  const contentMaxWidth = isWideScreen ? 800 : width;
+  const contentPadding = isWideScreen ? 40 : 24;
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
@@ -155,7 +160,7 @@ export default function SendScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}>
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Solde disponible</Text>
           <View style={styles.balanceRow}>
@@ -197,7 +202,7 @@ export default function SendScreen() {
                 </TouchableOpacity>
               )}
             </View>
-            <View style={styles.tokensContainer}>
+            <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
               <View style={styles.topTokensRow}>
                 {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => (
                   <View key={index} style={styles.tokenWrapper}>
@@ -440,11 +445,13 @@ const styles = StyleSheet.create({
   },
   tokenWrapper: {
     width: 150,
+    maxWidth: '45%',
     alignItems: 'center',
     gap: 8,
   },
   tokenWrapper50k: {
     width: 320,
+    maxWidth: '95%',
     alignItems: 'center',
     gap: 8,
   },
@@ -650,5 +657,13 @@ const styles = StyleSheet.create({
     borderColor: '#FF8C00',
     borderRadius: 24,
     backgroundColor: 'transparent',
+  },
+  headerWide: {
+    paddingHorizontal: 40,
+  },
+  tokensContainerWide: {
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '100%',
   },
 });
