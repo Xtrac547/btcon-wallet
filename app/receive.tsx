@@ -201,11 +201,11 @@ export default function ReceiveScreen() {
               <View style={styles.qrOverlay}>
                 {qrMatrix.length > 0 ? (
                   <View style={styles.qrCode}>
-                    <Svg width={160} height={160} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                    <Svg width={240} height={240} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
                       <Defs>
                         <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
-                          <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="0.2" />
-                          <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="0.2" />
+                          <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="0.85" />
+                          <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="0.85" />
                         </LinearGradient>
                       </Defs>
                       {qrMatrix.map((row, y) => 
@@ -224,8 +224,8 @@ export default function ReceiveScreen() {
                                 width={1}
                                 height={1}
                                 fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
-                                rx={0.2}
-                                opacity={isCorner ? "0.35" : "0.2"}
+                                rx={0.15}
+                                opacity={isCorner ? "0.95" : "0.8"}
                               />
                             );
                           }
@@ -237,7 +237,7 @@ export default function ReceiveScreen() {
                         cy={qrMatrix.length / 2} 
                         r="3.5" 
                         fill={currentArt.accent} 
-                        opacity="0.3"
+                        opacity="0.9"
                       />
                     </Svg>
                   </View>
@@ -376,25 +376,25 @@ const styles = StyleSheet.create({
     height: 320,
   },
   artworkImage: {
-    opacity: 0.95,
+    opacity: 0.65,
     borderRadius: 34,
   },
   qrOverlay: {
     flex: 1,
-    padding: 30,
+    padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
   qrCode: {
-    width: 160,
-    height: 160,
+    width: 240,
+    height: 240,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrPlaceholder: {
-    width: 160,
-    height: 160,
+    width: 240,
+    height: 240,
     justifyContent: 'center',
     alignItems: 'center',
   },
