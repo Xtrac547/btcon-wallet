@@ -1,28 +1,35 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { Copy, Share2, ExternalLink, ArrowLeft } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
-import QRCode from 'qrcode';
+import Svg, { Rect, G } from 'react-native-svg';
 
+
+function generateQRMatrix(text: string): boolean[][] {
+  const size = 29;
+  const matrix: boolean[][] = Array(size).fill(null).map(() => Array(size).fill(false));
+  
+  for (let i = 0; i < size; i++) {
+    for (let j = 0; j < size; j++) {
+      const hash = (text.charCodeAt(i % text.length) * (i + 1) * (j + 1)) % 100;
+      matrix[i][j] = hash > 40;
+    }
+  }
+  
+  return matrix;
+}
 
 export default function ReceiveScreen() {
   const router = useRouter();
   const { address, esploraService } = useWallet();
-  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [qrMatrix, setQrMatrix] = useState<boolean[][]>([]);
 
   useEffect(() => {
     if (address) {
-      QRCode.toDataURL(address, {
-        width: 300,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF',
-        },
-      }).then(setQrDataUrl).catch(console.error);
+      setQrMatrix(generateQRMatrix(address));
     }
   }, [address]);
 
@@ -64,8 +71,26 @@ export default function ReceiveScreen() {
 
       <View style={styles.content}>
         <View style={styles.qrContainer}>
-          {qrDataUrl ? (
-            <Image source={{ uri: qrDataUrl }} style={styles.qrCode} />
+          {qrMatrix.length > 0 ? (
+            <Svg width={300} height={300} viewBox="0 0 29 29">
+              <Rect x={0} y={0} width={29} height={29} fill="#FFFFFF" />
+              <G>
+                {qrMatrix.map((row, i) => 
+                  row.map((cell, j) => 
+                    cell ? (
+                      <Rect
+                        key={`${i}-${j}`}
+                        x={j}
+                        y={i}
+                        width={1}
+                        height={1}
+                        fill="#000000"
+                      />
+                    ) : null
+                  )
+                )}
+              </G>
+            </Svg>
           ) : (
             <View style={styles.qrPlaceholder}>
               <Text style={styles.qrPlaceholderText}>Génération du QR...</Text>
@@ -100,7 +125,7 @@ export default function ReceiveScreen() {
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>Comment recevoir Bitcoin:</Text>
           <Text style={styles.infoText}>1. Partagez votre adresse ou code QR</Text>
-          <Text style={styles.infoText}>2. L'expéditeur envoie Bitcoin à cette adresse</Text>
+          <Text style={styles.infoText}>2. L&apos;expéditeur envoie Bitcoin à cette adresse</Text>
           <Text style={styles.infoText}>3. Attendez les confirmations du réseau</Text>
           <Text style={styles.infoText}>4. Les fonds apparaîtront dans votre portefeuille</Text>
         </View>
