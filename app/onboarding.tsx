@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { Key, RefreshCw, Copy, Check } from 'lucide-react-native';
+import { Key, RefreshCw } from 'lucide-react-native';
 import * as ScreenCapture from 'expo-screen-capture';
-import * as Clipboard from 'expo-clipboard';
+
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -17,7 +17,6 @@ export default function OnboardingScreen() {
   const [seedWords, setSeedWords] = useState<string[]>([]);
 
   const [seedConfirmed, setSeedConfirmed] = useState<boolean>(false);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const handleCreateWallet = async () => {
     setIsCreating(true);
@@ -64,11 +63,7 @@ export default function OnboardingScreen() {
     }
   };
 
-  const copyWord = async (word: string, index: number) => {
-    await Clipboard.setStringAsync(word);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
-  };
+
 
   const handleRestoreWallet = async () => {
     if (!restorePhrase.trim()) {
@@ -180,20 +175,13 @@ export default function OnboardingScreen() {
           <View style={styles.seedContainer}>
             <View style={styles.wordsGrid}>
               {seedWords.map((word, index) => (
-                <TouchableOpacity
+                <View
                   key={index}
                   style={styles.wordItem}
-                  onPress={() => copyWord(word, index)}
-                  activeOpacity={0.7}
                 >
                   <Text style={styles.wordNumber}>{index + 1}</Text>
                   <Text style={styles.wordText}>{word}</Text>
-                  {copiedIndex === index ? (
-                    <Check color="#4CAF50" size={16} />
-                  ) : (
-                    <Copy color="#666" size={14} />
-                  )}
-                </TouchableOpacity>
+                </View>
               ))}
             </View>
           </View>
