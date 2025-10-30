@@ -184,14 +184,16 @@ export default function SendScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Solde disponible</Text>
-          <View style={styles.balanceRow}>
-            <Text style={styles.balanceAmount}>{formatBalance(balance)}</Text>
-            <Text style={styles.balanceUnit}>Btcon</Text>
+        {getTotalAmount() === 0 && (
+          <View style={styles.balanceCard}>
+            <Text style={styles.balanceLabel}>Solde disponible</Text>
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceAmount}>{formatBalance(balance)}</Text>
+              <Text style={styles.balanceUnit}>Btcon</Text>
+            </View>
+            <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
           </View>
-          <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
-        </View>
+        )}
 
         <View style={styles.formCard}>
           <View style={styles.inputContainer}>
