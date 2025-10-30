@@ -66,6 +66,11 @@ export default function ReceiveScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.backgroundPattern}>
+        <View style={[styles.patternCircle, { width: 300, height: 300, top: -100, right: -100 }]} />
+        <View style={[styles.patternCircle, { width: 200, height: 200, bottom: 100, left: -50 }]} />
+        <View style={[styles.patternCircle, { width: 150, height: 150, top: 200, left: 50 }]} />
+      </View>
       <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft color="#FFF" size={24} />
@@ -131,6 +136,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',
+    position: 'relative' as const,
+  },
+  backgroundPattern: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.03,
+  },
+  patternCircle: {
+    position: 'absolute' as const,
+    borderRadius: 1000,
+    borderWidth: 2,
+    borderColor: '#FF8C00',
   },
   header: {
     flexDirection: 'row',

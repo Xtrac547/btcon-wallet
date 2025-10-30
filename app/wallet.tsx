@@ -51,6 +51,22 @@ export default function WalletScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.backgroundPattern}>
+        {[...Array(15)].map((_, i) => (
+          <View
+            key={`dot-${i}`}
+            style={[
+              styles.patternDot,
+              {
+                left: (i * 50 + 20) % width,
+                top: Math.floor(i / 5) * 150 + 100,
+              },
+            ]}
+          />
+        ))}
+        <View style={[styles.patternLine, { width: 100, top: 150, left: 50, transform: [{ rotate: '45deg' }] }]} />
+        <View style={[styles.patternLine, { width: 80, top: 400, right: 60, transform: [{ rotate: '-30deg' }] }]} />
+      </View>
       <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>₿</Text>
@@ -149,6 +165,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',
+    position: 'relative' as const,
+  },
+  backgroundPattern: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.04,
+  },
+  patternDot: {
+    position: 'absolute' as const,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FF8C00',
+  },
+  patternLine: {
+    position: 'absolute' as const,
+    height: 2,
+    backgroundColor: '#FF8C00',
   },
   header: {
     flexDirection: 'row',
