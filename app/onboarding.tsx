@@ -1,29 +1,67 @@
 import '@/utils/shim';
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { Key, RefreshCw } from 'lucide-react-native';
+import { Key, RefreshCw, Eye, EyeOff, Copy, Check } from 'lucide-react-native';
+import * as ScreenCapture from 'expo-screen-capture';
+import * as Clipboard from 'expo-clipboard';
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { createWallet, restoreWallet, isLoading } = useWallet();
 
-  const [mode, setMode] = useState<'choose' | 'restore'>('choose');
+  const [mode, setMode] = useState<'choose' | 'restore' | 'show-seed'>('choose');
   const [restorePhrase, setRestorePhrase] = useState<string>('');
   const [isCreating, setIsCreating] = useState(false);
+  const [seedWords, setSeedWords] = useState<string[]>([]);
+  const [wordsRevealed, setWordsRevealed] = useState<boolean>(false);
+  const [seedConfirmed, setSeedConfirmed] = useState<boolean>(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const handleCreateWallet = async () => {
     setIsCreating(true);
     try {
-      await createWallet();
-      router.replace('/wallet');
+      const mnemonic = await createWallet();
+      const words = mnemonic.split(' ');
+      setSeedWords(words);
+      setMode('show-seed');
     } catch (error) {
       console.error('Error creating wallet:', error);
       Alert.alert('Erreur', 'Échec de la création du portefeuille. Veuillez réessayer.');
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const handleConfirmSeed = () => {
+    if (!seedConfirmed) {
+      Alert.alert(
+        'Confirmation',
+        'Avez-vous bien noté vos 12 mots de récupération ? Ils sont nécessaires pour restaurer votre portefeuille.',
+        [
+          {
+            text: 'Non, je veux les revoir',
+            style: 'cancel',
+          },
+          {
+            text: 'Oui, j\'ai noté',
+            onPress: () => {
+              setSeedConfirmed(true);
+              router.replace('/wallet');
+            },
+          },
+        ]
+      );
+    } else {
+      router.replace('/wallet');
+    }
+  };
+
+  const copyWord = async (word: string, index: number) => {
+    await Clipboard.setStringAsync(word);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   const handleRestoreWallet = async () => {
@@ -51,6 +89,24 @@ export default function OnboardingScreen() {
   };
 
 
+
+  useEffect(() => {
+    if (mode === 'show-seed') {
+      if (Platform.OS !== 'web') {
+        ScreenCapture.preventScreenCaptureAsync().catch((error) => {
+          console.warn('Failed to prevent screen capture:', error);
+        });
+      }
+      
+      return () => {
+        if (Platform.OS !== 'web') {
+          ScreenCapture.allowScreenCaptureAsync().catch((error) => {
+            console.warn('Failed to allow screen capture:', error);
+          });
+        }
+      };
+    }
+  }, [mode]);
 
   if (isLoading) {
     return (
@@ -105,6 +161,77 @@ export default function OnboardingScreen() {
           </View>
         </View>
       </View>
+    );
+  }
+
+  if (mode === 'show-seed') {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <Text style={styles.title}>🔐 Phrase de Récupération</Text>
+          <Text style={styles.subtitle}>
+            Notez ces 12 mots dans l'ordre. Ils sont la seule façon de récupérer votre portefeuille.
+          </Text>
+
+          {Platform.OS === 'web' && (
+            <View style={styles.warningBox}>
+              <Text style={styles.warningText}>⚠️ Attention : les captures d'écran ne sont pas bloquées sur le web</Text>
+            </View>
+          )}
+
+          <View style={styles.seedContainer}>
+            {!wordsRevealed ? (
+              <TouchableOpacity
+                style={styles.revealButton}
+                onPress={() => setWordsRevealed(true)}
+                activeOpacity={0.8}
+              >
+                <Eye color="#FF8C00" size={32} />
+                <Text style={styles.revealText}>Appuyez pour révéler</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.wordsGrid}>
+                {seedWords.map((word, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.wordItem}
+                    onPress={() => copyWord(word, index)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.wordNumber}>{index + 1}</Text>
+                    <Text style={styles.wordText}>{word}</Text>
+                    {copiedIndex === index ? (
+                      <Check color="#4CAF50" size={16} />
+                    ) : (
+                      <Copy color="#666" size={14} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {wordsRevealed && (
+            <>
+              <TouchableOpacity
+                style={styles.hideButton}
+                onPress={() => setWordsRevealed(false)}
+                activeOpacity={0.7}
+              >
+                <EyeOff color="#999" size={20} />
+                <Text style={styles.hideText}>Masquer</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={handleConfirmSeed}
+              >
+                <Text style={styles.primaryButtonText}>J'ai noté mes 12 mots</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </ScrollView>
     );
   }
 
@@ -241,5 +368,80 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 16,
     fontWeight: '600' as const,
+  },
+  seedContainer: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    padding: 24,
+    marginVertical: 24,
+    minHeight: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  revealButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  revealText: {
+    color: '#FF8C00',
+    fontSize: 18,
+    fontWeight: '700' as const,
+  },
+  wordsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    width: '100%',
+  },
+  wordItem: {
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: '47%',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  wordNumber: {
+    color: '#666',
+    fontSize: 12,
+    fontWeight: '700' as const,
+    minWidth: 20,
+  },
+  wordText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600' as const,
+    flex: 1,
+  },
+  hideButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  hideText: {
+    color: '#999',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  warningBox: {
+    backgroundColor: '#4A3000',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#FF8C00',
+  },
+  warningText: {
+    color: '#FFB84D',
+    fontSize: 14,
+    fontWeight: '600' as const,
+    textAlign: 'center',
   },
 });

@@ -35,7 +35,8 @@
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
         "CAMERA",
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "READ_MEDIA_IMAGES"
       ]
     },
     "web": {
