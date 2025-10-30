@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { UsernameProvider } from "@/contexts/UsernameContext";
 import { Platform } from 'react-native';
 
 if (Platform.OS !== 'web') {
@@ -44,9 +45,11 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <WalletProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <RootLayoutNav />
-        </GestureHandlerRootView>
+        <UsernameProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <RootLayoutNav />
+          </GestureHandlerRootView>
+        </UsernameProvider>
       </WalletProvider>
     </QueryClientProvider>
   );

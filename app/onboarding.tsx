@@ -3,20 +3,23 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
+import { useUsername } from '@/contexts/UsernameContext';
 import { Key, RefreshCw } from 'lucide-react-native';
 import * as ScreenCapture from 'expo-screen-capture';
 
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { createWallet, restoreWallet, isLoading } = useWallet();
+  const { createWallet, restoreWallet, isLoading, address } = useWallet();
+  const { setUsername: saveUsername } = useUsername();
 
-  const [mode, setMode] = useState<'choose' | 'restore' | 'show-seed'>('choose');
+  const [mode, setMode] = useState<'choose' | 'restore' | 'show-seed' | 'set-username'>('choose');
   const [restorePhrase, setRestorePhrase] = useState<string>('');
   const [isCreating, setIsCreating] = useState(false);
   const [seedWords, setSeedWords] = useState<string[]>([]);
 
   const [seedConfirmed, setSeedConfirmed] = useState<boolean>(false);
+  const [usernameInput, setUsernameInput] = useState<string>('');
 
   const handleCreateWallet = async () => {
     setIsCreating(true);
@@ -53,13 +56,13 @@ export default function OnboardingScreen() {
             text: 'Oui, j\'ai noté',
             onPress: () => {
               setSeedConfirmed(true);
-              router.replace('/wallet');
+              setMode('set-username');
             },
           },
         ]
       );
     } else {
-      router.replace('/wallet');
+      setMode('set-username');
     }
   };
 
@@ -80,10 +83,49 @@ export default function OnboardingScreen() {
     setIsCreating(true);
     try {
       await restoreWallet(restorePhrase.trim());
-      router.replace('/wallet');
+      setMode('set-username');
     } catch (error) {
       console.error('Error restoring wallet:', error);
       Alert.alert('Erreur', 'Phrase de récupération invalide. Veuillez vérifier et réessayer.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleSetUsername = async () => {
+    const cleanUsername = usernameInput.trim().toLowerCase();
+    
+    if (!cleanUsername) {
+      router.replace('/wallet');
+      return;
+    }
+
+    if (cleanUsername.length < 3) {
+      Alert.alert('Erreur', 'Le pseudo doit contenir au moins 3 caractères');
+      return;
+    }
+
+    if (!/^[a-z0-9_]+$/.test(cleanUsername)) {
+      Alert.alert('Erreur', 'Le pseudo ne peut contenir que des lettres, chiffres et underscores');
+      return;
+    }
+
+    if (!address) {
+      Alert.alert('Erreur', 'Adresse non disponible');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const success = await saveUsername(cleanUsername, address);
+      if (success) {
+        router.replace('/wallet');
+      } else {
+        Alert.alert('Erreur', 'Pseudo déjà pris');
+      }
+    } catch (error) {
+      console.error('Error setting username:', error);
+      Alert.alert('Erreur', 'Échec de la définition du pseudo');
     } finally {
       setIsCreating(false);
     }
@@ -150,6 +192,57 @@ export default function OnboardingScreen() {
             >
               <RefreshCw color="#FF8C00" size={20} />
                   <Text style={styles.secondaryButtonText}>Restaurer un Portefeuille</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  if (mode === 'set-username') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Choisir un Pseudo</Text>
+          <Text style={styles.subtitle}>Créez un pseudo unique commençant par @</Text>
+
+          <View style={styles.usernameInputContainer}>
+            <Text style={styles.atSymbol}>@</Text>
+            <TextInput
+              style={styles.usernameInput}
+              value={usernameInput}
+              onChangeText={setUsernameInput}
+              placeholder="pseudo"
+              placeholderTextColor="#666"
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={20}
+            />
+          </View>
+
+          <Text style={styles.hintText}>
+            Votre pseudo permettra aux autres utilisateurs de vous envoyer des Btcon plus facilement.
+          </Text>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleSetUsername}
+              disabled={isCreating}
+              testID="confirm-username-button"
+            >
+              {isCreating ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Confirmer</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.linkButton}
+              onPress={() => router.replace('/wallet')}
+            >
+              <Text style={styles.linkText}>Passer</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -384,5 +477,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as const,
     textAlign: 'center',
+  },
+  usernameInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginVertical: 24,
+    borderWidth: 2,
+    borderColor: '#333',
+  },
+  atSymbol: {
+    color: '#FF8C00',
+    fontSize: 24,
+    fontWeight: '700' as const,
+    marginRight: 4,
+  },
+  usernameInput: {
+    flex: 1,
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '600' as const,
+    padding: 0,
+  },
+  hintText: {
+    color: '#666',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
   },
 });

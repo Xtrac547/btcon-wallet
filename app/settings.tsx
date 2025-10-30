@@ -1,16 +1,20 @@
 import '@/utils/shim';
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Alert, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Alert, Pressable, useWindowDimensions, Modal, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle } from 'lucide-react-native';
+import { useUsername } from '@/contexts/UsernameContext';
+import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { mnemonic, deleteWallet } = useWallet();
+  const { mnemonic, deleteWallet, address } = useWallet();
+  const { username, setUsername: saveUsername, deleteUsername } = useUsername();
   const [showSeed, setShowSeed] = useState(false);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
@@ -93,6 +97,33 @@ export default function SettingsScreen() {
 
       <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40, maxWidth: isWideScreen ? 700 : width, width: '100%', alignSelf: 'center' }]}>
         <View style={styles.topGradient} />
+        
+        <View style={styles.usernameCard}>
+          <View style={styles.usernameHeader}>
+            <Text style={styles.usernameLabel}>Pseudo</Text>
+            {username && (
+              <Pressable onPress={() => {
+                setUsernameInput('');
+                setShowUsernameModal(true);
+              }}>
+                <Text style={styles.changeText}>Modifier</Text>
+              </Pressable>
+            )}
+          </View>
+          {username ? (
+            <Text style={styles.usernameDisplay}>@{username}</Text>
+          ) : (
+            <Pressable 
+              style={styles.addUsernameButton}
+              onPress={() => {
+                setUsernameInput('');
+                setShowUsernameModal(true);
+              }}
+            >
+              <Text style={styles.addUsernameText}>Ajouter un pseudo</Text>
+            </Pressable>
+          )}
+        </View>
         
         <View style={styles.settingsCard}>
           <View style={styles.securitySection}>
@@ -178,6 +209,99 @@ export default function SettingsScreen() {
           <Text style={styles.footerText}>Bitcoin Wallet • Sécurisé & Décentralisé</Text>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showUsernameModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowUsernameModal(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setShowUsernameModal(false)}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Définir un pseudo</Text>
+              <Pressable onPress={() => setShowUsernameModal(false)}>
+                <X color="#999" size={24} />
+              </Pressable>
+            </View>
+
+            <View style={styles.usernameInputContainer}>
+              <Text style={styles.atSymbol}>@</Text>
+              <TextInput
+                style={styles.usernameInput}
+                value={usernameInput}
+                onChangeText={setUsernameInput}
+                placeholder="pseudo"
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                autoCorrect={false}
+                maxLength={20}
+                autoFocus
+              />
+            </View>
+
+            <Text style={styles.modalHint}>
+              {username ? 'Modifier votre pseudo permettra aux autres de vous trouver avec ce nouveau nom.' : 'Choisissez un pseudo unique (min. 3 caractères)'}
+            </Text>
+
+            <Pressable
+              style={styles.modalButton}
+              onPress={async () => {
+                const cleanUsername = usernameInput.trim().toLowerCase();
+                
+                if (!cleanUsername) {
+                  if (username) {
+                    await deleteUsername();
+                    setShowUsernameModal(false);
+                  }
+                  return;
+                }
+
+                if (cleanUsername.length < 3) {
+                  Alert.alert('Erreur', 'Le pseudo doit contenir au moins 3 caractères');
+                  return;
+                }
+
+                if (!/^[a-z0-9_]+$/.test(cleanUsername)) {
+                  Alert.alert('Erreur', 'Le pseudo ne peut contenir que des lettres, chiffres et underscores');
+                  return;
+                }
+
+                if (!address) {
+                  Alert.alert('Erreur', 'Adresse non disponible');
+                  return;
+                }
+
+                const success = await saveUsername(cleanUsername, address);
+                if (success) {
+                  setShowUsernameModal(false);
+                } else {
+                  Alert.alert('Erreur', 'Pseudo déjà pris');
+                }
+              }}
+            >
+              <Text style={styles.modalButtonText}>
+                {username ? 'Modifier' : 'Définir'}
+              </Text>
+            </Pressable>
+
+            {username && (
+              <Pressable
+                style={styles.modalButtonSecondary}
+                onPress={async () => {
+                  await deleteUsername();
+                  setShowUsernameModal(false);
+                }}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Supprimer le pseudo</Text>
+              </Pressable>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -401,5 +525,125 @@ const styles = StyleSheet.create({
     color: '#444',
     fontSize: 12,
     fontWeight: '500' as const,
+  },
+  usernameCard: {
+    backgroundColor: '#141414',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  usernameHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  usernameLabel: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  changeText: {
+    color: '#FF8C00',
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  usernameDisplay: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: '700' as const,
+  },
+  addUsernameButton: {
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+  },
+  addUsernameText: {
+    color: '#FF8C00',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#1A1A1A',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700' as const,
+  },
+  usernameInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0A0A0A',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  atSymbol: {
+    color: '#FF8C00',
+    fontSize: 20,
+    fontWeight: '700' as const,
+    marginRight: 4,
+  },
+  usernameInput: {
+    flex: 1,
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600' as const,
+    padding: 0,
+  },
+  modalHint: {
+    color: '#666',
+    fontSize: 13,
+    marginBottom: 24,
+    lineHeight: 18,
+  },
+  modalButton: {
+    backgroundColor: '#FF8C00',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  modalButtonSecondary: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FF4444',
+  },
+  modalButtonSecondaryText: {
+    color: '#FF4444',
+    fontSize: 16,
+    fontWeight: '600' as const,
   },
 });

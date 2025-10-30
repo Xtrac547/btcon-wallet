@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
+import { useUsername } from '@/contexts/UsernameContext';
 import { ArrowLeft, Send, QrCode, X } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
 export default function SendScreen() {
   const router = useRouter();
   const { balance, signAndBroadcastTransaction, esploraService } = useWallet();
+  const { getAddressForUsername } = useUsername();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [toAddress, setToAddress] = useState('');
@@ -63,8 +65,25 @@ export default function SendScreen() {
 
   const handleSend = async () => {
     if (!toAddress.trim()) {
-      Alert.alert('Error', 'Veuillez entrer une adresse');
+      Alert.alert('Error', 'Veuillez entrer une adresse ou un pseudo');
       return;
+    }
+
+    let resolvedAddress = toAddress.trim();
+    
+    if (resolvedAddress.startsWith('@')) {
+      const username = resolvedAddress.substring(1);
+      const address = await getAddressForUsername(username);
+      if (!address) {
+        Alert.alert('Error', 'Pseudo introuvable');
+        return;
+      }
+      resolvedAddress = address;
+    } else if (!resolvedAddress.startsWith('bc1') && !resolvedAddress.startsWith('tb1')) {
+      const address = await getAddressForUsername(resolvedAddress);
+      if (address) {
+        resolvedAddress = address;
+      }
     }
 
     const totalAmount = getTotalAmount();
@@ -89,7 +108,7 @@ export default function SendScreen() {
 
     Alert.alert(
       'Confirmer',
-      `Envoyer ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC) à ${toAddress.slice(0, 10)}...?`,
+      `Envoyer ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC) à ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}?`,
       [
         {
           text: 'Annuler',
@@ -100,7 +119,7 @@ export default function SendScreen() {
           onPress: async () => {
             setIsSending(true);
             try {
-              const txid = await signAndBroadcastTransaction(toAddress, satsAmount);
+              const txid = await signAndBroadcastTransaction(resolvedAddress, satsAmount);
               const explorerUrl = esploraService.getExplorerUrl(txid);
               
               Alert.alert(
@@ -197,13 +216,13 @@ export default function SendScreen() {
 
         <View style={styles.formCard}>
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Adresse du destinataire</Text>
+            <Text style={styles.inputLabel}>Destinataire</Text>
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.input}
                 value={toAddress}
                 onChangeText={setToAddress}
-                placeholder="bc1q... or tb1q..."
+                placeholder="@pseudo, adresse BTC ou scanner QR"
                 placeholderTextColor="#666"
                 autoCapitalize="none"
                 autoCorrect={false}
