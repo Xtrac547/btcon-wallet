@@ -20,7 +20,7 @@ export default function WalletScreen() {
 
   const formatBalance = (sats: number): string => {
     const btcon = (sats / 100000000) * 100000000;
-    return btcon.toFixed(2);
+    return Math.floor(btcon).toString();
   };
 
   const formatAddress = (addr: string | null): string => {
@@ -82,7 +82,7 @@ export default function WalletScreen() {
             transform: [{ scale: scaleAnim }],
           },
         ]}>
-          <Text style={styles.balanceLabel}>Total Balance</Text>
+          <Text style={styles.balanceLabel}>Solde Total</Text>
           <View style={styles.balanceRow}>
             <Text style={styles.balanceAmount}>{formatBalance(balance)}</Text>
             <Text style={styles.balanceUnit}>Btcon</Text>
@@ -91,7 +91,7 @@ export default function WalletScreen() {
 
           {address && (
             <View style={styles.addressContainer}>
-              <Text style={styles.addressLabel}>Address</Text>
+              <Text style={styles.addressLabel}>Adresse</Text>
               <Text style={styles.addressText}>{formatAddress(address)}</Text>
             </View>
           )}
@@ -110,7 +110,7 @@ export default function WalletScreen() {
             <View style={styles.actionIconContainer}>
               <ArrowDownLeft color="#FF8C00" size={24} />
             </View>
-            <Text style={styles.actionText}>Receive</Text>
+            <Text style={styles.actionText}>Recevoir</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -125,14 +125,14 @@ export default function WalletScreen() {
             <View style={styles.actionIconContainer}>
               <ArrowUpRight color="#FF8C00" size={24} />
             </View>
-            <Text style={styles.actionText}>Send</Text>
+            <Text style={styles.actionText}>Envoyer</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
             <RefreshCw color="#666" size={20} />
-            <Text style={styles.infoText}>Pull to refresh balance</Text>
+            <Text style={styles.infoText}>Tirez pour actualiser le solde</Text>
           </View>
         </View>
       </ScrollView>

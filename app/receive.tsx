@@ -29,7 +29,7 @@ export default function ReceiveScreen() {
   const handleCopy = async () => {
     if (address) {
       await Clipboard.setStringAsync(address);
-      Alert.alert('Copied', 'Address copied to clipboard');
+      Alert.alert('Copié', 'Adresse copiée dans le presse-papiers');
     }
   };
 
@@ -48,7 +48,7 @@ export default function ReceiveScreen() {
   const handleOpenExplorer = () => {
     if (address) {
       const url = esploraService.getAddressExplorerUrl(address);
-      Alert.alert('Explorer', `Open ${url} in browser?`);
+      Alert.alert('Explorateur', `Ouvrir ${url} dans le navigateur ?`);
     }
   };
 
@@ -58,7 +58,7 @@ export default function ReceiveScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Receive Bitcoin</Text>
+        <Text style={styles.headerTitle}>Recevoir Bitcoin</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -68,13 +68,13 @@ export default function ReceiveScreen() {
             <Image source={{ uri: qrDataUrl }} style={styles.qrCode} />
           ) : (
             <View style={styles.qrPlaceholder}>
-              <Text style={styles.qrPlaceholderText}>Generating QR...</Text>
+              <Text style={styles.qrPlaceholderText}>Génération du QR...</Text>
             </View>
           )}
         </View>
 
         <View style={styles.addressCard}>
-          <Text style={styles.addressLabel}>Your Address</Text>
+          <Text style={styles.addressLabel}>Votre Adresse</Text>
           <Text style={styles.addressText} numberOfLines={2}>
             {address}
           </Text>
@@ -83,26 +83,26 @@ export default function ReceiveScreen() {
         <View style={styles.actionsContainer}>
           <TouchableOpacity style={styles.actionButton} onPress={handleCopy} testID="copy-button">
             <Copy color="#FF8C00" size={20} />
-            <Text style={styles.actionButtonText}>Copy</Text>
+            <Text style={styles.actionButtonText}>Copier</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handleShare} testID="share-button">
             <Share2 color="#FF8C00" size={20} />
-            <Text style={styles.actionButtonText}>Share</Text>
+            <Text style={styles.actionButtonText}>Partager</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handleOpenExplorer} testID="explorer-button">
             <ExternalLink color="#FF8C00" size={20} />
-            <Text style={styles.actionButtonText}>Explorer</Text>
+            <Text style={styles.actionButtonText}>Explorateur</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>How to receive Bitcoin:</Text>
-          <Text style={styles.infoText}>1. Share your address or QR code</Text>
-          <Text style={styles.infoText}>2. Sender sends Bitcoin to this address</Text>
-          <Text style={styles.infoText}>3. Wait for network confirmations</Text>
-          <Text style={styles.infoText}>4. Funds will appear in your wallet</Text>
+          <Text style={styles.infoTitle}>Comment recevoir Bitcoin:</Text>
+          <Text style={styles.infoText}>1. Partagez votre adresse ou code QR</Text>
+          <Text style={styles.infoText}>2. L'expéditeur envoie Bitcoin à cette adresse</Text>
+          <Text style={styles.infoText}>3. Attendez les confirmations du réseau</Text>
+          <Text style={styles.infoText}>4. Les fonds apparaîtront dans votre portefeuille</Text>
         </View>
       </View>
     </View>
