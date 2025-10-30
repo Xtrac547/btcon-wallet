@@ -278,21 +278,23 @@ export default function SendScreen() {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={[styles.sendButton, isSending && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={isSending}
-          testID="send-transaction-button"
-        >
-          {isSending ? (
-            <ActivityIndicator color="#000" />
-          ) : (
-            <>
-              <Send color="#000" size={20} />
-              <Text style={styles.sendButtonText}>Envoyer</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {showTokens && getTotalAmount() > 0 && (
+          <TouchableOpacity
+            style={[styles.sendButton, isSending && styles.sendButtonDisabled]}
+            onPress={handleSend}
+            disabled={isSending}
+            testID="send-transaction-button"
+          >
+            {isSending ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <>
+                <Send color="#000" size={20} />
+                <Text style={styles.sendButtonText}>Envoyer</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
 
         <View style={styles.infoCard}>
           <Text style={styles.infoText}>
@@ -320,7 +322,11 @@ export default function SendScreen() {
           <CameraView
             style={styles.camera}
             facing="back"
+            barcodeScannerSettings={{
+              barcodeTypes: ['qr'],
+            }}
             onBarcodeScanned={(result) => {
+              console.log('QR Code détecté:', result.data);
               handleBarcodeScanned(result.data);
             }}
           >
