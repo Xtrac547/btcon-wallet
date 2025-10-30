@@ -1,11 +1,11 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { Copy, Share2, ExternalLink, ArrowLeft } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
-import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
+import Svg, { Rect, Defs, LinearGradient, Stop, Circle, Path } from 'react-native-svg';
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -18,58 +18,65 @@ export default function ReceiveScreen() {
     {
       id: 1,
       name: 'Mona Lisa',
-      bg: '#3D2817',
-      fg: ['#8B7355', '#D4AF37'],
-      accent: '#D4AF37',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg',
+      bg: '#1a0f07',
+      fg: ['#d4a373', '#f4e4c1'],
+      accent: '#d4a373',
+      borderGlow: 'rgba(212, 163, 115, 0.6)',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/600px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg',
     },
     {
       id: 2,
       name: 'La Nuit étoilée',
-      bg: '#1B2845',
-      fg: ['#4169E1', '#FFD700'],
-      accent: '#FFD700',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1200px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg',
+      bg: '#0a1628',
+      fg: ['#4a90e2', '#ffd93d'],
+      accent: '#4a90e2',
+      borderGlow: 'rgba(74, 144, 226, 0.6)',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/600px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg',
     },
     {
       id: 3,
       name: 'La Création d\'Adam',
-      bg: '#E8D5C4',
-      fg: ['#8B6F47', '#CD853F'],
-      accent: '#CD853F',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Creación_de_Adán_%28Miguel_Ángel%29.jpg/1200px-Creación_de_Adán_%28Miguel_Ángel%29.jpg',
+      bg: '#2a1f15',
+      fg: ['#e8c4a0', '#d4af7a'],
+      accent: '#e8c4a0',
+      borderGlow: 'rgba(232, 196, 160, 0.6)',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Creación_de_Adán_%28Miguel_Ángel%29.jpg/600px-Creación_de_Adán_%28Miguel_Ángel%29.jpg',
     },
     {
       id: 4,
       name: 'La Jeune Fille à la perle',
-      bg: '#1C1C1C',
-      fg: ['#FFD700', '#4682B4'],
-      accent: '#FFD700',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/1665_Girl_with_a_Pearl_Earring.jpg/800px-1665_Girl_with_a_Pearl_Earring.jpg',
+      bg: '#0f1419',
+      fg: ['#4a9fd8', '#e8d5a0'],
+      accent: '#4a9fd8',
+      borderGlow: 'rgba(74, 159, 216, 0.6)',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/1665_Girl_with_a_Pearl_Earring.jpg/600px-1665_Girl_with_a_Pearl_Earring.jpg',
     },
     {
       id: 5,
       name: 'Le Cri',
-      bg: '#FF6B35',
-      fg: ['#FF8C42', '#004E89'],
-      accent: '#FF8C42',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg/800px-Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg',
+      bg: '#2a0f0a',
+      fg: ['#ff6b35', '#ffb347'],
+      accent: '#ff6b35',
+      borderGlow: 'rgba(255, 107, 53, 0.6)',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg/600px-Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg',
     },
     {
       id: 6,
       name: 'Le Baiser',
-      bg: '#D4AF37',
-      fg: ['#FFD700', '#FF6B35'],
-      accent: '#FFD700',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Gustav_Klimt_016.jpg/800px-Gustav_Klimt_016.jpg',
+      bg: '#2a2010',
+      fg: ['#ffd700', '#ff8c42'],
+      accent: '#ffd700',
+      borderGlow: 'rgba(255, 215, 0, 0.6)',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Gustav_Klimt_016.jpg/600px-Gustav_Klimt_016.jpg',
     },
     {
       id: 7,
       name: 'Guernica',
-      bg: '#2C2C2C',
-      fg: ['#FFFFFF', '#808080'],
-      accent: '#FFFFFF',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/74/PicassoGuernica.jpg/1200px-PicassoGuernica.jpg',
+      bg: '#1a1a1a',
+      fg: ['#e0e0e0', '#a0a0a0'],
+      accent: '#e0e0e0',
+      borderGlow: 'rgba(224, 224, 224, 0.6)',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/74/PicassoGuernica.jpg/600px-PicassoGuernica.jpg',
     },
   ];
 
@@ -166,60 +173,91 @@ export default function ReceiveScreen() {
       <View style={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}>
         <View style={styles.qrArtContainer}>
           <View style={styles.qrBackdrop}>
-            <View style={[styles.decorativeCircle, { width: 60, height: 60, top: -20, left: -20 }]} />
-            <View style={[styles.decorativeCircle, { width: 45, height: 45, bottom: 10, right: -10 }]} />
-            <View style={[styles.decorativeRing, { width: 70, height: 70, top: 280, right: -25 }]} />
-            <View style={[styles.decorativeRing, { width: 50, height: 50, bottom: -15, left: 15 }]} />
+            <View style={[styles.glowOrb, { 
+              width: 100, 
+              height: 100, 
+              top: -40, 
+              left: -40,
+              backgroundColor: currentArt.borderGlow,
+            }]} />
+            <View style={[styles.glowOrb, { 
+              width: 80, 
+              height: 80, 
+              bottom: -30, 
+              right: -30,
+              backgroundColor: currentArt.borderGlow,
+            }]} />
           </View>
-          <View 
-            style={[styles.qrContainer, { backgroundColor: currentArt.bg, borderColor: currentArt.accent }]}
-          >
-            {qrMatrix.length > 0 ? (
-              <View style={styles.qrCode}>
-                <Svg width={280} height={280} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
-                  <Defs>
-                    <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
-                      <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="1" />
-                      <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="1" />
-                    </LinearGradient>
-                  </Defs>
-                  <Rect width={qrMatrix.length} height={qrMatrix.length} fill={currentArt.bg} rx={2} />
-                  {qrMatrix.map((row, y) => 
-                    row.map((cell, x) => {
-                      if (cell === 1) {
-                        const isCorner = 
-                          (y < 8 && x < 8) ||
-                          (y < 8 && x >= qrMatrix.length - 8) ||
-                          (y >= qrMatrix.length - 8 && x < 8);
-                        
-                        return (
-                          <Rect
-                            key={`${y}-${x}`}
-                            x={x}
-                            y={y}
-                            width={1}
-                            height={1}
-                            fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
-                            rx={0.15}
-                          />
-                        );
-                      }
-                      return null;
-                    })
-                  )}
-                  <Circle cx={qrMatrix.length / 2} cy={qrMatrix.length / 2} r="5" fill={currentArt.bg} />
-                  <Circle cx={qrMatrix.length / 2} cy={qrMatrix.length / 2} r="3" fill={currentArt.accent} />
-                </Svg>
+          
+          <View style={[styles.qrFrame, { 
+            shadowColor: currentArt.accent,
+            borderColor: currentArt.accent,
+          }]}>
+            <ImageBackground
+              source={{ uri: currentArt.imageUrl }}
+              style={styles.artworkBackground}
+              imageStyle={styles.artworkImage}
+            >
+              <View style={[styles.qrOverlay, { backgroundColor: currentArt.bg }]}>
+                {qrMatrix.length > 0 ? (
+                  <View style={styles.qrCode}>
+                    <Svg width={260} height={260} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                      <Defs>
+                        <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
+                          <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="0.95" />
+                          <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="0.95" />
+                        </LinearGradient>
+                      </Defs>
+                      {qrMatrix.map((row, y) => 
+                        row.map((cell, x) => {
+                          if (cell === 1) {
+                            const isCorner = 
+                              (y < 8 && x < 8) ||
+                              (y < 8 && x >= qrMatrix.length - 8) ||
+                              (y >= qrMatrix.length - 8 && x < 8);
+                            
+                            return (
+                              <Rect
+                                key={`${y}-${x}`}
+                                x={x}
+                                y={y}
+                                width={1}
+                                height={1}
+                                fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
+                                rx={0.2}
+                              />
+                            );
+                          }
+                          return null;
+                        })
+                      )}
+                      <Circle 
+                        cx={qrMatrix.length / 2} 
+                        cy={qrMatrix.length / 2} 
+                        r="6" 
+                        fill={currentArt.accent} 
+                        opacity="0.95"
+                      />
+                      <Path
+                        d={`M ${qrMatrix.length / 2 - 3} ${qrMatrix.length / 2} L ${qrMatrix.length / 2 + 3} ${qrMatrix.length / 2} M ${qrMatrix.length / 2} ${qrMatrix.length / 2 - 3} L ${qrMatrix.length / 2} ${qrMatrix.length / 2 + 3}`}
+                        stroke={currentArt.bg}
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </Svg>
+                  </View>
+                ) : (
+                  <View style={styles.qrPlaceholder}>
+                    <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
+                  </View>
+                )}
               </View>
-            ) : (
-              <View style={styles.qrPlaceholder}>
-                <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
-              </View>
-            )}
+            </ImageBackground>
           </View>
-          <View style={styles.artInfoContainer}>
+          
+          <View style={[styles.artInfoContainer, { borderColor: currentArt.accent }]}>
             <Text style={[styles.artInfoText, { color: currentArt.accent }]}>🎨 {currentArt.name}</Text>
-            <Text style={[styles.artInfoSubtext, { color: currentArt.accent, opacity: 0.7 }]}>Style unique de votre portefeuille</Text>
+            <Text style={[styles.artInfoSubtext, { color: currentArt.accent }]}>Identité Artistique Unique</Text>
           </View>
         </View>
 
@@ -319,42 +357,49 @@ const styles = StyleSheet.create({
   },
   qrBackdrop: {
     position: 'absolute' as const,
-    top: -10,
-    left: -10,
-    right: -10,
-    bottom: -10,
+    top: -20,
+    left: -20,
+    right: -20,
+    bottom: -20,
   },
-  decorativeCircle: {
+  glowOrb: {
     position: 'absolute' as const,
     borderRadius: 1000,
-    backgroundColor: 'rgba(255, 140, 0, 0.15)',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 140, 0, 0.3)',
+    opacity: 0.3,
   },
-  decorativeRing: {
-    position: 'absolute' as const,
-    borderRadius: 1000,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 215, 0, 0.4)',
+  qrFrame: {
+    borderRadius: 40,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.8,
+    shadowRadius: 40,
+    elevation: 20,
+    borderWidth: 6,
   },
-  qrContainer: {
-    padding: 32,
-    borderRadius: 32,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    elevation: 12,
-    borderWidth: 5,
+  artworkBackground: {
+    width: 320,
+    height: 320,
+  },
+  artworkImage: {
+    opacity: 0.35,
+    borderRadius: 34,
+  },
+  qrOverlay: {
+    flex: 1,
+    padding: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
   },
   qrCode: {
-    width: 280,
-    height: 280,
+    width: 260,
+    height: 260,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrPlaceholder: {
-    width: 280,
-    height: 280,
+    width: 260,
+    height: 260,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -363,26 +408,33 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   artInfoContainer: {
-    marginTop: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
+    marginTop: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 28,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 20,
     alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 6,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 8,
   },
   artInfoText: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    letterSpacing: 0.5,
+    fontSize: 18,
+    fontWeight: '800' as const,
+    letterSpacing: 0.8,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   artInfoSubtext: {
-    fontSize: 11,
-    fontWeight: '500' as const,
+    fontSize: 10,
+    fontWeight: '600' as const,
     textTransform: 'uppercase' as const,
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    opacity: 0.8,
   },
   addressCard: {
     backgroundColor: '#1a1a1a',
