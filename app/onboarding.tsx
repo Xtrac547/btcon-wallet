@@ -23,7 +23,7 @@ export default function OnboardingScreen() {
       setMode('create');
     } catch (error) {
       console.error('Error creating wallet:', error);
-      Alert.alert('Error', 'Failed to create wallet. Please try again.');
+      Alert.alert('Erreur', 'Échec de la création du portefeuille. Veuillez réessayer.');
     } finally {
       setIsCreating(false);
     }
@@ -31,13 +31,13 @@ export default function OnboardingScreen() {
 
   const handleRestoreWallet = async () => {
     if (!restorePhrase.trim()) {
-      Alert.alert('Error', 'Please enter your recovery phrase');
+      Alert.alert('Erreur', 'Veuillez entrer votre phrase de récupération');
       return;
     }
 
     const words = restorePhrase.trim().split(/\s+/);
     if (words.length !== 12) {
-      Alert.alert('Error', 'Recovery phrase must be 12 words');
+      Alert.alert('Erreur', 'La phrase de récupération doit contenir 12 mots');
       return;
     }
 
@@ -47,7 +47,7 @@ export default function OnboardingScreen() {
       router.replace('/wallet');
     } catch (error) {
       console.error('Error restoring wallet:', error);
-      Alert.alert('Error', 'Invalid recovery phrase. Please check and try again.');
+      Alert.alert('Erreur', 'Phrase de récupération invalide. Veuillez vérifier et réessayer.');
     } finally {
       setIsCreating(false);
     }
@@ -70,8 +70,8 @@ export default function OnboardingScreen() {
       <View style={styles.container}>
         <View style={styles.content}>
           <Text style={styles.logo}>₿</Text>
-          <Text style={styles.title}>Btcon Wallet</Text>
-          <Text style={styles.subtitle}>Your Bitcoin companion</Text>
+          <Text style={styles.title}>Portefeuille Btcon</Text>
+          <Text style={styles.subtitle}>Votre compagnon Bitcoin</Text>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -89,7 +89,7 @@ export default function OnboardingScreen() {
               ) : (
                 <>
                   <Key color="#000" size={20} />
-                  <Text style={styles.primaryButtonText}>Create New Wallet</Text>
+                  <Text style={styles.primaryButtonText}>Créer un Portefeuille</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -105,7 +105,7 @@ export default function OnboardingScreen() {
               testID="restore-wallet-button"
             >
               <RefreshCw color="#FF8C00" size={20} />
-              <Text style={styles.secondaryButtonText}>Restore Wallet</Text>
+                  <Text style={styles.secondaryButtonText}>Restaurer un Portefeuille</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -119,9 +119,9 @@ export default function OnboardingScreen() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          <Text style={styles.title}>Your Recovery Phrase</Text>
+          <Text style={styles.title}>Phrase de Récupération</Text>
           <Text style={styles.warningText}>
-            Write down these 12 words in order and store them safely. You will need them to recover your wallet.
+            Notez ces 12 mots dans l'ordre et conservez-les en lieu sûr. Vous en aurez besoin pour récupérer votre portefeuille.
           </Text>
 
           <View style={styles.seedContainer}>
@@ -138,7 +138,7 @@ export default function OnboardingScreen() {
             onPress={handleContinue}
             testID="continue-button"
           >
-            <Text style={styles.primaryButtonText}>I Have Saved My Phrase</Text>
+            <Text style={styles.primaryButtonText}>J'ai Sauvegardé ma Phrase</Text>
             <ArrowRight color="#000" size={20} />
           </TouchableOpacity>
         </View>
@@ -149,8 +149,8 @@ export default function OnboardingScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={styles.content}>
-        <Text style={styles.title}>Restore Wallet</Text>
-        <Text style={styles.subtitle}>Enter your 12-word recovery phrase</Text>
+        <Text style={styles.title}>Restaurer le Portefeuille</Text>
+        <Text style={styles.subtitle}>Entrez votre phrase de récupération de 12 mots</Text>
 
         <TextInput
           style={styles.textArea}
@@ -158,7 +158,7 @@ export default function OnboardingScreen() {
           numberOfLines={4}
           value={restorePhrase}
           onChangeText={setRestorePhrase}
-          placeholder="word1 word2 word3 ..."
+          placeholder="mot1 mot2 mot3 ..."
           placeholderTextColor="#666"
           autoCapitalize="none"
           autoCorrect={false}
@@ -174,7 +174,7 @@ export default function OnboardingScreen() {
             <ActivityIndicator color="#000" />
           ) : (
             <>
-              <Text style={styles.primaryButtonText}>Restore Wallet</Text>
+              <Text style={styles.primaryButtonText}>Restaurer le Portefeuille</Text>
               <ArrowRight color="#000" size={20} />
             </>
           )}
@@ -184,7 +184,7 @@ export default function OnboardingScreen() {
           style={styles.linkButton}
           onPress={() => setMode('choose')}
         >
-          <Text style={styles.linkText}>Back</Text>
+          <Text style={styles.linkText}>Retour</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

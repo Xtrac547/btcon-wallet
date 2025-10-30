@@ -83,6 +83,8 @@ export default function ReceiveScreen() {
         <View style={[styles.patternCircle, { width: 300, height: 300, top: -100, right: -100 }]} />
         <View style={[styles.patternCircle, { width: 200, height: 200, bottom: 100, left: -50 }]} />
         <View style={[styles.patternCircle, { width: 150, height: 150, top: 200, left: 50 }]} />
+        <View style={[styles.patternRing, { width: 120, height: 120, top: 350, right: 60 }]} />
+        <View style={[styles.patternRing, { width: 80, height: 80, top: 150, left: 100 }]} />
       </View>
       <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -93,32 +95,41 @@ export default function ReceiveScreen() {
       </View>
 
       <View style={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}>
-        <View style={styles.qrContainer}>
-          {qrMatrix.length > 0 ? (
-            <View style={styles.qrCode}>
-              <Svg width={300} height={300} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
-                <Rect width={qrMatrix.length} height={qrMatrix.length} fill="#FFFFFF" />
-                {qrMatrix.map((row, y) => 
-                  row.map((cell, x) => 
-                    cell === 1 ? (
-                      <Rect
-                        key={`${y}-${x}`}
-                        x={x}
-                        y={y}
-                        width={1}
-                        height={1}
-                        fill="#000000"
-                      />
-                    ) : null
-                  )
-                )}
-              </Svg>
-            </View>
-          ) : (
-            <View style={styles.qrPlaceholder}>
-              <Text style={styles.qrPlaceholderText}>Génération du QR...</Text>
-            </View>
-          )}
+        <View style={styles.qrArtContainer}>
+          <View style={styles.qrBackdrop}>
+            <View style={[styles.decorativeCircle, { width: 60, height: 60, top: -20, left: -20 }]} />
+            <View style={[styles.decorativeCircle, { width: 45, height: 45, bottom: 10, right: -10 }]} />
+            <View style={[styles.decorativeRing, { width: 70, height: 70, top: 280, right: -25 }]} />
+            <View style={[styles.decorativeRing, { width: 50, height: 50, bottom: -15, left: 15 }]} />
+          </View>
+          <View style={styles.qrContainer}>
+            {qrMatrix.length > 0 ? (
+              <View style={styles.qrCode}>
+                <Svg width={280} height={280} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                  <Rect width={qrMatrix.length} height={qrMatrix.length} fill="#FFFFFF" rx={2} />
+                  {qrMatrix.map((row, y) => 
+                    row.map((cell, x) => 
+                      cell === 1 ? (
+                        <Rect
+                          key={`${y}-${x}`}
+                          x={x}
+                          y={y}
+                          width={1}
+                          height={1}
+                          fill="#000000"
+                          rx={0.1}
+                        />
+                      ) : null
+                    )
+                  )}
+                </Svg>
+              </View>
+            ) : (
+              <View style={styles.qrPlaceholder}>
+                <Text style={styles.qrPlaceholderText}>Génération du QR...</Text>
+              </View>
+            )}
+          </View>
         </View>
 
 
@@ -179,6 +190,13 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FF8C00',
   },
+  patternRing: {
+    position: 'absolute' as const,
+    borderRadius: 1000,
+    borderWidth: 4,
+    borderColor: '#FFD700',
+    opacity: 0.3,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -204,26 +222,51 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     alignItems: 'center',
   },
+  qrArtContainer: {
+    position: 'relative' as const,
+    marginBottom: 32,
+  },
+  qrBackdrop: {
+    position: 'absolute' as const,
+    top: -10,
+    left: -10,
+    right: -10,
+    bottom: -10,
+  },
+  decorativeCircle: {
+    position: 'absolute' as const,
+    borderRadius: 1000,
+    backgroundColor: 'rgba(255, 140, 0, 0.15)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+  },
+  decorativeRing: {
+    position: 'absolute' as const,
+    borderRadius: 1000,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+  },
   qrContainer: {
     backgroundColor: '#FFF',
-    padding: 24,
-    borderRadius: 28,
-    marginBottom: 32,
+    padding: 32,
+    borderRadius: 32,
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 12,
+    borderWidth: 4,
+    borderColor: '#FF8C00',
   },
   qrCode: {
-    width: 300,
-    height: 300,
+    width: 280,
+    height: 280,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrPlaceholder: {
-    width: 300,
-    height: 300,
+    width: 280,
+    height: 280,
     justifyContent: 'center',
     alignItems: 'center',
   },
