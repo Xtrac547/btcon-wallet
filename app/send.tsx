@@ -20,7 +20,7 @@ export default function SendScreen() {
   const [isSending, setIsSending] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const [showTokens, setShowTokens] = useState(false);
+
 
   const tokenAmounts = [
     { value: 1000, shape: 'circle' as const },
@@ -203,14 +203,6 @@ export default function SendScreen() {
                 </TouchableOpacity>
               )}
             </View>
-            {!showTokens ? (
-              <TouchableOpacity 
-                style={styles.showTokensButton}
-                onPress={() => setShowTokens(true)}
-              >
-                <Text style={styles.showTokensText}>Afficher les jetons</Text>
-              </TouchableOpacity>
-            ) : (
             <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
               <View style={styles.topTokensRow}>
                 {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => (
@@ -262,8 +254,7 @@ export default function SendScreen() {
                 ))}
               </View>
             </View>
-            )}
-            {showTokens && getTotalAmount() > 0 && (
+            {getTotalAmount() > 0 && (
               <View style={styles.totalContainer}>
                 <Text style={styles.totalLabel}>Total:</Text>
                 <View style={styles.totalRow}>
@@ -278,7 +269,7 @@ export default function SendScreen() {
           </View>
         </View>
 
-        {showTokens && getTotalAmount() > 0 && (
+        {getTotalAmount() > 0 && (
           <TouchableOpacity
             style={[styles.sendButton, isSending && styles.sendButtonDisabled]}
             onPress={handleSend}
@@ -326,8 +317,10 @@ export default function SendScreen() {
               barcodeTypes: ['qr'],
             }}
             onBarcodeScanned={(result) => {
-              console.log('QR Code détecté:', result.data);
-              handleBarcodeScanned(result.data);
+              if (result?.data) {
+                console.log('QR Code détecté:', result.data);
+                handleBarcodeScanned(result.data);
+              }
             }}
           >
             <View style={styles.scannerOverlay}>
