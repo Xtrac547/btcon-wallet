@@ -444,19 +444,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tokenWrapper: {
-    width: 150,
-    maxWidth: '45%',
+    width: '45%',
     alignItems: 'center',
     gap: 8,
   },
   tokenWrapper50k: {
-    width: 320,
-    maxWidth: '95%',
+    width: '95%',
     alignItems: 'center',
     gap: 8,
   },
   tokenCircle: {
-    flex: 1,
+    width: '100%',
     aspectRatio: 1,
     backgroundColor: '#2a2a2a',
     borderRadius: 1000,
@@ -479,7 +477,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   tokenSquare: {
-    flex: 1,
+    width: '100%',
     aspectRatio: 1.3,
     backgroundColor: '#E8451A',
     borderRadius: 16,
