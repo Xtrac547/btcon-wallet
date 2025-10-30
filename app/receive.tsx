@@ -1,9 +1,9 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ImageBackground, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ImageBackground, ScrollView, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { Copy, Share2, ExternalLink, ArrowLeft } from 'lucide-react-native';
+import { Copy, Share2, ExternalLink, ArrowLeft, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 
@@ -87,6 +87,7 @@ export default function ReceiveScreen() {
   };
 
   const currentArt = getArtworkForAddress(address);
+  const [showQR, setShowQR] = useState(false);
 
   const generateQRMatrix = (text: string): number[][] => {
     try {
@@ -155,6 +156,7 @@ export default function ReceiveScreen() {
   
   const qrArtSize = Math.min(width - (contentPadding * 2), 360);
   const qrCodeSize = qrArtSize * 0.6;
+  const modalQrSize = Math.min(width * 0.9, 380);
 
   return (
     <View style={styles.container}>
@@ -179,90 +181,48 @@ export default function ReceiveScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.qrArtContainer}>
-          <View style={styles.qrBackdrop}>
-            <View style={[styles.glowOrb, { 
-              width: 100, 
-              height: 100, 
-              top: -40, 
-              left: -40,
-              backgroundColor: currentArt.borderGlow,
-            }]} />
-            <View style={[styles.glowOrb, { 
-              width: 80, 
-              height: 80, 
-              bottom: -30, 
-              right: -30,
-              backgroundColor: currentArt.borderGlow,
-            }]} />
-          </View>
-          
-          <View style={[styles.qrFrame, { 
-            shadowColor: currentArt.accent,
-            borderColor: currentArt.accent,
-            width: qrArtSize,
-            height: qrArtSize,
-          }]}>
-            <ImageBackground
-              source={{ uri: currentArt.imageUrl }}
-              style={[styles.artworkBackground, { width: qrArtSize, height: qrArtSize }]}
-              imageStyle={styles.artworkImage}
-            >
-              <View style={styles.qrOverlay}>
-                {qrMatrix.length > 0 ? (
-                  <View style={[styles.qrCode, { width: qrCodeSize, height: qrCodeSize }]}>
-                    <Svg width={qrCodeSize} height={qrCodeSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
-                      <Defs>
-                        <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
-                          <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="0.85" />
-                          <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="0.85" />
-                        </LinearGradient>
-                      </Defs>
-                      {qrMatrix.map((row, y) => 
-                        row.map((cell, x) => {
-                          if (cell === 1) {
-                            const isCorner = 
-                              (y < 8 && x < 8) ||
-                              (y < 8 && x >= qrMatrix.length - 8) ||
-                              (y >= qrMatrix.length - 8 && x < 8);
-                            
-                            return (
-                              <Rect
-                                key={`${y}-${x}`}
-                                x={x}
-                                y={y}
-                                width={1}
-                                height={1}
-                                fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
-                                rx={0.15}
-                                opacity={isCorner ? "0.95" : "0.8"}
-                              />
-                            );
-                          }
-                          return null;
-                        })
-                      )}
-                      <Circle 
-                        cx={qrMatrix.length / 2} 
-                        cy={qrMatrix.length / 2} 
-                        r="3.5" 
-                        fill={currentArt.accent} 
-                        opacity="0.9"
-                      />
-                    </Svg>
-                  </View>
-                ) : (
-                  <View style={[styles.qrPlaceholder, { width: qrCodeSize, height: qrCodeSize }]}>
-                    <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
-                  </View>
-                )}
-              </View>
-            </ImageBackground>
-          </View>
-          
-          <View style={[styles.artInfoContainer, { borderColor: currentArt.accent }]}>
-            <Text style={[styles.artInfoText, { color: currentArt.accent }]}>🎨 {currentArt.name}</Text>
-            <Text style={[styles.artInfoSubtext, { color: currentArt.accent }]}>Identité Artistique Unique</Text>
-          </View>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setShowQR(true)}
+            style={styles.artTouchable}
+          >
+            <View style={styles.qrBackdrop}>
+              <View style={[styles.glowOrb, { 
+                width: 100, 
+                height: 100, 
+                top: -40, 
+                left: -40,
+                backgroundColor: currentArt.borderGlow,
+              }]} />
+              <View style={[styles.glowOrb, { 
+                width: 80, 
+                height: 80, 
+                bottom: -30, 
+                right: -30,
+                backgroundColor: currentArt.borderGlow,
+              }]} />
+            </View>
+            
+            <View style={[styles.qrFrame, { 
+              shadowColor: currentArt.accent,
+              borderColor: currentArt.accent,
+              width: qrArtSize,
+              height: qrArtSize,
+            }]}>
+              <ImageBackground
+                source={{ uri: currentArt.imageUrl }}
+                style={[styles.artworkBackground, { width: qrArtSize, height: qrArtSize }]}
+                imageStyle={styles.artworkImage}
+              >
+                <View style={styles.artOverlay} />
+              </ImageBackground>
+            </View>
+            
+            <View style={[styles.artInfoContainer, { borderColor: currentArt.accent }]}>
+              <Text style={[styles.artInfoText, { color: currentArt.accent }]}>🎨 {currentArt.name}</Text>
+              <Text style={[styles.artInfoSubtext, { color: currentArt.accent }]}>Touchez pour voir le QR Code</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
 
@@ -299,6 +259,77 @@ export default function ReceiveScreen() {
           <Text style={styles.infoText}>4. Les fonds apparaîtront dans votre portefeuille</Text>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showQR}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowQR(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: currentArt.bg }]}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowQR(false)}
+              testID="close-qr-modal"
+            >
+              <X color={currentArt.accent} size={28} />
+            </TouchableOpacity>
+
+            <View style={[styles.modalQrContainer, { borderColor: currentArt.accent }]}>
+              {qrMatrix.length > 0 ? (
+                <View style={[styles.modalQrCode, { width: modalQrSize, height: modalQrSize, backgroundColor: '#FFF' }]}>
+                  <Svg width={modalQrSize} height={modalQrSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                    <Defs>
+                      <LinearGradient id={`qrGradientModal-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
+                        <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="1" />
+                        <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="1" />
+                      </LinearGradient>
+                    </Defs>
+                    {qrMatrix.map((row, y) => 
+                      row.map((cell, x) => {
+                        if (cell === 1) {
+                          const isCorner = 
+                            (y < 8 && x < 8) ||
+                            (y < 8 && x >= qrMatrix.length - 8) ||
+                            (y >= qrMatrix.length - 8 && x < 8);
+                          
+                          return (
+                            <Rect
+                              key={`modal-${y}-${x}`}
+                              x={x}
+                              y={y}
+                              width={1}
+                              height={1}
+                              fill={isCorner ? currentArt.accent : `url(#qrGradientModal-${currentArt.id})`}
+                              rx={0.12}
+                            />
+                          );
+                        }
+                        return null;
+                      })
+                    )}
+                    <Circle 
+                      cx={qrMatrix.length / 2} 
+                      cy={qrMatrix.length / 2} 
+                      r="4" 
+                      fill={currentArt.accent}
+                    />
+                  </Svg>
+                </View>
+              ) : (
+                <View style={[styles.qrPlaceholder, { width: modalQrSize, height: modalQrSize }]}>
+                  <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={[styles.modalArtInfo, { borderColor: currentArt.accent }]}>
+              <Text style={[styles.modalArtName, { color: currentArt.accent }]}>🎨 {currentArt.name}</Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -363,6 +394,9 @@ const styles = StyleSheet.create({
     marginBottom: 28,
     alignItems: 'center',
   },
+  artTouchable: {
+    alignItems: 'center',
+  },
   qrBackdrop: {
     position: 'absolute' as const,
     top: -20,
@@ -389,7 +423,11 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   artworkImage: {
-    opacity: 0.65,
+    borderRadius: 34,
+  },
+  artOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     borderRadius: 34,
   },
   qrOverlay: {
@@ -438,6 +476,63 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase' as const,
     letterSpacing: 1.5,
     opacity: 0.8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    borderRadius: 32,
+    padding: 32,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 500,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.8,
+    shadowRadius: 40,
+    elevation: 20,
+  },
+  modalCloseButton: {
+    position: 'absolute' as const,
+    top: 16,
+    right: 16,
+    padding: 8,
+    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 20,
+  },
+  modalQrContainer: {
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderRadius: 24,
+    borderWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.6,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  modalQrCode: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  modalArtInfo: {
+    marginTop: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 20,
+    borderWidth: 2,
+  },
+  modalArtName: {
+    fontSize: 20,
+    fontWeight: '800' as const,
+    letterSpacing: 1,
+    textAlign: 'center' as const,
   },
   addressCard: {
     backgroundColor: '#1a1a1a',
