@@ -52,20 +52,22 @@ export default function WalletScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.backgroundPattern}>
-        {[...Array(15)].map((_, i) => (
+        {[...Array(25)].map((_, i) => (
           <View
-            key={`dot-${i}`}
+            key={`pattern-${i}`}
             style={[
-              styles.patternDot,
+              i % 2 === 0 ? styles.patternDot : styles.patternRing,
               {
-                left: (i * 50 + 20) % width,
-                top: Math.floor(i / 5) * 150 + 100,
+                left: (i * 60 + 30) % width,
+                top: Math.floor(i / 6) * 160 + 80,
+                opacity: 0.4 + (i % 3) * 0.2,
               },
             ]}
           />
         ))}
-        <View style={[styles.patternLine, { width: 100, top: 150, left: 50, transform: [{ rotate: '45deg' }] }]} />
-        <View style={[styles.patternLine, { width: 80, top: 400, right: 60, transform: [{ rotate: '-30deg' }] }]} />
+        <View style={[styles.patternLine, { width: 120, top: 180, left: 40, transform: [{ rotate: '45deg' }] }]} />
+        <View style={[styles.patternLine, { width: 100, top: 450, right: 50, transform: [{ rotate: '-35deg' }] }]} />
+        <View style={[styles.patternLine, { width: 90, top: 300, left: width * 0.3, transform: [{ rotate: '15deg' }] }]} />
       </View>
       <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <View style={styles.logoContainer}>
@@ -173,18 +175,26 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.04,
+    opacity: 0.08,
   },
   patternDot: {
     position: 'absolute' as const,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#FF8C00',
+  },
+  patternRing: {
+    position: 'absolute' as const,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#FFD700',
   },
   patternLine: {
     position: 'absolute' as const,
-    height: 2,
+    height: 3,
     backgroundColor: '#FF8C00',
   },
   header: {

@@ -1,37 +1,50 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { Copy, Share2, ExternalLink, ArrowLeft } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
-import QRCode from 'qrcode';
+import Svg, { Rect } from 'react-native-svg';
 
 export default function ReceiveScreen() {
   const router = useRouter();
   const { address, esploraService } = useWallet();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
+
+  const generateQRMatrix = (text: string): number[][] => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const QRCode = require('qrcode');
+      const qr = QRCode.create(text, { errorCorrectionLevel: 'H' });
+      const modules = qr.modules;
+      const size = modules.size;
+      const matrix: number[][] = [];
+      
+      for (let row = 0; row < size; row++) {
+        matrix[row] = [];
+        for (let col = 0; col < size; col++) {
+          matrix[row][col] = modules.get(row, col) ? 1 : 0;
+        }
+      }
+      return matrix;
+    } catch (error) {
+      console.error('Erreur génération QR:', error);
+      return [];
+    }
+  };
 
   useEffect(() => {
     if (address) {
-      QRCode.toDataURL(address, {
-        errorCorrectionLevel: 'H',
-        margin: 1,
-        width: 300,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      })
-      .then(url => {
-        console.log('QR Code généré pour:', address);
-        setQrCodeDataUrl(url);
-      })
-      .catch(err => {
+      try {
+        const matrix = generateQRMatrix(address);
+        console.log('QR Code généré pour:', address, 'taille:', matrix.length);
+        setQrMatrix(matrix);
+      } catch (err) {
         console.error('Erreur génération QR:', err);
-      });
+      }
     }
   }, [address]);
 
@@ -81,12 +94,26 @@ export default function ReceiveScreen() {
 
       <View style={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}>
         <View style={styles.qrContainer}>
-          {qrCodeDataUrl ? (
-            <Image 
-              source={{ uri: qrCodeDataUrl }}
-              style={styles.qrCode}
-              resizeMode="contain"
-            />
+          {qrMatrix.length > 0 ? (
+            <View style={styles.qrCode}>
+              <Svg width={300} height={300} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                <Rect width={qrMatrix.length} height={qrMatrix.length} fill="#FFFFFF" />
+                {qrMatrix.map((row, y) => 
+                  row.map((cell, x) => 
+                    cell === 1 ? (
+                      <Rect
+                        key={`${y}-${x}`}
+                        x={x}
+                        y={y}
+                        width={1}
+                        height={1}
+                        fill="#000000"
+                      />
+                    ) : null
+                  )
+                )}
+              </Svg>
+            </View>
           ) : (
             <View style={styles.qrPlaceholder}>
               <Text style={styles.qrPlaceholderText}>Génération du QR...</Text>
@@ -144,12 +171,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.03,
+    opacity: 0.05,
   },
   patternCircle: {
     position: 'absolute' as const,
     borderRadius: 1000,
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#FF8C00',
   },
   header: {
@@ -191,6 +218,8 @@ const styles = StyleSheet.create({
   qrCode: {
     width: 300,
     height: 300,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   qrPlaceholder: {
     width: 300,

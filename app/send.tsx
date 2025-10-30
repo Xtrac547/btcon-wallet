@@ -153,6 +153,23 @@ export default function SendScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.backgroundPattern}>
+        {[...Array(20)].map((_, i) => (
+          <View
+            key={`pattern-${i}`}
+            style={[
+              i % 3 === 0 ? styles.patternCircle : styles.patternSquare,
+              {
+                width: 40 + (i % 3) * 30,
+                height: 40 + (i % 3) * 30,
+                left: (i * 70) % width,
+                top: Math.floor(i / 4) * 180 + 50,
+                transform: [{ rotate: `${i * 15}deg` }],
+              },
+            ]}
+          />
+        ))}
+      </View>
       <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft color="#FFF" size={24} />
@@ -337,6 +354,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',
+    position: 'relative' as const,
+  },
+  backgroundPattern: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.06,
+  },
+  patternCircle: {
+    position: 'absolute' as const,
+    borderRadius: 1000,
+    borderWidth: 3,
+    borderColor: '#FF8C00',
+  },
+  patternSquare: {
+    position: 'absolute' as const,
+    borderWidth: 3,
+    borderColor: '#FFD700',
+    borderRadius: 8,
   },
   header: {
     flexDirection: 'row',
