@@ -326,10 +326,6 @@ export default function ReceiveScreen() {
                 </View>
               )}
             </View>
-
-            <View style={[styles.modalArtInfo, { borderColor: currentArt.accent }]}>
-              <Text style={[styles.modalArtName, { color: currentArt.accent }]}>🎨 {currentArt.name}</Text>
-            </View>
           </View>
         </View>
       </Modal>
