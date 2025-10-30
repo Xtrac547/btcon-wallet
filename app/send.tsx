@@ -207,14 +207,14 @@ export default function SendScreen() {
                         token.value === 1000 && styles.token1000,
                         token.value === 5000 && styles.token5000,
                         tokenCounts[token.value] > 0 && styles.tokenSelected,
-                        token.value === 5000 && styles.tokenRotated,
+
                       ]}
                       onPress={() => handleTokenPress(token.value)}
                       onLongPress={() => handleTokenLongPress(token.value)}
                       testID={`token-${token.value}`}
                     >
-                      <Text style={[styles.tokenValue, token.value === 5000 && styles.token5000Text]}>{token.value}</Text>
-                      <Text style={[styles.tokenUnit, token.value === 5000 && styles.token5000Text]}>Btcon</Text>
+                      <Text style={styles.tokenValue}>{token.value}</Text>
+                      <Text style={styles.tokenUnit}>Btcon</Text>
                       {tokenCounts[token.value] > 0 && (
                         <View style={styles.countBadge}>
                           <Text style={styles.countText}>×{tokenCounts[token.value]}</Text>
@@ -439,12 +439,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tokenWrapper: {
-    width: 200,
+    width: 150,
     alignItems: 'center',
     gap: 8,
   },
   tokenWrapper50k: {
-    width: 250,
+    width: 320,
     alignItems: 'center',
     gap: 8,
   },
@@ -468,14 +468,8 @@ const styles = StyleSheet.create({
     borderColor: '#6BA4E8',
   },
   token5000: {
-    backgroundColor: '#F5E6D3',
-    borderColor: '#E8D4BC',
-  },
-  token5000Text: {
-    color: '#FFD700',
-  },
-  tokenRotated: {
-    transform: [{ rotate: '180deg' }],
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
   },
   tokenSquare: {
     flex: 1,
