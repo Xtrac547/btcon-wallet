@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { Key, RefreshCw, Eye, EyeOff, Copy, Check } from 'lucide-react-native';
+import { Key, RefreshCw, Copy, Check } from 'lucide-react-native';
 import * as ScreenCapture from 'expo-screen-capture';
 import * as Clipboard from 'expo-clipboard';
 
@@ -15,7 +15,7 @@ export default function OnboardingScreen() {
   const [restorePhrase, setRestorePhrase] = useState<string>('');
   const [isCreating, setIsCreating] = useState(false);
   const [seedWords, setSeedWords] = useState<string[]>([]);
-  const [wordsRevealed, setWordsRevealed] = useState<boolean>(false);
+
   const [seedConfirmed, setSeedConfirmed] = useState<boolean>(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
@@ -26,6 +26,12 @@ export default function OnboardingScreen() {
       const words = mnemonic.split(' ');
       setSeedWords(words);
       setMode('show-seed');
+      
+      if (Platform.OS !== 'web') {
+        await ScreenCapture.preventScreenCaptureAsync().catch((error) => {
+          console.warn('Failed to prevent screen capture:', error);
+        });
+      }
     } catch (error) {
       console.error('Error creating wallet:', error);
       Alert.alert('Erreur', 'Échec de la création du portefeuille. Veuillez réessayer.');
@@ -91,22 +97,14 @@ export default function OnboardingScreen() {
 
 
   useEffect(() => {
-    if (mode === 'show-seed') {
+    return () => {
       if (Platform.OS !== 'web') {
-        ScreenCapture.preventScreenCaptureAsync().catch((error) => {
-          console.warn('Failed to prevent screen capture:', error);
+        ScreenCapture.allowScreenCaptureAsync().catch((error) => {
+          console.warn('Failed to allow screen capture:', error);
         });
       }
-      
-      return () => {
-        if (Platform.OS !== 'web') {
-          ScreenCapture.allowScreenCaptureAsync().catch((error) => {
-            console.warn('Failed to allow screen capture:', error);
-          });
-        }
-      };
-    }
-  }, [mode]);
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -180,56 +178,32 @@ export default function OnboardingScreen() {
           )}
 
           <View style={styles.seedContainer}>
-            {!wordsRevealed ? (
-              <TouchableOpacity
-                style={styles.revealButton}
-                onPress={() => setWordsRevealed(true)}
-                activeOpacity={0.8}
-              >
-                <Eye color="#FF8C00" size={32} />
-                <Text style={styles.revealText}>Appuyez pour révéler</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.wordsGrid}>
-                {seedWords.map((word, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.wordItem}
-                    onPress={() => copyWord(word, index)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.wordNumber}>{index + 1}</Text>
-                    <Text style={styles.wordText}>{word}</Text>
-                    {copiedIndex === index ? (
-                      <Check color="#4CAF50" size={16} />
-                    ) : (
-                      <Copy color="#666" size={14} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+            <View style={styles.wordsGrid}>
+              {seedWords.map((word, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.wordItem}
+                  onPress={() => copyWord(word, index)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.wordNumber}>{index + 1}</Text>
+                  <Text style={styles.wordText}>{word}</Text>
+                  {copiedIndex === index ? (
+                    <Check color="#4CAF50" size={16} />
+                  ) : (
+                    <Copy color="#666" size={14} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
-          {wordsRevealed && (
-            <>
-              <TouchableOpacity
-                style={styles.hideButton}
-                onPress={() => setWordsRevealed(false)}
-                activeOpacity={0.7}
-              >
-                <EyeOff color="#999" size={20} />
-                <Text style={styles.hideText}>Masquer</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={handleConfirmSeed}
-              >
-                <Text style={styles.primaryButtonText}>J'ai noté mes 12 mots</Text>
-              </TouchableOpacity>
-            </>
-          )}
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={handleConfirmSeed}
+          >
+            <Text style={styles.primaryButtonText}>J'ai noté mes 12 mots</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     );
@@ -378,16 +352,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  revealButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  revealText: {
-    color: '#FF8C00',
-    fontSize: 18,
-    fontWeight: '700' as const,
-  },
+
   wordsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -417,19 +382,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     flex: 1,
   },
-  hideButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-    marginBottom: 16,
-  },
-  hideText: {
-    color: '#999',
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
+
   warningBox: {
     backgroundColor: '#4A3000',
     borderRadius: 12,
