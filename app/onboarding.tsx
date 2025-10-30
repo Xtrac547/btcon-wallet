@@ -1,26 +1,23 @@
 import '@/utils/shim';
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowRight, Key, RefreshCw } from 'lucide-react-native';
+import { Key, RefreshCw } from 'lucide-react-native';
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { createWallet, restoreWallet, isLoading } = useWallet();
-  const { width } = useWindowDimensions();
-  const isWideScreen = width > 768;
-  const [mode, setMode] = useState<'choose' | 'create' | 'restore'>('choose');
-  const [mnemonic, setMnemonic] = useState<string>('');
+
+  const [mode, setMode] = useState<'choose' | 'restore'>('choose');
   const [restorePhrase, setRestorePhrase] = useState<string>('');
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreateWallet = async () => {
     setIsCreating(true);
     try {
-      const phrase = await createWallet();
-      setMnemonic(phrase);
-      setMode('create');
+      await createWallet();
+      router.replace('/wallet');
     } catch (error) {
       console.error('Error creating wallet:', error);
       Alert.alert('Erreur', 'Échec de la création du portefeuille. Veuillez réessayer.');
@@ -53,9 +50,7 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleContinue = () => {
-    router.replace('/wallet');
-  };
+
 
   if (isLoading) {
     return (
@@ -113,39 +108,6 @@ export default function OnboardingScreen() {
     );
   }
 
-  if (mode === 'create') {
-    const words = mnemonic.split(' ');
-
-    return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Phrase de Récupération</Text>
-          <Text style={styles.warningText}>
-            Notez ces 12 mots dans l'ordre et conservez-les en lieu sûr. Vous en aurez besoin pour récupérer votre portefeuille.
-          </Text>
-
-          <View style={styles.seedContainer}>
-            {words.map((word, index) => (
-              <View key={index} style={styles.seedWord}>
-                <Text style={styles.seedNumber}>{index + 1}.</Text>
-                <Text style={styles.seedText}>{word}</Text>
-              </View>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={handleContinue}
-            testID="continue-button"
-          >
-            <Text style={styles.primaryButtonText}>J'ai Sauvegardé ma Phrase</Text>
-            <ArrowRight color="#000" size={20} />
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    );
-  }
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={styles.content}>
@@ -173,10 +135,7 @@ export default function OnboardingScreen() {
           {isCreating ? (
             <ActivityIndicator color="#000" />
           ) : (
-            <>
-              <Text style={styles.primaryButtonText}>Restaurer le Portefeuille</Text>
-              <ArrowRight color="#000" size={20} />
-            </>
+            <Text style={styles.primaryButtonText}>Restaurer le Portefeuille</Text>
           )}
         </TouchableOpacity>
 
@@ -263,44 +222,6 @@ const styles = StyleSheet.create({
     color: '#FF8C00',
     fontSize: 18,
     fontWeight: '800' as const,
-  },
-  warningText: {
-    color: '#FF8C00',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  seedContainer: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 32,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  seedWord: {
-    width: '47%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  seedNumber: {
-    color: '#666',
-    fontSize: 14,
-    fontWeight: '600' as const,
-    width: 24,
-  },
-  seedText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600' as const,
   },
   textArea: {
     backgroundColor: '#1a1a1a',
