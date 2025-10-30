@@ -1,6 +1,6 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
@@ -155,9 +155,12 @@ export default function OnboardingScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.content}>
-          <Text style={styles.logo}>₿</Text>
-          <Text style={styles.title}>Portefeuille Btcon</Text>
-          <Text style={styles.subtitle}>Votre compagnon Bitcoin</Text>
+          <Image
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/4t8mks6crk2tstcwiy4hp' }}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>Portefeuille</Text>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -173,10 +176,7 @@ export default function OnboardingScreen() {
               {isCreating ? (
                 <ActivityIndicator color="#000" />
               ) : (
-                <>
-                  <Key color="#000" size={20} />
-                  <Text style={styles.primaryButtonText}>Créer un Portefeuille</Text>
-                </>
+                <Text style={styles.primaryButtonText}>Nouveau</Text>
               )}
             </TouchableOpacity>
 
@@ -190,8 +190,7 @@ export default function OnboardingScreen() {
               activeOpacity={0.7}
               testID="restore-wallet-button"
             >
-              <RefreshCw color="#FF8C00" size={20} />
-                  <Text style={styles.secondaryButtonText}>Restaurer un Portefeuille</Text>
+              <Text style={styles.secondaryButtonText}>Ancien</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -348,18 +347,19 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
-  logo: {
-    fontSize: 88,
-    textAlign: 'center',
-    marginBottom: 24,
+  logoImage: {
+    width: 160,
+    height: 160,
+    alignSelf: 'center',
+    marginBottom: 48,
   },
   title: {
-    fontSize: 40,
-    fontWeight: '800' as const,
+    fontSize: 32,
+    fontWeight: '700' as const,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: -1,
+    marginBottom: 80,
+    letterSpacing: 1,
   },
   subtitle: {
     fontSize: 16,
@@ -368,42 +368,44 @@ const styles = StyleSheet.create({
     marginBottom: 48,
   },
   buttonContainer: {
-    gap: 16,
+    gap: 20,
   },
   primaryButton: {
-    backgroundColor: '#FF8C00',
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: '#C17C3A',
+    borderRadius: 24,
+    paddingVertical: 24,
+    paddingHorizontal: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowColor: '#C17C3A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
   },
   primaryButtonText: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: '800' as const,
+    color: '#FFF',
+    fontSize: 22,
+    fontWeight: '700' as const,
+    letterSpacing: 1,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#1a1a1a',
     borderWidth: 2,
-    borderColor: '#FF8C00',
-    borderRadius: 20,
-    padding: 20,
+    borderColor: '#C17C3A',
+    borderRadius: 24,
+    paddingVertical: 24,
+    paddingHorizontal: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
   },
   secondaryButtonText: {
-    color: '#FF8C00',
-    fontSize: 18,
-    fontWeight: '800' as const,
+    color: '#C17C3A',
+    fontSize: 22,
+    fontWeight: '700' as const,
+    letterSpacing: 1,
   },
   textArea: {
     backgroundColor: '#1a1a1a',
