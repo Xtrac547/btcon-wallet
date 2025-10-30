@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { Copy, Share2, ExternalLink, ArrowLeft } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
-import Svg, { Rect, Defs, LinearGradient, Stop, Circle, Path } from 'react-native-svg';
+import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -198,14 +198,14 @@ export default function ReceiveScreen() {
               style={styles.artworkBackground}
               imageStyle={styles.artworkImage}
             >
-              <View style={[styles.qrOverlay, { backgroundColor: `${currentArt.bg}CC` }]}>
+              <View style={styles.qrOverlay}>
                 {qrMatrix.length > 0 ? (
                   <View style={styles.qrCode}>
-                    <Svg width={260} height={260} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                    <Svg width={160} height={160} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
                       <Defs>
                         <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
-                          <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="0.85" />
-                          <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="0.85" />
+                          <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="0.2" />
+                          <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="0.2" />
                         </LinearGradient>
                       </Defs>
                       {qrMatrix.map((row, y) => 
@@ -224,8 +224,8 @@ export default function ReceiveScreen() {
                                 width={1}
                                 height={1}
                                 fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
-                                rx={0.15}
-                                opacity="0.85"
+                                rx={0.2}
+                                opacity={isCorner ? "0.35" : "0.2"}
                               />
                             );
                           }
@@ -235,15 +235,9 @@ export default function ReceiveScreen() {
                       <Circle 
                         cx={qrMatrix.length / 2} 
                         cy={qrMatrix.length / 2} 
-                        r="6" 
+                        r="3.5" 
                         fill={currentArt.accent} 
-                        opacity="0.9"
-                      />
-                      <Path
-                        d={`M ${qrMatrix.length / 2 - 3} ${qrMatrix.length / 2} L ${qrMatrix.length / 2 + 3} ${qrMatrix.length / 2} M ${qrMatrix.length / 2} ${qrMatrix.length / 2 - 3} L ${qrMatrix.length / 2} ${qrMatrix.length / 2 + 3}`}
-                        stroke={currentArt.bg}
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
+                        opacity="0.3"
                       />
                     </Svg>
                   </View>
@@ -382,7 +376,7 @@ const styles = StyleSheet.create({
     height: 320,
   },
   artworkImage: {
-    opacity: 0.65,
+    opacity: 0.95,
     borderRadius: 34,
   },
   qrOverlay: {
@@ -390,16 +384,17 @@ const styles = StyleSheet.create({
     padding: 30,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   qrCode: {
-    width: 260,
-    height: 260,
+    width: 160,
+    height: 160,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrPlaceholder: {
-    width: 260,
-    height: 260,
+    width: 160,
+    height: 160,
     justifyContent: 'center',
     alignItems: 'center',
   },
