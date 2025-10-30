@@ -2,12 +2,12 @@ import '@/utils/shim';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw, TrendingUp, TrendingDown, Clock } from 'lucide-react-native';
 import { useState, useEffect, useRef } from 'react';
 
 export default function WalletScreen() {
   const router = useRouter();
-  const { balance, address, refreshBalance } = useWallet();
+  const { balance, address, refreshBalance, transactions } = useWallet();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -28,6 +28,46 @@ export default function WalletScreen() {
   const formatAddress = (addr: string | null): string => {
     if (!addr) return '';
     return `${addr.slice(0, 8)}...${addr.slice(-8)}`;
+  };
+
+  const formatDate = (timestamp: number): string => {
+    const date = new Date(timestamp * 1000);
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diff < 60) return 'À l\'instant';
+    if (diff < 3600) return `Il y a ${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)}h`;
+    if (diff < 604800) return `Il y a ${Math.floor(diff / 86400)}j`;
+    
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  };
+
+  const getTransactionType = (tx: any): 'sent' | 'received' | 'pending' => {
+    if (!tx.status.confirmed) return 'pending';
+    
+    const isSent = tx.vin.some((vin: any) => vin.prevout?.scriptpubkey_address === address);
+    const isReceived = tx.vout.some((vout: any) => vout.scriptpubkey_address === address);
+    
+    if (isSent) return 'sent';
+    if (isReceived) return 'received';
+    return 'received';
+  };
+
+  const getTransactionAmount = (tx: any): number => {
+    const type = getTransactionType(tx);
+    
+    if (type === 'sent') {
+      const sentAmount = tx.vout
+        .filter((vout: any) => vout.scriptpubkey_address !== address)
+        .reduce((sum: number, vout: any) => sum + vout.value, 0);
+      return -sentAmount;
+    }
+    
+    const receivedAmount = tx.vout
+      .filter((vout: any) => vout.scriptpubkey_address === address)
+      .reduce((sum: number, vout: any) => sum + vout.value, 0);
+    return receivedAmount;
   };
 
   useEffect(() => {
@@ -152,10 +192,59 @@ export default function WalletScreen() {
           </TouchableOpacity>
         </View>
 
+        {transactions.length > 0 && (
+          <View style={styles.historyContainer}>
+            <Text style={styles.historyTitle}>Historique</Text>
+            {transactions.slice(0, 20).map((tx) => {
+              const type = getTransactionType(tx);
+              const amount = getTransactionAmount(tx);
+              const isPositive = amount > 0;
+              
+              return (
+                <View key={tx.txid} style={styles.transactionItem}>
+                  <View style={[
+                    styles.transactionIcon,
+                    type === 'sent' && styles.transactionIconSent,
+                    type === 'received' && styles.transactionIconReceived,
+                    type === 'pending' && styles.transactionIconPending,
+                  ]}>
+                    {type === 'sent' && <TrendingDown color="#FF4444" size={20} />}
+                    {type === 'received' && <TrendingUp color="#00CC66" size={20} />}
+                    {type === 'pending' && <Clock color="#FF8C00" size={20} />}
+                  </View>
+                  
+                  <View style={styles.transactionDetails}>
+                    <Text style={styles.transactionType}>
+                      {type === 'sent' ? 'Envoyé' : type === 'received' ? 'Reçu' : 'En cours'}
+                    </Text>
+                    <Text style={styles.transactionDate}>
+                      {tx.status.block_time ? formatDate(tx.status.block_time) : 'Non confirmé'}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.transactionAmountContainer}>
+                    <Text style={[
+                      styles.transactionAmount,
+                      type === 'sent' && styles.transactionAmountSent,
+                      type === 'received' && styles.transactionAmountReceived,
+                      type === 'pending' && styles.transactionAmountPending,
+                    ]}>
+                      {isPositive ? '+' : ''}{Math.abs(amount).toLocaleString()} Btcon
+                    </Text>
+                    <Text style={styles.transactionAmountBtc}>
+                      {(Math.abs(amount) / 100000000).toFixed(8)} BTC
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
             <RefreshCw color="#666" size={20} />
-            <Text style={styles.infoText}>Tirez pour actualiser le solde</Text>
+            <Text style={styles.infoText}>Tirez pour actualiser</Text>
           </View>
         </View>
       </ScrollView>
@@ -335,5 +424,74 @@ const styles = StyleSheet.create({
   },
   headerWide: {
     paddingHorizontal: 40,
+  },
+  historyContainer: {
+    marginBottom: 24,
+  },
+  historyTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700' as const,
+    marginBottom: 16,
+    paddingLeft: 4,
+  },
+  transactionItem: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  transactionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  transactionIconSent: {
+    backgroundColor: 'rgba(255, 68, 68, 0.15)',
+  },
+  transactionIconReceived: {
+    backgroundColor: 'rgba(0, 204, 102, 0.15)',
+  },
+  transactionIconPending: {
+    backgroundColor: 'rgba(255, 140, 0, 0.15)',
+  },
+  transactionDetails: {
+    flex: 1,
+  },
+  transactionType: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600' as const,
+    marginBottom: 4,
+  },
+  transactionDate: {
+    color: '#666',
+    fontSize: 13,
+  },
+  transactionAmountContainer: {
+    alignItems: 'flex-end',
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    marginBottom: 2,
+  },
+  transactionAmountSent: {
+    color: '#FF4444',
+  },
+  transactionAmountReceived: {
+    color: '#00CC66',
+  },
+  transactionAmountPending: {
+    color: '#FF8C00',
+  },
+  transactionAmountBtc: {
+    color: '#666',
+    fontSize: 12,
   },
 });

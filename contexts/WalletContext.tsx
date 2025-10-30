@@ -26,6 +26,7 @@ interface WalletState {
   isTestnet: boolean;
   isLoading: boolean;
   hasWallet: boolean;
+  transactions: any[];
 }
 
 export const [WalletProvider, useWallet] = createContextHook(() => {
@@ -37,6 +38,7 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
     isTestnet: false,
     isLoading: true,
     hasWallet: false,
+    transactions: [],
   });
 
   const [esploraService] = useState(() => new EsploraService(false));
@@ -162,15 +164,19 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
     console.log('Refreshing balance for:', state.address);
     try {
       const utxos = await esploraService.getAddressUTXOs(state.address);
-      const balance = utxos.reduce((sum, utxo) => sum + utxo.value, 0);
+      const confirmedUtxos = utxos.filter(utxo => utxo.status.confirmed);
+      const balance = confirmedUtxos.reduce((sum, utxo) => sum + utxo.value, 0);
+
+      const transactions = await esploraService.getAddressTransactions(state.address);
 
       setState(prev => ({
         ...prev,
         balance,
         utxos,
+        transactions,
       }));
 
-      console.log('Balance updated:', { balance, utxoCount: utxos.length });
+      console.log('Balance updated:', { balance, utxoCount: utxos.length, txCount: transactions.length });
     } catch (error) {
       console.error('Error refreshing balance:', error);
     }
@@ -313,9 +319,11 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
             try {
               console.log('Fetching UTXOs for address:', address);
               const utxos = await esploraService.getAddressUTXOs(address);
-              const balance = utxos.reduce((sum, utxo) => sum + utxo.value, 0);
+              const confirmedUtxos = utxos.filter(utxo => utxo.status.confirmed);
+              const balance = confirmedUtxos.reduce((sum, utxo) => sum + utxo.value, 0);
+              const transactions = await esploraService.getAddressTransactions(address);
               console.log('Balance fetched:', { balance, utxoCount: utxos.length });
-              setState(prev => ({ ...prev, balance, utxos }));
+              setState(prev => ({ ...prev, balance, utxos, transactions }));
             } catch (balanceError) {
               console.error('Error fetching balance:', balanceError);
             }
