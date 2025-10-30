@@ -439,12 +439,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tokenWrapper: {
-    width: 160,
+    width: 200,
     alignItems: 'center',
     gap: 8,
   },
   tokenWrapper50k: {
-    width: 200,
+    width: 250,
     alignItems: 'center',
     gap: 8,
   },
