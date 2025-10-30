@@ -1,9 +1,10 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ImageBackground, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ScrollView, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { Copy, Share2, ExternalLink, ArrowLeft, X } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 
@@ -209,13 +210,15 @@ export default function ReceiveScreen() {
               width: qrArtSize,
               height: qrArtSize,
             }]}>
-              <ImageBackground
-                source={{ uri: currentArt.imageUrl }}
-                style={[styles.artworkBackground, { width: qrArtSize, height: qrArtSize }]}
-                imageStyle={styles.artworkImage}
-              >
+              <View style={[styles.artworkBackground, { width: qrArtSize, height: qrArtSize }]}>
+                <Image
+                  source={{ uri: currentArt.imageUrl }}
+                  style={styles.artworkImage}
+                  contentFit="cover"
+                  transition={300}
+                />
                 <View style={styles.artOverlay} />
-              </ImageBackground>
+              </View>
             </View>
             
             <View style={[styles.artInfoContainer, { borderColor: currentArt.accent }]}>
@@ -421,9 +424,13 @@ const styles = StyleSheet.create({
   artworkBackground: {
     width: '100%',
     height: '100%',
+    position: 'relative' as const,
   },
   artworkImage: {
+    width: '100%',
+    height: '100%',
     borderRadius: 34,
+    position: 'absolute' as const,
   },
   artOverlay: {
     flex: 1,
