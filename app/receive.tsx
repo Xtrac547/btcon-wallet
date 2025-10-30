@@ -22,7 +22,7 @@ export default function ReceiveScreen() {
       fg: ['#d4a373', '#f4e4c1'],
       accent: '#d4a373',
       borderGlow: 'rgba(212, 163, 115, 0.6)',
-      imageUrl: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=600&q=80',
+      imageUrl: 'https://picsum.photos/seed/artwork1/600/600',
     },
     {
       id: 2,
@@ -31,7 +31,7 @@ export default function ReceiveScreen() {
       fg: ['#4a90e2', '#ffd93d'],
       accent: '#4a90e2',
       borderGlow: 'rgba(74, 144, 226, 0.6)',
-      imageUrl: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=600&q=80',
+      imageUrl: 'https://picsum.photos/seed/artwork2/600/600',
     },
     {
       id: 3,
@@ -40,7 +40,7 @@ export default function ReceiveScreen() {
       fg: ['#e8c4a0', '#d4af7a'],
       accent: '#e8c4a0',
       borderGlow: 'rgba(232, 196, 160, 0.6)',
-      imageUrl: 'https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?w=600&q=80',
+      imageUrl: 'https://picsum.photos/seed/artwork3/600/600',
     },
     {
       id: 4,
@@ -49,7 +49,7 @@ export default function ReceiveScreen() {
       fg: ['#4a9fd8', '#e8d5a0'],
       accent: '#4a9fd8',
       borderGlow: 'rgba(74, 159, 216, 0.6)',
-      imageUrl: 'https://images.unsplash.com/photo-1578301978018-3005759f48f7?w=600&q=80',
+      imageUrl: 'https://picsum.photos/seed/artwork4/600/600',
     },
     {
       id: 5,
@@ -58,7 +58,7 @@ export default function ReceiveScreen() {
       fg: ['#ff6b35', '#ffb347'],
       accent: '#ff6b35',
       borderGlow: 'rgba(255, 107, 53, 0.6)',
-      imageUrl: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=600&q=80',
+      imageUrl: 'https://picsum.photos/seed/artwork5/600/600',
     },
     {
       id: 6,
@@ -67,7 +67,7 @@ export default function ReceiveScreen() {
       fg: ['#ffd700', '#ff8c42'],
       accent: '#ffd700',
       borderGlow: 'rgba(255, 215, 0, 0.6)',
-      imageUrl: 'https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=600&q=80',
+      imageUrl: 'https://picsum.photos/seed/artwork6/600/600',
     },
     {
       id: 7,
@@ -76,7 +76,7 @@ export default function ReceiveScreen() {
       fg: ['#e0e0e0', '#a0a0a0'],
       accent: '#e0e0e0',
       borderGlow: 'rgba(224, 224, 224, 0.6)',
-      imageUrl: 'https://images.unsplash.com/photo-1549887534-1541e9326642?w=600&q=80',
+      imageUrl: 'https://picsum.photos/seed/artwork7/600/600',
     },
   ];
 
