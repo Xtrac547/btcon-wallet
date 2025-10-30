@@ -199,25 +199,29 @@ export default function SendScreen() {
             </View>
             <View style={styles.tokensContainer}>
               {tokenAmounts.map((token, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    token.shape === 'circle' ? styles.tokenCircle : styles.tokenSquare,
-                    tokenCounts[token.value] > 0 && styles.tokenSelected,
-                    token.value === 5000 && styles.tokenRotated,
-                  ]}
-                  onPress={() => handleTokenPress(token.value)}
-                  onLongPress={() => handleTokenLongPress(token.value)}
-                  testID={`token-${token.value}`}
-                >
-                  <Text style={styles.tokenValue}>{token.value}</Text>
-                  <Text style={styles.tokenUnit}>Btcon</Text>
-                  {tokenCounts[token.value] > 0 && (
-                    <View style={styles.countBadge}>
-                      <Text style={styles.countText}>×{tokenCounts[token.value]}</Text>
-                    </View>
+                <View key={index} style={styles.tokenWrapper}>
+                  <TouchableOpacity
+                    style={[
+                      token.shape === 'circle' ? styles.tokenCircle : styles.tokenSquare,
+                      tokenCounts[token.value] > 0 && styles.tokenSelected,
+                      token.value === 5000 && styles.tokenRotated,
+                    ]}
+                    onPress={() => handleTokenPress(token.value)}
+                    onLongPress={() => handleTokenLongPress(token.value)}
+                    testID={`token-${token.value}`}
+                  >
+                    <Text style={styles.tokenValue}>{token.value}</Text>
+                    <Text style={styles.tokenUnit}>Btcon</Text>
+                    {tokenCounts[token.value] > 0 && (
+                      <View style={styles.countBadge}>
+                        <Text style={styles.countText}>×{tokenCounts[token.value]}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  {token.value === 50000 && (
+                    <Text style={styles.tokenLabel}>50 000</Text>
                   )}
-                </TouchableOpacity>
+                </View>
               ))}
             </View>
             {getTotalAmount() > 0 && (
@@ -401,6 +405,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 16,
     marginTop: 8,
+  },
+  tokenWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
+  },
+  tokenLabel: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
   tokenCircle: {
     flex: 1,
