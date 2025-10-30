@@ -17,8 +17,8 @@ export default function ReceiveScreen() {
   const artworks = [
     {
       id: 1,
-      name: 'Mona Lisa',
-      bg: '#1a0f07',
+      name: 'La Joconde',
+      bg: '#3d2f1f',
       fg: ['#d4a373', '#f4e4c1'],
       accent: '#d4a373',
       borderGlow: 'rgba(212, 163, 115, 0.6)',
@@ -27,7 +27,7 @@ export default function ReceiveScreen() {
     {
       id: 2,
       name: 'La Nuit étoilée',
-      bg: '#0a1628',
+      bg: '#1a2d4a',
       fg: ['#4a90e2', '#ffd93d'],
       accent: '#4a90e2',
       borderGlow: 'rgba(74, 144, 226, 0.6)',
@@ -36,7 +36,7 @@ export default function ReceiveScreen() {
     {
       id: 3,
       name: 'La Création d\'Adam',
-      bg: '#2a1f15',
+      bg: '#4a392a',
       fg: ['#e8c4a0', '#d4af7a'],
       accent: '#e8c4a0',
       borderGlow: 'rgba(232, 196, 160, 0.6)',
@@ -45,7 +45,7 @@ export default function ReceiveScreen() {
     {
       id: 4,
       name: 'La Jeune Fille à la perle',
-      bg: '#0f1419',
+      bg: '#1f2a32',
       fg: ['#4a9fd8', '#e8d5a0'],
       accent: '#4a9fd8',
       borderGlow: 'rgba(74, 159, 216, 0.6)',
@@ -54,7 +54,7 @@ export default function ReceiveScreen() {
     {
       id: 5,
       name: 'Le Cri',
-      bg: '#2a0f0a',
+      bg: '#4a2720',
       fg: ['#ff6b35', '#ffb347'],
       accent: '#ff6b35',
       borderGlow: 'rgba(255, 107, 53, 0.6)',
@@ -63,7 +63,7 @@ export default function ReceiveScreen() {
     {
       id: 6,
       name: 'Le Baiser',
-      bg: '#2a2010',
+      bg: '#3a3020',
       fg: ['#ffd700', '#ff8c42'],
       accent: '#ffd700',
       borderGlow: 'rgba(255, 215, 0, 0.6)',
@@ -72,7 +72,7 @@ export default function ReceiveScreen() {
     {
       id: 7,
       name: 'Guernica',
-      bg: '#1a1a1a',
+      bg: '#2a2a2a',
       fg: ['#e0e0e0', '#a0a0a0'],
       accent: '#e0e0e0',
       borderGlow: 'rgba(224, 224, 224, 0.6)',
@@ -198,14 +198,14 @@ export default function ReceiveScreen() {
               style={styles.artworkBackground}
               imageStyle={styles.artworkImage}
             >
-              <View style={[styles.qrOverlay, { backgroundColor: currentArt.bg }]}>
+              <View style={[styles.qrOverlay, { backgroundColor: `${currentArt.bg}CC` }]}>
                 {qrMatrix.length > 0 ? (
                   <View style={styles.qrCode}>
                     <Svg width={260} height={260} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
                       <Defs>
                         <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
-                          <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="0.95" />
-                          <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="0.95" />
+                          <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="0.85" />
+                          <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="0.85" />
                         </LinearGradient>
                       </Defs>
                       {qrMatrix.map((row, y) => 
@@ -224,7 +224,8 @@ export default function ReceiveScreen() {
                                 width={1}
                                 height={1}
                                 fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
-                                rx={0.2}
+                                rx={0.15}
+                                opacity="0.85"
                               />
                             );
                           }
@@ -236,7 +237,7 @@ export default function ReceiveScreen() {
                         cy={qrMatrix.length / 2} 
                         r="6" 
                         fill={currentArt.accent} 
-                        opacity="0.95"
+                        opacity="0.9"
                       />
                       <Path
                         d={`M ${qrMatrix.length / 2 - 3} ${qrMatrix.length / 2} L ${qrMatrix.length / 2 + 3} ${qrMatrix.length / 2} M ${qrMatrix.length / 2} ${qrMatrix.length / 2 - 3} L ${qrMatrix.length / 2} ${qrMatrix.length / 2 + 3}`}
@@ -381,7 +382,7 @@ const styles = StyleSheet.create({
     height: 320,
   },
   artworkImage: {
-    opacity: 0.35,
+    opacity: 0.65,
     borderRadius: 34,
   },
   qrOverlay: {
@@ -389,7 +390,6 @@ const styles = StyleSheet.create({
     padding: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
   },
   qrCode: {
     width: 260,
