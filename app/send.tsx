@@ -1,9 +1,10 @@
 import '@/utils/shim';
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowLeft, Send } from 'lucide-react-native';
+import { ArrowLeft, Send, QrCode, X } from 'lucide-react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
 export default function SendScreen() {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function SendScreen() {
     50000: 0,
   });
   const [isSending, setIsSending] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const tokenAmounts = [
     { value: 1000, shape: 'circle' as const },
@@ -24,7 +27,7 @@ export default function SendScreen() {
 
   const formatBalance = (sats: number): string => {
     const btcon = (sats / 100000000) * 100000000;
-    return btcon.toFixed(2);
+    return Math.floor(btcon).toString();
   };
 
   const getTotalAmount = (): number => {
@@ -83,7 +86,7 @@ export default function SendScreen() {
 
     Alert.alert(
       'Confirmer',
-      `Envoyer ${btconAmount.toFixed(2)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC) à ${toAddress.slice(0, 10)}...?`,
+      `Envoyer ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC) à ${toAddress.slice(0, 10)}...?`,
       [
         {
           text: 'Annuler',
@@ -122,7 +125,25 @@ export default function SendScreen() {
     );
   };
 
+  const handleOpenScanner = async () => {
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert('Permission refusée', 'Veuillez autoriser l\'accès à la caméra');
+        return;
+      }
+    }
+    setShowScanner(true);
+  };
 
+  const handleBarcodeScanned = (data: string) => {
+    setShowScanner(false);
+    let address = data;
+    if (address.toLowerCase().startsWith('bitcoin:')) {
+      address = address.substring(8).split('?')[0];
+    }
+    setToAddress(address);
+  };
 
   return (
     <View style={styles.container}>
@@ -147,15 +168,24 @@ export default function SendScreen() {
         <View style={styles.formCard}>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Adresse du destinataire</Text>
-            <TextInput
-              style={styles.input}
-              value={toAddress}
-              onChangeText={setToAddress}
-              placeholder="bc1q... or tb1q..."
-              placeholderTextColor="#666"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                value={toAddress}
+                onChangeText={setToAddress}
+                placeholder="bc1q... or tb1q..."
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity
+                style={styles.scanButton}
+                onPress={handleOpenScanner}
+                testID="scan-qr-button"
+              >
+                <QrCode color="#FF8C00" size={24} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
@@ -193,7 +223,7 @@ export default function SendScreen() {
               <View style={styles.totalContainer}>
                 <Text style={styles.totalLabel}>Total:</Text>
                 <View style={styles.totalRow}>
-                  <Text style={styles.totalAmount}>{getTotalAmount().toFixed(2)}</Text>
+                  <Text style={styles.totalAmount}>{Math.floor(getTotalAmount())}</Text>
                   <Text style={styles.totalUnit}>Btcon</Text>
                 </View>
                 <Text style={styles.conversionText}>
@@ -226,6 +256,36 @@ export default function SendScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showScanner}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.scannerHeader}>
+            <Text style={styles.scannerTitle}>Scanner QR Code</Text>
+            <TouchableOpacity
+              onPress={() => setShowScanner(false)}
+              style={styles.closeButton}
+              testID="close-scanner-button"
+            >
+              <X color="#FFF" size={28} />
+            </TouchableOpacity>
+          </View>
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            onBarcodeScanned={(result) => {
+              handleBarcodeScanned(result.data);
+            }}
+          >
+            <View style={styles.scannerOverlay}>
+              <View style={styles.scannerFrame} />
+            </View>
+          </CameraView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -424,12 +484,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700' as const,
   },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
   input: {
+    flex: 1,
     backgroundColor: '#0a0a0a',
     borderRadius: 12,
     padding: 16,
     color: '#FFF',
     fontSize: 16,
+  },
+  scanButton: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   conversionText: {
     color: '#666',
@@ -468,5 +541,43 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 13,
     lineHeight: 18,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  scannerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: '#0a0a0a',
+  },
+  scannerTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700' as const,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  camera: {
+    flex: 1,
+  },
+  scannerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerFrame: {
+    width: 280,
+    height: 280,
+    borderWidth: 3,
+    borderColor: '#FF8C00',
+    borderRadius: 24,
+    backgroundColor: 'transparent',
   },
 });
