@@ -120,10 +120,11 @@ export default function WalletScreen() {
             style={styles.logoHeaderImage1}
             resizeMode="contain"
           />
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={[styles.bitcoinSymbol, { color: '#FFD700' }]}>₿</Text>
-            <Text style={[styles.btconText, { color: '#FF8C00' }]}>TCON</Text>
-          </View>
+          <Image
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ig8yh1pui959enuvw0p3d' }}
+            style={styles.logoHeaderImage2}
+            resizeMode="contain"
+          />
         </View>
         <TouchableOpacity 
           onPress={() => {

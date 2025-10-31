@@ -96,7 +96,7 @@ export default function OnboardingScreen() {
     const cleanUsername = usernameInput.trim().toLowerCase();
     
     if (!cleanUsername) {
-      Alert.alert('Erreur', 'Le pseudo est obligatoire');
+      router.replace('/wallet');
       return;
     }
 
@@ -161,10 +161,11 @@ export default function OnboardingScreen() {
               style={styles.logoImage}
               resizeMode="contain"
             />
-            <View style={styles.logoTextContainer}>
-              <Text style={[styles.bitcoinSymbolLogo, { color: '#FFD700' }]}>₿</Text>
-              <Text style={[styles.btconTextLogo, { color: '#FF8C00' }]}>TCON</Text>
-            </View>
+            <Image
+              source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ig8yh1pui959enuvw0p3d' }}
+              style={styles.btcoinLogoImage}
+              resizeMode="contain"
+            />
           </View>
 
           <View style={styles.buttonContainer}>
@@ -208,7 +209,7 @@ export default function OnboardingScreen() {
       <View style={styles.container}>
         <View style={styles.content}>
           <Text style={styles.title}>Choisir un Pseudo</Text>
-          <Text style={styles.subtitle}>Créez un pseudo unique commençant par @ (obligatoire)</Text>
+          <Text style={styles.subtitle}>Créez un pseudo unique commençant par @ (optionnel)</Text>
 
           <View style={styles.usernameInputContainer}>
             <Text style={styles.atSymbol}>@</Text>
@@ -242,7 +243,13 @@ export default function OnboardingScreen() {
               )}
             </TouchableOpacity>
 
-
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.replace('/wallet')}
+              disabled={isCreating}
+            >
+              <Text style={styles.secondaryButtonText}>Passer</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
