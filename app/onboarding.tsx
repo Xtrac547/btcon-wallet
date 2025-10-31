@@ -156,11 +156,15 @@ export default function OnboardingScreen() {
       <View style={styles.container}>
         <View style={styles.content}>
           <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/4t8mks6crk2tstcwiy4hp' }}
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
+            style={styles.btcoinLogoImage}
+            resizeMode="contain"
+          />
+          <Image
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/fycv5rxyn7iqfp2lwp4zb' }}
             style={styles.logoImage}
             resizeMode="contain"
           />
-          <Text style={styles.title}>Portefeuille</Text>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -174,7 +178,7 @@ export default function OnboardingScreen() {
               testID="create-wallet-button"
             >
               {isCreating ? (
-                <ActivityIndicator color="#000" />
+                <ActivityIndicator color="#FFF" />
               ) : (
                 <Text style={styles.primaryButtonText}>Nouveau</Text>
               )}
@@ -343,10 +347,16 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   logoImage: {
-    width: 160,
-    height: 160,
+    width: 200,
+    height: 200,
     alignSelf: 'center',
-    marginBottom: 48,
+    marginBottom: 60,
+  },
+  btcoinLogoImage: {
+    width: 280,
+    height: 100,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,
@@ -366,14 +376,14 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   primaryButton: {
-    backgroundColor: '#C17C3A',
+    backgroundColor: '#FF8C00',
     borderRadius: 24,
     paddingVertical: 24,
     paddingHorizontal: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#C17C3A',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
@@ -388,7 +398,7 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: '#1a1a1a',
     borderWidth: 2,
-    borderColor: '#C17C3A',
+    borderColor: '#FF8C00',
     borderRadius: 24,
     paddingVertical: 24,
     paddingHorizontal: 32,
@@ -397,7 +407,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryButtonText: {
-    color: '#C17C3A',
+    color: '#FF8C00',
     fontSize: 22,
     fontWeight: '700' as const,
     letterSpacing: 1,

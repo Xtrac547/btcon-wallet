@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated, useWindowDimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
@@ -118,9 +118,17 @@ export default function WalletScreen() {
         <View style={[styles.patternLine, { width: 90, top: 300, left: width * 0.3, transform: [{ rotate: '15deg' }] }]} />
       </View>
       <View style={[styles.header, isWideScreen && styles.headerWide]}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logo}>₿</Text>
-          <Text style={styles.appName}>Btcon</Text>
+        <View style={styles.logoHeaderContainer}>
+          <Image
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/fycv5rxyn7iqfp2lwp4zb' }}
+            style={styles.logoHeaderImage1}
+            resizeMode="contain"
+          />
+          <Image
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
+            style={styles.logoHeaderImage2}
+            resizeMode="contain"
+          />
         </View>
         <TouchableOpacity 
           onPress={() => {
@@ -315,6 +323,19 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700' as const,
     color: '#FFF',
+  },
+  logoHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logoHeaderImage1: {
+    width: 36,
+    height: 36,
+  },
+  logoHeaderImage2: {
+    width: 110,
+    height: 32,
   },
   settingsButton: {
     padding: 8,
