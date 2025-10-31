@@ -98,6 +98,17 @@ export default function WalletScreen() {
     }
   }, [address, setDeveloperStatus]);
 
+  const getCustomImageForAddress = (addr: string | null): string | null => {
+    if (!addr) return null;
+    if (addr === 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd') {
+      return 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&h=400&fit=crop';
+    }
+    if (addr === 'bc1qdff8680vyy0qthr5vpe3ywzw48r8rr4jn4jvac') {
+      return 'https://i.seadn.io/gae/Ju9CkWtV-1Okvf45wo8UctR-M9He2PjILP0oOvxE89AyiPPGtrR3gysu1Zgy0hjd2xKIgjJJtWIc0ybj4Vd7wv8t3pxDGHoJBzDB?w=500';
+    }
+    return null;
+  };
+
   const contentMaxWidth = isWideScreen ? 800 : width;
   const contentPadding = isWideScreen ? 40 : 24;
 
@@ -182,6 +193,13 @@ export default function WalletScreen() {
             transform: [{ scale: scaleAnim }],
           },
         ]}>
+          {getCustomImageForAddress(address) && (
+            <Image
+              source={{ uri: getCustomImageForAddress(address)! }}
+              style={styles.customAddressImage}
+              resizeMode="cover"
+            />
+          )}
           <Text style={styles.balanceLabel}>Solde Total</Text>
           <View style={styles.balanceRow}>
             <Text style={styles.balanceAmount}>{formatBalance(balance)}</Text>
@@ -416,6 +434,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 8,
+  },
+  customAddressImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 3,
+    borderColor: '#FF8C00',
   },
   balanceLabel: {
     color: '#999',
