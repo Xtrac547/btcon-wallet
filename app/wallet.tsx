@@ -325,17 +325,17 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   logoHeaderContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   logoHeaderImage1: {
     width: 36,
     height: 36,
   },
   logoHeaderImage2: {
-    width: 110,
-    height: 32,
+    width: 220,
+    height: 64,
   },
   settingsButton: {
     padding: 8,
