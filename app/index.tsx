@@ -14,13 +14,11 @@ export default function IndexScreen() {
     if (!walletLoading && !usernameLoading) {
       if (!hasWallet) {
         router.replace('/onboarding');
-      } else if (!username) {
-        router.replace('/set-username');
       } else {
         router.replace('/wallet');
       }
     }
-  }, [hasWallet, walletLoading, username, usernameLoading]);
+  }, [hasWallet, walletLoading, usernameLoading]);
 
   return (
     <View style={styles.container}>

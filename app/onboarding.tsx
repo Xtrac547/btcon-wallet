@@ -155,16 +155,21 @@ export default function OnboardingScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.content}>
-          <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
-            style={styles.btcoinLogoImage}
-            resizeMode="contain"
-          />
-          <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/fycv5rxyn7iqfp2lwp4zb' }}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
+          <View style={styles.logoSection}>
+            <Image
+              source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/fycv5rxyn7iqfp2lwp4zb' }}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <View style={styles.btcoinSection}>
+              <Image
+                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
+                style={styles.btcoinLogoImage}
+                resizeMode="contain"
+              />
+              <Text style={styles.btcoinText}>Btcon</Text>
+            </View>
+          </View>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -346,17 +351,28 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
-  logoImage: {
-    width: 200,
-    height: 200,
-    alignSelf: 'center',
+  logoSection: {
+    alignItems: 'center',
     marginBottom: 60,
   },
+  logoImage: {
+    width: 180,
+    height: 180,
+    marginBottom: 30,
+  },
+  btcoinSection: {
+    alignItems: 'center',
+  },
   btcoinLogoImage: {
-    width: 280,
-    height: 100,
-    alignSelf: 'center',
-    marginBottom: 20,
+    width: 300,
+    height: 120,
+    marginBottom: 8,
+  },
+  btcoinText: {
+    color: '#FF8C00',
+    fontSize: 28,
+    fontWeight: '700' as const,
+    letterSpacing: 2,
   },
   title: {
     fontSize: 32,

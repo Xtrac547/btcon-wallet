@@ -16,11 +16,7 @@ export default function WalletScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
-  useEffect(() => {
-    if (!username) {
-      router.replace('/set-username');
-    }
-  }, [username]);
+
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -120,13 +116,13 @@ export default function WalletScreen() {
       <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <View style={styles.logoHeaderContainer}>
           <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/fycv5rxyn7iqfp2lwp4zb' }}
-            style={styles.logoHeaderImage1}
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
+            style={styles.logoHeaderImage2}
             resizeMode="contain"
           />
           <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
-            style={styles.logoHeaderImage2}
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/fycv5rxyn7iqfp2lwp4zb' }}
+            style={styles.logoHeaderImage1}
             resizeMode="contain"
           />
         </View>
@@ -325,17 +321,17 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   logoHeaderContainer: {
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   logoHeaderImage1: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
   },
   logoHeaderImage2: {
-    width: 220,
-    height: 64,
+    width: 180,
+    height: 50,
   },
   settingsButton: {
     padding: 8,
