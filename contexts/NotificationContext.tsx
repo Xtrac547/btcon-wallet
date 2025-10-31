@@ -4,15 +4,19 @@ import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
 
 if (Platform.OS !== 'web') {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (error) {
+    console.log('Notifications configuration skipped - using fallback mode');
+  }
 }
 
 const DEVELOPER_ADDRESSES = [
@@ -33,6 +37,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
 
   const requestPermissions = useCallback(async () => {
     if (Platform.OS === 'web') {
+      setState(prev => ({ ...prev, hasPermission: false }));
       return false;
     }
 
@@ -49,9 +54,9 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       setState(prev => ({ ...prev, hasPermission: granted }));
       return granted;
     } catch (error) {
-      console.log('Notifications not available in Expo Go - local notifications will still work');
-      setState(prev => ({ ...prev, hasPermission: true }));
-      return true;
+      console.log('Notifications not supported in Expo Go - using Alert fallback');
+      setState(prev => ({ ...prev, hasPermission: false }));
+      return false;
     }
   }, []);
 
@@ -67,14 +72,6 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     }
 
     try {
-      if (!state.hasPermission) {
-        const granted = await requestPermissions();
-        if (!granted) {
-          console.log('Notification permission not granted');
-          return;
-        }
-      }
-
       await Notifications.scheduleNotificationAsync({
         content: {
           title,
@@ -83,10 +80,12 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
         },
         trigger: null,
       });
+      console.log('Notification sent:', title);
     } catch (error) {
-      console.error('Error sending notification:', error);
+      console.log('Using Alert fallback for notification');
+      Alert.alert(title, body, [{ text: 'OK' }]);
     }
-  }, [state.hasPermission, requestPermissions]);
+  }, []);
 
   const notifyTransaction = useCallback(async (type: 'sent' | 'received', amount: number) => {
     const btcon = Math.floor(amount);
@@ -125,7 +124,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   useEffect(() => {
     if (Platform.OS !== 'web') {
       requestPermissions().catch(() => {
-        console.log('Permission request handled gracefully');
+        console.log('Notification permissions not available - using fallback');
       });
     }
   }, [requestPermissions]);

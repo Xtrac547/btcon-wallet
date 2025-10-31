@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { UsernameProvider } from "@/contexts/UsernameContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Platform } from 'react-native';
 
 if (Platform.OS !== 'web') {
@@ -46,16 +47,18 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <WalletProvider>
-        <UsernameProvider>
-          <NotificationProvider>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-              <RootLayoutNav />
-            </GestureHandlerRootView>
-          </NotificationProvider>
-        </UsernameProvider>
-      </WalletProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <WalletProvider>
+          <UsernameProvider>
+            <NotificationProvider>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <RootLayoutNav />
+              </GestureHandlerRootView>
+            </NotificationProvider>
+          </UsernameProvider>
+        </WalletProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
