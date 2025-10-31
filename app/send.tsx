@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityInd
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { ArrowLeft, Send, QrCode, X } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
@@ -11,6 +12,7 @@ export default function SendScreen() {
   const router = useRouter();
   const { balance, signAndBroadcastTransaction, esploraService } = useWallet();
   const { username, getAddressForUsername } = useUsername();
+  const { notifyTransaction } = useNotifications();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
 
@@ -127,6 +129,8 @@ export default function SendScreen() {
             try {
               const txid = await signAndBroadcastTransaction(resolvedAddress, satsAmount);
               const explorerUrl = esploraService.getExplorerUrl(txid);
+              
+              await notifyTransaction('sent', btconAmount);
               
               Alert.alert(
                 'Transaction envoyée',

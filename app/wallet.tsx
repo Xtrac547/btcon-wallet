@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, A
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw, TrendingUp, TrendingDown, Clock } from 'lucide-react-native';
 import { useState, useEffect, useRef } from 'react';
 
@@ -10,6 +11,7 @@ export default function WalletScreen() {
   const router = useRouter();
   const { balance, address, refreshBalance, transactions } = useWallet();
   const { username } = useUsername();
+  const { setDeveloperStatus, isDeveloper } = useNotifications();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -90,6 +92,12 @@ export default function WalletScreen() {
     ]).start();
   }, []);
 
+  useEffect(() => {
+    if (address) {
+      setDeveloperStatus(address);
+    }
+  }, [address, setDeveloperStatus]);
+
   const contentMaxWidth = isWideScreen ? 800 : width;
   const contentPadding = isWideScreen ? 40 : 24;
 
@@ -126,17 +134,34 @@ export default function WalletScreen() {
             resizeMode="contain"
           />
         </View>
-        <TouchableOpacity 
-          onPress={() => {
-            console.log('Settings button pressed');
-            router.push('/settings');
-          }} 
-          style={styles.settingsButton}
-          activeOpacity={0.7}
-          testID="settings-button"
-        >
-          <Settings color="#FFF" size={24} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {isDeveloper && (
+            <TouchableOpacity 
+              onPress={() => {
+                console.log('Developer button pressed');
+                router.push('/developer');
+              }} 
+              style={styles.settingsButton}
+              activeOpacity={0.7}
+              testID="developer-button"
+            >
+              <View style={styles.developerBadge}>
+                <Text style={styles.developerBadgeText}>DEV</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity 
+            onPress={() => {
+              console.log('Settings button pressed');
+              router.push('/settings');
+            }} 
+            style={styles.settingsButton}
+            activeOpacity={0.7}
+            testID="settings-button"
+          >
+            <Settings color="#FFF" size={24} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -332,6 +357,23 @@ const styles = StyleSheet.create({
   logoHeaderImage2: {
     width: 240,
     height: 70,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  developerBadge: {
+    backgroundColor: '#FF8C00',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  developerBadgeText: {
+    color: '#000',
+    fontSize: 10,
+    fontWeight: '900' as const,
+    letterSpacing: 1,
   },
   btconText: {
     fontSize: 52,

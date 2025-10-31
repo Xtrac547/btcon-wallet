@@ -36,7 +36,9 @@
         "USE_FINGERPRINT",
         "CAMERA",
         "RECORD_AUDIO",
-        "READ_MEDIA_IMAGES"
+        "READ_MEDIA_IMAGES",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ]
     },
     "web": {
@@ -68,6 +70,18 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./local/assets/notification_icon.png",
+          "color": "#ffffff",
+          "defaultChannel": "default",
+          "sounds": [
+            "./local/assets/notification_sound.wav"
+          ],
+          "enableBackgroundRemoteNotifications": false
         }
       ]
     ],

@@ -110,6 +110,35 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
     }
   }, [username]);
 
+  const getAllUsers = useCallback(async (): Promise<{ username: string; address: string }[]> => {
+    try {
+      const registry = await getRegistry();
+      return Object.entries(registry).map(([username, address]) => ({ username, address }));
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      return [];
+    }
+  }, []);
+
+  const deleteUserByAddress = useCallback(async (address: string): Promise<void> => {
+    try {
+      const registry = await getRegistry();
+      const entry = Object.entries(registry).find(([_, addr]) => addr === address);
+      if (entry) {
+        const [usernameToDelete] = entry;
+        delete registry[usernameToDelete];
+        await saveRegistry(registry);
+        
+        if (usernameToDelete === username) {
+          await AsyncStorage.removeItem(STORAGE_KEYS.USERNAME);
+          setUsernameState(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting user by address:', error);
+    }
+  }, [username]);
+
   useEffect(() => {
     loadUsername();
   }, []);
@@ -121,5 +150,7 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
     getUsernameForAddress,
     getAddressForUsername,
     deleteUsername,
-  }), [username, isLoading, setUsername, getUsernameForAddress, getAddressForUsername, deleteUsername]);
+    getAllUsers,
+    deleteUserByAddress,
+  }), [username, isLoading, setUsername, getUsernameForAddress, getAddressForUsername, deleteUsername, getAllUsers, deleteUserByAddress]);
 });

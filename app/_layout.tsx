@@ -6,6 +6,7 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { UsernameProvider } from "@/contexts/UsernameContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { Platform } from 'react-native';
 
 if (Platform.OS !== 'web') {
@@ -24,6 +25,7 @@ function RootLayoutNav() {
       <Stack.Screen name="receive" options={{ headerShown: false }} />
       <Stack.Screen name="send" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ headerShown: false }} />
+      <Stack.Screen name="developer" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -47,9 +49,11 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <WalletProvider>
         <UsernameProvider>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <RootLayoutNav />
-          </GestureHandlerRootView>
+          <NotificationProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <RootLayoutNav />
+            </GestureHandlerRootView>
+          </NotificationProvider>
         </UsernameProvider>
       </WalletProvider>
     </QueryClientProvider>
