@@ -1,10 +1,11 @@
 import '@/utils/shim';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Modal, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
-import { ArrowLeft, UserX, Users, Trash2, Search, Shield } from 'lucide-react-native';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { ArrowLeft, UserX, Users, Trash2, Search, Shield, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface UserEntry {
@@ -16,12 +17,30 @@ export default function DeveloperScreen() {
   const router = useRouter();
   const { address, deleteWallet } = useWallet();
   const { getAllUsers, deleteUserByAddress } = useUsername();
+  const { setDeveloperPin, verifyDeveloperPin, hasDeveloperPinSet } = useNotifications();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserEntry | null>(null);
   const [users, setUsers] = useState<UserEntry[]>([]);
   const [showAllUsers, setShowAllUsers] = useState(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [showPinVerification, setShowPinVerification] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [isPinSet, setIsPinSet] = useState(false);
+
+  const checkPinStatus = async () => {
+    const pinSet = await hasDeveloperPinSet();
+    setIsPinSet(pinSet);
+    if (!pinSet) {
+      setShowPinSetup(true);
+    }
+  };
+
+  useEffect(() => {
+    checkPinStatus();
+  }, []);
 
   const loadUsers = async () => {
     const allUsers = await getAllUsers();
@@ -37,9 +56,54 @@ export default function DeveloperScreen() {
     user.address.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const requestPinVerification = (action: () => void) => {
+    setPendingAction(() => action);
+    setPinInput('');
+    setShowPinVerification(true);
+  };
+
+  const handleSetPin = async () => {
+    if (pinInput.length !== 6) {
+      Alert.alert('Erreur', 'Le code PIN doit contenir 6 chiffres');
+      return;
+    }
+
+    const success = await setDeveloperPin(pinInput);
+    if (success) {
+      setIsPinSet(true);
+      setShowPinSetup(false);
+      setPinInput('');
+      Alert.alert('Succès', 'Code PIN configuré avec succès');
+    } else {
+      Alert.alert('Erreur', 'Le code PIN doit contenir 6 chiffres');
+    }
+  };
+
+  const handleVerifyPin = async () => {
+    if (pinInput.length !== 6) {
+      Alert.alert('Erreur', 'Le code PIN doit contenir 6 chiffres');
+      return;
+    }
+
+    const isValid = await verifyDeveloperPin(pinInput);
+    if (isValid) {
+      setShowPinVerification(false);
+      setPinInput('');
+      if (pendingAction) {
+        pendingAction();
+        setPendingAction(null);
+      }
+    } else {
+      Alert.alert('Erreur', 'Code PIN incorrect');
+      setPinInput('');
+    }
+  };
+
   const handleDeleteUser = (user: UserEntry) => {
-    setSelectedUser(user);
-    setShowDeleteModal(true);
+    requestPinVerification(() => {
+      setSelectedUser(user);
+      setShowDeleteModal(true);
+    });
   };
 
   const confirmDeleteUser = async () => {
@@ -57,34 +121,36 @@ export default function DeveloperScreen() {
   };
 
   const handleDeleteAccount = (targetAddress: string) => {
-    Alert.alert(
-      'Supprimer le compte',
-      `Êtes-vous sûr de vouloir supprimer le compte avec l'adresse ${targetAddress.slice(0, 10)}... ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteUserByAddress(targetAddress);
-              
-              if (targetAddress === address) {
-                await deleteWallet();
-                Alert.alert('Compte supprimé', 'Votre compte a été supprimé', [
-                  { text: 'OK', onPress: () => router.replace('/onboarding') }
-                ]);
-              } else {
-                Alert.alert('Succès', 'Le compte a été supprimé');
-                loadUsers();
+    requestPinVerification(() => {
+      Alert.alert(
+        'Supprimer le compte',
+        `Êtes-vous sûr de vouloir supprimer le compte avec l'adresse ${targetAddress.slice(0, 10)}... ?`,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Supprimer',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteUserByAddress(targetAddress);
+                
+                if (targetAddress === address) {
+                  await deleteWallet();
+                  Alert.alert('Compte supprimé', 'Votre compte a été supprimé', [
+                    { text: 'OK', onPress: () => router.replace('/onboarding') }
+                  ]);
+                } else {
+                  Alert.alert('Succès', 'Le compte a été supprimé');
+                  loadUsers();
+                }
+              } catch {
+                Alert.alert('Erreur', 'Impossible de supprimer le compte');
               }
-            } catch {
-              Alert.alert('Erreur', 'Impossible de supprimer le compte');
-            }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    });
   };
 
   return (
@@ -226,6 +292,99 @@ export default function DeveloperScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showPinSetup}
+        animationType="fade"
+        transparent
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Lock color="#FF8C00" size={40} style={{ alignSelf: 'center', marginBottom: 16 }} />
+            <Text style={styles.modalTitle}>Configurer le code PIN</Text>
+            <Text style={styles.modalText}>
+              Créez un code PIN à 6 chiffres pour sécuriser l&apos;accès au mode développeur.
+            </Text>
+            
+            <TextInput
+              style={styles.pinInput}
+              value={pinInput}
+              onChangeText={(text) => setPinInput(text.replace(/[^0-9]/g, '').slice(0, 6))}
+              placeholder="000000"
+              placeholderTextColor="#666"
+              keyboardType="number-pad"
+              maxLength={6}
+              secureTextEntry
+            />
+            
+            <Pressable
+              style={[styles.primaryButton, pinInput.length !== 6 && styles.primaryButtonDisabled]}
+              onPress={handleSetPin}
+              disabled={pinInput.length !== 6}
+            >
+              <Text style={styles.primaryButtonText}>Confirmer</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showPinVerification}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowPinVerification(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => {
+            setShowPinVerification(false);
+            setPinInput('');
+            setPendingAction(null);
+          }}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <Lock color="#FF8C00" size={40} style={{ alignSelf: 'center', marginBottom: 16 }} />
+            <Text style={styles.modalTitle}>Vérification PIN</Text>
+            <Text style={styles.modalText}>
+              Entrez votre code PIN à 6 chiffres pour continuer.
+            </Text>
+            
+            <TextInput
+              style={styles.pinInput}
+              value={pinInput}
+              onChangeText={(text) => setPinInput(text.replace(/[^0-9]/g, '').slice(0, 6))}
+              placeholder="000000"
+              placeholderTextColor="#666"
+              keyboardType="number-pad"
+              maxLength={6}
+              secureTextEntry
+              autoFocus
+            />
+            
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={styles.modalButtonCancel}
+                onPress={() => {
+                  setShowPinVerification(false);
+                  setPinInput('');
+                  setPendingAction(null);
+                }}
+              >
+                <Text style={styles.modalButtonCancelText}>Annuler</Text>
+              </Pressable>
+              
+              <Pressable
+                style={[styles.modalButtonConfirm, pinInput.length !== 6 && styles.modalButtonDisabled]}
+                onPress={handleVerifyPin}
+                disabled={pinInput.length !== 6}
+              >
+                <Text style={styles.modalButtonConfirmText}>Vérifier</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal
         visible={showDeleteModal}
@@ -534,5 +693,36 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '700' as const,
+  },
+  pinInput: {
+    backgroundColor: '#0A0A0A',
+    borderRadius: 12,
+    padding: 16,
+    color: '#FFF',
+    fontSize: 24,
+    textAlign: 'center',
+    fontWeight: '700' as const,
+    letterSpacing: 8,
+    marginVertical: 24,
+    borderWidth: 2,
+    borderColor: '#333',
+  },
+  primaryButton: {
+    backgroundColor: '#FF8C00',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  primaryButtonDisabled: {
+    backgroundColor: '#555',
+    opacity: 0.5,
+  },
+  primaryButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  modalButtonDisabled: {
+    opacity: 0.5,
   },
 });

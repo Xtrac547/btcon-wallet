@@ -46,11 +46,28 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
     }
   };
 
+  const getUsernameForAddress = useCallback(async (address: string): Promise<string | null> => {
+    try {
+      const registry = await getRegistry();
+      const entry = Object.entries(registry).find(([_, addr]) => addr === address);
+      return entry ? entry[0] : null;
+    } catch (error) {
+      console.error('Error getting username for address:', error);
+      return null;
+    }
+  }, []);
+
   const setUsername = useCallback(async (newUsername: string, address: string): Promise<boolean> => {
     try {
       const cleanUsername = newUsername.toLowerCase().trim();
       
       if (cleanUsername.length < 3) {
+        return false;
+      }
+
+      const existingUsername = await getUsernameForAddress(address);
+      if (existingUsername) {
+        console.warn('Username already set for this address:', existingUsername);
         return false;
       }
 
@@ -72,18 +89,7 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
       console.error('Error setting username:', error);
       return false;
     }
-  }, []);
-
-  const getUsernameForAddress = useCallback(async (address: string): Promise<string | null> => {
-    try {
-      const registry = await getRegistry();
-      const entry = Object.entries(registry).find(([_, addr]) => addr === address);
-      return entry ? entry[0] : null;
-    } catch (error) {
-      console.error('Error getting username for address:', error);
-      return null;
-    }
-  }, []);
+  }, [getUsernameForAddress]);
 
   const getAddressForUsername = useCallback(async (username: string): Promise<string | null> => {
     try {

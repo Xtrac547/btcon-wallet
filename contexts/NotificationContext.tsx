@@ -1,21 +1,28 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { Platform, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DEVELOPER_ADDRESSES = [
   'bc1qdff8680vyy0qthr5vpe3ywzw48r8rr4jn4jvac',
   'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd',
 ];
 
+const STORAGE_KEYS = {
+  DEVELOPER_PIN: 'btcon_developer_pin',
+};
+
 interface NotificationState {
   hasPermission: boolean;
   isDeveloper: boolean;
+  hasDeveloperPin: boolean;
 }
 
 export const [NotificationProvider, useNotifications] = createContextHook(() => {
   const [state, setState] = useState<NotificationState>({
     hasPermission: false,
     isDeveloper: false,
+    hasDeveloperPin: false,
   });
 
   const requestPermissions = useCallback(async () => {
@@ -68,6 +75,49 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     }
   }, [checkDeveloperStatus, notifyDeveloperLogin]);
 
+  const setDeveloperPin = useCallback(async (pin: string): Promise<boolean> => {
+    try {
+      if (pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+        return false;
+      }
+      await AsyncStorage.setItem(STORAGE_KEYS.DEVELOPER_PIN, pin);
+      setState(prev => ({ ...prev, hasDeveloperPin: true }));
+      return true;
+    } catch (error) {
+      console.error('Error setting developer PIN:', error);
+      return false;
+    }
+  }, []);
+
+  const verifyDeveloperPin = useCallback(async (pin: string): Promise<boolean> => {
+    try {
+      const storedPin = await AsyncStorage.getItem(STORAGE_KEYS.DEVELOPER_PIN);
+      return storedPin === pin;
+    } catch (error) {
+      console.error('Error verifying developer PIN:', error);
+      return false;
+    }
+  }, []);
+
+  const hasDeveloperPinSet = useCallback(async (): Promise<boolean> => {
+    try {
+      const pin = await AsyncStorage.getItem(STORAGE_KEYS.DEVELOPER_PIN);
+      return pin !== null;
+    } catch (error) {
+      console.error('Error checking developer PIN:', error);
+      return false;
+    }
+  }, []);
+
+  const loadDeveloperPinStatus = useCallback(async () => {
+    const hasPinSet = await hasDeveloperPinSet();
+    setState(prev => ({ ...prev, hasDeveloperPin: hasPinSet }));
+  }, [hasDeveloperPinSet]);
+
+  useEffect(() => {
+    loadDeveloperPinStatus();
+  }, [loadDeveloperPinStatus]);
+
 
 
   return useMemo(() => ({
@@ -77,5 +127,8 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     notifyTransaction,
     setDeveloperStatus,
     checkDeveloperStatus,
-  }), [state, requestPermissions, sendLocalNotification, notifyTransaction, setDeveloperStatus, checkDeveloperStatus]);
+    setDeveloperPin,
+    verifyDeveloperPin,
+    hasDeveloperPinSet,
+  }), [state, requestPermissions, sendLocalNotification, notifyTransaction, setDeveloperStatus, checkDeveloperStatus, setDeveloperPin, verifyDeveloperPin, hasDeveloperPinSet]);
 });

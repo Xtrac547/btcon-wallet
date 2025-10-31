@@ -56,7 +56,7 @@ export default function SetUsernameScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>Choisir un Pseudo</Text>
         <Text style={styles.subtitle}>
-          Vous devez créer un pseudo unique commençant par @ pour utiliser l&apos;application
+          Choisissez votre pseudo avec soin. Une fois créé, il ne pourra plus être modifié.
         </Text>
 
         <View style={styles.usernameInputContainer}>
@@ -74,7 +74,7 @@ export default function SetUsernameScreen() {
         </View>
 
         <Text style={styles.hintText}>
-          Votre pseudo permettra aux autres utilisateurs de vous envoyer des Btcon plus facilement.
+          ⚠️ Attention : Votre pseudo est permanent et ne peut pas être changé après création.
         </Text>
 
         <View style={styles.buttonContainer}>
