@@ -5,7 +5,8 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { ArrowLeft, Send, QrCode, X } from 'lucide-react-native';
+import { useFollowing } from '@/contexts/FollowingContext';
+import { ArrowLeft, Send, QrCode, X, Users } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
 export default function SendScreen() {
@@ -13,6 +14,7 @@ export default function SendScreen() {
   const { balance, signAndBroadcastTransaction, esploraService } = useWallet();
   const { username, getAddressForUsername } = useUsername();
   const { notifyTransaction } = useNotifications();
+  const { following } = useFollowing();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
 
@@ -204,7 +206,13 @@ export default function SendScreen() {
           <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Envoyer</Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity 
+          onPress={() => router.push('/search-users')} 
+          style={styles.searchUsersButton}
+          testID="search-users-button"
+        >
+          <Users color="#FF8C00" size={24} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -221,6 +229,32 @@ export default function SendScreen() {
               <Text style={styles.balanceUnit}>Btcon</Text>
             </View>
             <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
+          </View>
+        )}
+
+        {following.length > 0 && (
+          <View style={styles.followingSection}>
+            <Text style={styles.followingSectionTitle}>Accès rapide</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.followingList}
+            >
+              {following.map((user) => (
+                <TouchableOpacity
+                  key={user.username}
+                  style={styles.followingCard}
+                  onPress={() => setToAddress(`@${user.username}`)}
+                >
+                  <View style={styles.followingAvatar}>
+                    <Text style={styles.followingAvatarText}>
+                      {user.username.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={styles.followingUsername}>@{user.username}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         )}
 
@@ -430,6 +464,49 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  searchUsersButton: {
+    padding: 8,
+  },
+  followingSection: {
+    marginBottom: 24,
+  },
+  followingSectionTitle: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700' as const,
+    marginBottom: 12,
+    paddingLeft: 4,
+  },
+  followingList: {
+    gap: 12,
+    paddingRight: 24,
+  },
+  followingCard: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 100,
+  },
+  followingAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FF8C00',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  followingAvatarText: {
+    color: '#000',
+    fontSize: 24,
+    fontWeight: '700' as const,
+  },
+  followingUsername: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
   scrollView: {
     flex: 1,

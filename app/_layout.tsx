@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { UsernameProvider } from "@/contexts/UsernameContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { FollowingProvider } from "@/contexts/FollowingContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Platform } from 'react-native';
 
@@ -27,6 +28,7 @@ function RootLayoutNav() {
       <Stack.Screen name="send" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen name="developer" options={{ headerShown: false }} />
+      <Stack.Screen name="search-users" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -51,11 +53,13 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
           <UsernameProvider>
-            <NotificationProvider>
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <RootLayoutNav />
-              </GestureHandlerRootView>
-            </NotificationProvider>
+            <FollowingProvider>
+              <NotificationProvider>
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                  <RootLayoutNav />
+                </GestureHandlerRootView>
+              </NotificationProvider>
+            </FollowingProvider>
           </UsernameProvider>
         </WalletProvider>
       </QueryClientProvider>
