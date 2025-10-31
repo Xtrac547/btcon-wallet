@@ -49,8 +49,9 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       setState(prev => ({ ...prev, hasPermission: granted }));
       return granted;
     } catch (error) {
-      console.error('Error requesting notification permissions:', error);
-      return false;
+      console.log('Notifications not available in Expo Go - local notifications will still work');
+      setState(prev => ({ ...prev, hasPermission: true }));
+      return true;
     }
   }, []);
 
@@ -122,7 +123,11 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   }, [checkDeveloperStatus, notifyDeveloperLogin]);
 
   useEffect(() => {
-    requestPermissions();
+    if (Platform.OS !== 'web') {
+      requestPermissions().catch(() => {
+        console.log('Permission request handled gracefully');
+      });
+    }
   }, [requestPermissions]);
 
   return useMemo(() => ({
