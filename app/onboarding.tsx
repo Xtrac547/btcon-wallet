@@ -161,11 +161,10 @@ export default function OnboardingScreen() {
               style={styles.logoImage}
               resizeMode="contain"
             />
-            <Image
-              source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
-              style={styles.btcoinLogoImage}
-              resizeMode="contain"
-            />
+            <View style={styles.logoTextContainer}>
+              <Text style={styles.bitcoinSymbolLogo}>₿</Text>
+              <Text style={styles.btconTextLogo}>TCON</Text>
+            </View>
           </View>
 
           <View style={styles.buttonContainer}>
@@ -360,6 +359,30 @@ const styles = StyleSheet.create({
   btcoinLogoImage: {
     width: 400,
     height: 160,
+  },
+  btconTextLogo: {
+    fontSize: 72,
+    fontWeight: '900' as const,
+    color: '#FF8C00',
+    letterSpacing: 6,
+    marginLeft: 12,
+    textShadowColor: 'rgba(255, 140, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 16,
+  },
+  bitcoinSymbolLogo: {
+    fontSize: 72,
+    fontWeight: '900' as const,
+    color: '#FFD700',
+    letterSpacing: 0,
+    textShadowColor: 'rgba(255, 215, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 16,
+  },
+  logoTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 32,
