@@ -116,13 +116,13 @@ export default function WalletScreen() {
       <View style={[styles.header, isWideScreen && styles.headerWide]}>
         <View style={styles.logoHeaderContainer}>
           <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
-            style={styles.logoHeaderImage2}
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/fycv5rxyn7iqfp2lwp4zb' }}
+            style={styles.logoHeaderImage1}
             resizeMode="contain"
           />
           <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/fycv5rxyn7iqfp2lwp4zb' }}
-            style={styles.logoHeaderImage1}
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
+            style={styles.logoHeaderImage2}
             resizeMode="contain"
           />
         </View>
@@ -323,15 +323,15 @@ const styles = StyleSheet.create({
   logoHeaderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 4,
   },
   logoHeaderImage1: {
-    width: 40,
-    height: 40,
+    width: 60,
+    height: 60,
   },
   logoHeaderImage2: {
-    width: 180,
-    height: 50,
+    width: 240,
+    height: 70,
   },
   settingsButton: {
     padding: 8,

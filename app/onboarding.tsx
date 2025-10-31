@@ -161,14 +161,11 @@ export default function OnboardingScreen() {
               style={styles.logoImage}
               resizeMode="contain"
             />
-            <View style={styles.btcoinSection}>
-              <Image
-                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
-                style={styles.btcoinLogoImage}
-                resizeMode="contain"
-              />
-              <Text style={styles.btcoinText}>Btcon</Text>
-            </View>
+            <Image
+              source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rnfr5rxgzfuiivrs9yra2' }}
+              style={styles.btcoinLogoImage}
+              resizeMode="contain"
+            />
           </View>
 
           <View style={styles.buttonContainer}>
@@ -360,19 +357,9 @@ const styles = StyleSheet.create({
     height: 180,
     marginBottom: 30,
   },
-  btcoinSection: {
-    alignItems: 'center',
-  },
   btcoinLogoImage: {
-    width: 300,
-    height: 120,
-    marginBottom: 8,
-  },
-  btcoinText: {
-    color: '#FF8C00',
-    fontSize: 28,
-    fontWeight: '700' as const,
-    letterSpacing: 2,
+    width: 400,
+    height: 160,
   },
   title: {
     fontSize: 32,
