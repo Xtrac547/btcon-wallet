@@ -3,22 +3,20 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { useUsername } from '@/contexts/UsernameContext';
 
 export default function IndexScreen() {
   const router = useRouter();
   const { hasWallet, isLoading: walletLoading } = useWallet();
-  const { username, isLoading: usernameLoading } = useUsername();
 
   useEffect(() => {
-    if (!walletLoading && !usernameLoading) {
+    if (!walletLoading) {
       if (!hasWallet) {
         router.replace('/onboarding');
       } else {
         router.replace('/wallet');
       }
     }
-  }, [hasWallet, walletLoading, usernameLoading]);
+  }, [hasWallet, walletLoading]);
 
   return (
     <View style={styles.container}>
