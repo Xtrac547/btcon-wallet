@@ -162,8 +162,8 @@ export default function OnboardingScreen() {
               resizeMode="contain"
             />
             <View style={styles.logoTextContainer}>
-              <Text style={styles.bitcoinSymbolLogo}>₿</Text>
-              <Text style={styles.btconTextLogo}>TCON</Text>
+              <Text style={[styles.bitcoinSymbolLogo, { color: '#FFD700' }]}>₿</Text>
+              <Text style={[styles.btconTextLogo, { color: '#FF8C00' }]}>TCON</Text>
             </View>
           </View>
 
