@@ -96,7 +96,7 @@ export default function OnboardingScreen() {
     const cleanUsername = usernameInput.trim().toLowerCase();
     
     if (!cleanUsername) {
-      router.replace('/wallet');
+      Alert.alert('Erreur', 'Le pseudo est obligatoire');
       return;
     }
 
@@ -209,7 +209,7 @@ export default function OnboardingScreen() {
       <View style={styles.container}>
         <View style={styles.content}>
           <Text style={styles.title}>Choisir un Pseudo</Text>
-          <Text style={styles.subtitle}>Créez un pseudo unique commençant par @ (optionnel)</Text>
+          <Text style={styles.subtitle}>Créez un pseudo unique commençant par @. Ce pseudo est obligatoire et ne pourra pas être modifié.</Text>
 
           <View style={styles.usernameInputContainer}>
             <Text style={styles.atSymbol}>@</Text>
@@ -226,7 +226,7 @@ export default function OnboardingScreen() {
           </View>
 
           <Text style={styles.hintText}>
-            Votre pseudo permettra aux autres utilisateurs de vous envoyer des Btcon plus facilement.
+            ⚠️ Attention : Votre pseudo est permanent et ne peut pas être changé après création. Il permettra aux autres utilisateurs de vous envoyer des Btcon plus facilement.
           </Text>
 
           <View style={styles.buttonContainer}>
@@ -237,18 +237,10 @@ export default function OnboardingScreen() {
               testID="confirm-username-button"
             >
               {isCreating ? (
-                <ActivityIndicator color="#000" />
+                <ActivityIndicator color="#FFF" />
               ) : (
                 <Text style={styles.primaryButtonText}>Confirmer</Text>
               )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => router.replace('/wallet')}
-              disabled={isCreating}
-            >
-              <Text style={styles.secondaryButtonText}>Passer</Text>
             </TouchableOpacity>
           </View>
         </View>

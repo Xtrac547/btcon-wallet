@@ -10,7 +10,7 @@ import { useState, useEffect, useRef } from 'react';
 export default function WalletScreen() {
   const router = useRouter();
   const { balance, address, refreshBalance, transactions } = useWallet();
-  const { username, getUsernameForAddress } = useUsername();
+  const { username, getUsernameForAddress, isLoading: usernameLoading } = useUsername();
   const { setDeveloperStatus, isDeveloper } = useNotifications();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
@@ -108,6 +108,12 @@ export default function WalletScreen() {
       }),
     ]).start();
   }, []);
+
+  useEffect(() => {
+    if (!usernameLoading && !username) {
+      router.replace('/set-username');
+    }
+  }, [username, usernameLoading]);
 
   useEffect(() => {
     if (address) {
