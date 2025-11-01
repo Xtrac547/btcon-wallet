@@ -5,8 +5,9 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUserImage } from '@/contexts/UserImageContext';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { ArrowLeft, Image as ImageIcon, Lock, AlertCircle, Info, X } from 'lucide-react-native';
+import { ArrowLeft, Image as ImageIcon, Lock, AlertCircle, Info, X, Upload } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 
 const PAYMENT_ADDRESS = 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd';
 const PAYMENT_AMOUNT_SATS = 200000000000;
@@ -29,6 +30,37 @@ export default function ProfileImageScreen() {
   const canChangeFree = canChangeImage(address || '');
   const requiresPayment = needsPaymentForChange(address || '');
 
+  const pickImage = async (type: 'profile' | 'qr') => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission requise', 'Veuillez autoriser l\'accès à la galerie');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        
+        if (type === 'profile') {
+          setProfileImageUrl(imageUri);
+        } else {
+          setQrImageUrl(imageUri);
+        }
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Erreur', 'Impossible de sélectionner l\'image');
+    }
+  };
+
   const handleChangeImageWithPin = async () => {
     if (pinInput.length !== 6) {
       Alert.alert('Erreur', 'Le code PIN doit contenir 6 chiffres');
@@ -43,7 +75,7 @@ export default function ProfileImageScreen() {
     }
 
     if (!profileImageUrl || !qrImageUrl) {
-      Alert.alert('Erreur', 'Veuillez renseigner les URLs des images');
+      Alert.alert('Erreur', 'Veuillez renseigner les images');
       return;
     }
 
@@ -52,8 +84,8 @@ export default function ProfileImageScreen() {
       return;
     }
 
-    const success = await updateUserImageWithPin(address, profileImageUrl, qrImageUrl);
-    if (success) {
+    const result = await updateUserImageWithPin(address, profileImageUrl, qrImageUrl);
+    if (result.success) {
       Alert.alert('Succès', 'Images modifiées avec succès');
       setShowPinModal(false);
       setPinInput('');
@@ -61,7 +93,7 @@ export default function ProfileImageScreen() {
       setQrImageUrl('');
       router.back();
     } else {
-      Alert.alert('Erreur', 'Impossible de modifier les images');
+      Alert.alert('Erreur', result.error || 'Impossible de modifier les images');
     }
   };
 
@@ -90,14 +122,14 @@ export default function ProfileImageScreen() {
           {
             text: 'Continuer',
             onPress: async () => {
-              const success = await updateUserImage(address, profileImageUrl, qrImageUrl, false);
-              if (success) {
+              const result = await updateUserImage(address, profileImageUrl, qrImageUrl, false);
+              if (result.success) {
                 Alert.alert('Succès', 'Images modifiées avec succès');
                 setProfileImageUrl('');
                 setQrImageUrl('');
                 router.back();
               } else {
-                Alert.alert('Erreur', 'Impossible de modifier les images');
+                Alert.alert('Erreur', result.error || 'Impossible de modifier les images');
               }
             },
           },
@@ -117,14 +149,14 @@ export default function ProfileImageScreen() {
                 const txid = await signAndBroadcastTransaction(PAYMENT_ADDRESS, PAYMENT_AMOUNT_SATS);
                 console.log('Payment sent:', txid);
 
-                const success = await updateUserImage(address, profileImageUrl, qrImageUrl, true);
-                if (success) {
+                const result = await updateUserImage(address, profileImageUrl, qrImageUrl, true);
+                if (result.success) {
                   Alert.alert('Succès', 'Paiement effectué et images modifiées avec succès');
                   setProfileImageUrl('');
                   setQrImageUrl('');
                   router.back();
                 } else {
-                  Alert.alert('Erreur', 'Paiement effectué mais impossible de modifier les images');
+                  Alert.alert('Erreur', result.error || 'Paiement effectué mais impossible de modifier les images');
                 }
               } catch (error) {
                 console.error('Payment error:', error);
@@ -212,29 +244,55 @@ export default function ProfileImageScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>URL de l&apos;image de profil</Text>
-                <TextInput
-                  style={styles.input}
-                  value={profileImageUrl}
-                  onChangeText={setProfileImageUrl}
-                  placeholder="https://example.com/profile.jpg"
-                  placeholderTextColor="#666"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
+                <Text style={styles.inputLabel}>Image de profil</Text>
+                <View style={styles.imageInputContainer}>
+                  {profileImageUrl ? (
+                    <View style={styles.selectedImagePreview}>
+                      <Image source={{ uri: profileImageUrl }} style={styles.selectedImage} />
+                      <TouchableOpacity
+                        style={styles.changeImageButton}
+                        onPress={() => pickImage('profile')}
+                      >
+                        <Upload color="#FFF" size={16} />
+                        <Text style={styles.changeImageText}>Changer</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.pickImageButton}
+                      onPress={() => pickImage('profile')}
+                    >
+                      <Upload color="#FF8C00" size={24} />
+                      <Text style={styles.pickImageText}>Sélectionner depuis la galerie</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>URL de l&apos;image QR Code</Text>
-                <TextInput
-                  style={styles.input}
-                  value={qrImageUrl}
-                  onChangeText={setQrImageUrl}
-                  placeholder="https://example.com/qr.jpg"
-                  placeholderTextColor="#666"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
+                <Text style={styles.inputLabel}>Image QR Code</Text>
+                <View style={styles.imageInputContainer}>
+                  {qrImageUrl ? (
+                    <View style={styles.selectedImagePreview}>
+                      <Image source={{ uri: qrImageUrl }} style={styles.selectedImage} />
+                      <TouchableOpacity
+                        style={styles.changeImageButton}
+                        onPress={() => pickImage('qr')}
+                      >
+                        <Upload color="#FFF" size={16} />
+                        <Text style={styles.changeImageText}>Changer</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.pickImageButton}
+                      onPress={() => pickImage('qr')}
+                    >
+                      <Upload color="#FF8C00" size={24} />
+                      <Text style={styles.pickImageText}>Sélectionner depuis la galerie</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
 
               <TouchableOpacity
@@ -508,6 +566,52 @@ const styles = StyleSheet.create({
     fontSize: 14,
     borderWidth: 1,
     borderColor: '#333',
+  },
+  imageInputContainer: {
+    backgroundColor: '#0A0A0A',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#333',
+    overflow: 'hidden' as const,
+  },
+  pickImageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    padding: 32,
+  },
+  pickImageText: {
+    color: '#FF8C00',
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  selectedImagePreview: {
+    position: 'relative' as const,
+  },
+  selectedImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 12,
+  },
+  changeImageButton: {
+    position: 'absolute' as const,
+    bottom: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#FF8C00',
+  },
+  changeImageText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600' as const,
   },
   primaryButton: {
     flexDirection: 'row',
