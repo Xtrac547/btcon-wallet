@@ -10,13 +10,14 @@ import { useState, useEffect, useRef } from 'react';
 export default function WalletScreen() {
   const router = useRouter();
   const { balance, address, refreshBalance, transactions } = useWallet();
-  const { username } = useUsername();
+  const { username, getUsernameForAddress } = useUsername();
   const { setDeveloperStatus, isDeveloper } = useNotifications();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const [addressUsernameMap, setAddressUsernameMap] = useState<Record<string, string>>({});
 
 
 
@@ -76,6 +77,22 @@ export default function WalletScreen() {
     return receivedAmount;
   };
 
+  const getTransactionAddress = (tx: any): string | null => {
+    const type = getTransactionType(tx);
+    
+    if (type === 'sent') {
+      const outputAddr = tx.vout.find((vout: any) => vout.scriptpubkey_address !== address);
+      return outputAddr?.scriptpubkey_address || null;
+    }
+    
+    if (type === 'received') {
+      const inputAddr = tx.vin.find((vin: any) => vin.prevout?.scriptpubkey_address !== address);
+      return inputAddr?.prevout?.scriptpubkey_address || null;
+    }
+    
+    return null;
+  };
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -97,6 +114,28 @@ export default function WalletScreen() {
       setDeveloperStatus(address);
     }
   }, [address, setDeveloperStatus]);
+
+  useEffect(() => {
+    const loadUsernames = async () => {
+      const addressMap: Record<string, string> = {};
+      
+      for (const tx of transactions) {
+        const txAddress = getTransactionAddress(tx);
+        if (txAddress && !addressMap[txAddress]) {
+          const username = await getUsernameForAddress(txAddress);
+          if (username) {
+            addressMap[txAddress] = username;
+          }
+        }
+      }
+      
+      setAddressUsernameMap(addressMap);
+    };
+    
+    if (transactions.length > 0) {
+      loadUsernames();
+    }
+  }, [transactions, getUsernameForAddress]);
 
   const getCustomImageForAddress = (addr: string | null): string | null => {
     if (!addr) return null;
@@ -270,7 +309,17 @@ export default function WalletScreen() {
                   
                   <View style={styles.transactionDetails}>
                     <Text style={styles.transactionType}>
-                      {type === 'sent' ? 'Envoyé' : type === 'received' ? 'Reçu' : 'En cours'}
+                      {(() => {
+                        const txAddress = getTransactionAddress(tx);
+                        const username = txAddress ? addressUsernameMap[txAddress] : null;
+                        
+                        if (type === 'sent') {
+                          return username ? `@${username}` : 'Envoyé';
+                        } else if (type === 'received') {
+                          return username ? `@${username}` : 'Reçu';
+                        }
+                        return 'En cours';
+                      })()}
                     </Text>
                     <Text style={styles.transactionDate}>
                       {tx.status.block_time ? formatDate(tx.status.block_time) : 'Non confirmé'}
@@ -284,7 +333,7 @@ export default function WalletScreen() {
                       type === 'received' && styles.transactionAmountReceived,
                       type === 'pending' && styles.transactionAmountPending,
                     ]}>
-                      {isPositive ? '+' : ''}{Math.abs(amount).toLocaleString()} Btcon
+                      {isPositive ? '+' : '-'}{Math.abs(amount).toLocaleString()}
                     </Text>
                     <Text style={styles.transactionAmountBtc}>
                       {(Math.abs(amount) / 100000000).toFixed(8)} BTC
