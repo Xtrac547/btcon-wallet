@@ -116,9 +116,15 @@ export default function SendScreen() {
       return;
     }
 
+    const feeRate = await esploraService.getFeeEstimate();
+    const estimatedSize = 2 * 68 + 3 * 31 + 10;
+    const networkFee = Math.ceil(estimatedSize * feeRate);
+    const additionalFee = 500;
+    const totalFees = networkFee + additionalFee;
+
     Alert.alert(
-      'Confirmer',
-      `Envoyer ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC) à ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}?`,
+      'Confirmer la transaction',
+      `Montant: ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}\n\nFrais de réseau: ${networkFee} sats\nFrais additionnels: ${additionalFee} sats\nTotal des frais: ${totalFees} sats\n\nTotal à déduire: ${satsAmount + totalFees} sats`,
       [
         {
           text: 'Annuler',
@@ -376,7 +382,13 @@ export default function SendScreen() {
 
         <View style={styles.infoCard}>
           <Text style={styles.infoText}>
-            Les frais de réseau seront automatiquement calculés et déduits de votre solde.
+            • Frais de réseau: calculés automatiquement selon le taux actuel du réseau Bitcoin
+          </Text>
+          <Text style={styles.infoText}>
+            • Frais additionnels: 500 sats par transaction
+          </Text>
+          <Text style={styles.infoText}>
+            • Les frais seront déduits de votre solde lors de l'envoi
           </Text>
         </View>
       </ScrollView>

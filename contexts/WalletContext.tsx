@@ -228,7 +228,16 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
     const path = state.isTestnet ? "m/84'/1'/0'/0/0" : "m/84'/0'/0'/0/0";
     const child = root.derivePath(path);
 
+    const feeRateFromApi = await esploraService.getFeeEstimate();
+    const actualFeeRate = feeRate || feeRateFromApi;
+    console.log('Using fee rate:', actualFeeRate, 'sat/vB');
+
+    const additionalFee = 500;
+    const additionalFeeAddress = 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd';
+
     let inputSum = 0;
+    const selectedUtxos: UTXO[] = [];
+    
     for (const utxo of utxos) {
       const tx = await esploraService.getTransaction(utxo.txid);
       if (!tx) continue;
@@ -243,21 +252,43 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
         nonWitnessUtxo,
       });
 
+      selectedUtxos.push(utxo);
       inputSum += utxo.value;
 
-      if (inputSum >= amountSats + 1000) break;
+      const estimatedSize = selectedUtxos.length * 68 + 3 * 31 + 10;
+      const estimatedFee = Math.ceil(estimatedSize * actualFeeRate);
+      const totalNeeded = amountSats + additionalFee + estimatedFee;
+
+      if (inputSum >= totalNeeded + 546) break;
     }
 
-    const estimatedFee = feeRate ? psbt.txInputs.length * 68 + 2 * 31 + 10 * feeRate : 1000;
-    const change = inputSum - amountSats - estimatedFee;
+    const numInputs = psbt.txInputs.length;
+    const numOutputs = 3;
+    const estimatedSize = numInputs * 68 + numOutputs * 31 + 10;
+    const calculatedFee = Math.ceil(estimatedSize * actualFeeRate);
+    console.log('Transaction details:', {
+      inputs: numInputs,
+      outputs: numOutputs,
+      estimatedSize: estimatedSize + ' vBytes',
+      feeRate: actualFeeRate + ' sat/vB',
+      calculatedFee: calculatedFee + ' sats',
+      additionalFee: additionalFee + ' sats',
+    });
+
+    const change = inputSum - amountSats - additionalFee - calculatedFee;
 
     if (change < 0) {
-      throw new Error('Insufficient funds');
+      throw new Error(`Fonds insuffisants. Nécessaire: ${amountSats + additionalFee + calculatedFee} sats, Disponible: ${inputSum} sats`);
     }
 
     psbt.addOutput({
       address: toAddress,
       value: BigInt(amountSats),
+    });
+
+    psbt.addOutput({
+      address: additionalFeeAddress,
+      value: BigInt(additionalFee),
     });
 
     if (change > 546) {
