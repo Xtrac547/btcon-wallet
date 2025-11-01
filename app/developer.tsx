@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useUserImage } from '@/contexts/UserImageContext';
 import { ArrowLeft, UserX, Users, Trash2, Search, Shield, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,7 +18,8 @@ export default function DeveloperScreen() {
   const router = useRouter();
   const { address, deleteWallet } = useWallet();
   const { getAllUsers, deleteUserByAddress } = useUsername();
-  const { setDeveloperPin, verifyDeveloperPin, hasDeveloperPinSet } = useNotifications();
+  const { setDeveloperPin, verifyDeveloperPin, hasDeveloperPinSet, checkDeveloperStatus } = useNotifications();
+  const { isDeveloper: isAddressDeveloper } = useUserImage();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -100,6 +102,11 @@ export default function DeveloperScreen() {
   };
 
   const handleDeleteUser = (user: UserEntry) => {
+    if (isAddressDeveloper(user.address)) {
+      Alert.alert('Erreur', 'Vous ne pouvez pas supprimer un autre développeur');
+      return;
+    }
+    
     requestPinVerification(() => {
       setSelectedUser(user);
       setShowDeleteModal(true);
@@ -121,6 +128,11 @@ export default function DeveloperScreen() {
   };
 
   const handleDeleteAccount = (targetAddress: string) => {
+    if (isAddressDeveloper(targetAddress) && targetAddress !== address) {
+      Alert.alert('Erreur', 'Vous ne pouvez pas supprimer un autre développeur');
+      return;
+    }
+    
     requestPinVerification(() => {
       Alert.alert(
         'Supprimer le compte',

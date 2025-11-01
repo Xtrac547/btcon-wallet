@@ -8,6 +8,7 @@ import { WalletProvider } from "@/contexts/WalletContext";
 import { UsernameProvider } from "@/contexts/UsernameContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { FollowingProvider } from "@/contexts/FollowingContext";
+import { UserImageProvider } from "@/contexts/UserImageContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Platform } from 'react-native';
 
@@ -29,6 +30,7 @@ function RootLayoutNav() {
       <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen name="developer" options={{ headerShown: false }} />
       <Stack.Screen name="search-users" options={{ headerShown: false }} />
+      <Stack.Screen name="profile-image" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -55,9 +57,11 @@ export default function RootLayout() {
           <UsernameProvider>
             <FollowingProvider>
               <NotificationProvider>
-                <GestureHandlerRootView style={{ flex: 1 }}>
-                  <RootLayoutNav />
-                </GestureHandlerRootView>
+                <UserImageProvider>
+                  <GestureHandlerRootView style={{ flex: 1 }}>
+                    <RootLayoutNav />
+                  </GestureHandlerRootView>
+                </UserImageProvider>
               </NotificationProvider>
             </FollowingProvider>
           </UsernameProvider>

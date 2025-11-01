@@ -1,0 +1,625 @@
+import '@/utils/shim';
+import { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Alert, Modal, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useWallet } from '@/contexts/WalletContext';
+import { useUserImage } from '@/contexts/UserImageContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { ArrowLeft, Image as ImageIcon, Lock, AlertCircle, Info, X } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const PAYMENT_ADDRESS = 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd';
+const PAYMENT_AMOUNT_SATS = 200000000000;
+
+export default function ProfileImageScreen() {
+  const router = useRouter();
+  const { address, signAndBroadcastTransaction } = useWallet();
+  const { getImageForUser, canChangeImage, needsPaymentForChange, updateUserImage, updateUserImageWithPin, isDeveloper } = useUserImage();
+  const { verifyDeveloperPin, checkDeveloperStatus } = useNotifications();
+  const insets = useSafeAreaInsets();
+
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [qrImageUrl, setQrImageUrl] = useState('');
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const imageData = getImageForUser(address);
+  const isDevAddress = address ? isDeveloper(address) : false;
+  const canChangeFree = canChangeImage(address || '');
+  const requiresPayment = needsPaymentForChange(address || '');
+
+  const handleChangeImageWithPin = async () => {
+    if (pinInput.length !== 6) {
+      Alert.alert('Erreur', 'Le code PIN doit contenir 6 chiffres');
+      return;
+    }
+
+    const isValid = await verifyDeveloperPin(pinInput);
+    if (!isValid) {
+      Alert.alert('Erreur', 'Code PIN incorrect');
+      setPinInput('');
+      return;
+    }
+
+    if (!profileImageUrl || !qrImageUrl) {
+      Alert.alert('Erreur', 'Veuillez renseigner les URLs des images');
+      return;
+    }
+
+    if (!address) {
+      Alert.alert('Erreur', 'Adresse non disponible');
+      return;
+    }
+
+    const success = await updateUserImageWithPin(address, profileImageUrl, qrImageUrl);
+    if (success) {
+      Alert.alert('Succès', 'Images modifiées avec succès');
+      setShowPinModal(false);
+      setPinInput('');
+      setProfileImageUrl('');
+      setQrImageUrl('');
+      router.back();
+    } else {
+      Alert.alert('Erreur', 'Impossible de modifier les images');
+    }
+  };
+
+  const handleChangeImage = async () => {
+    if (!profileImageUrl || !qrImageUrl) {
+      Alert.alert('Erreur', 'Veuillez renseigner les URLs des images');
+      return;
+    }
+
+    if (!address) {
+      Alert.alert('Erreur', 'Adresse non disponible');
+      return;
+    }
+
+    if (isDevAddress) {
+      Alert.alert('Information', 'Les développeurs utilisent toujours l\'image BTC par défaut');
+      return;
+    }
+
+    if (canChangeFree) {
+      Alert.alert(
+        'Confirmation',
+        'Ceci est votre premier changement gratuit. Voulez-vous continuer ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Continuer',
+            onPress: async () => {
+              const success = await updateUserImage(address, profileImageUrl, qrImageUrl, false);
+              if (success) {
+                Alert.alert('Succès', 'Images modifiées avec succès');
+                setProfileImageUrl('');
+                setQrImageUrl('');
+                router.back();
+              } else {
+                Alert.alert('Erreur', 'Impossible de modifier les images');
+              }
+            },
+          },
+        ]
+      );
+    } else if (requiresPayment) {
+      Alert.alert(
+        'Paiement requis',
+        `Pour modifier vos images après le premier changement, vous devez envoyer 2000 BTC (${PAYMENT_AMOUNT_SATS.toLocaleString()} sats) à l'adresse ${PAYMENT_ADDRESS.slice(0, 20)}...`,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Payer et Modifier',
+            onPress: async () => {
+              setIsProcessing(true);
+              try {
+                const txid = await signAndBroadcastTransaction(PAYMENT_ADDRESS, PAYMENT_AMOUNT_SATS);
+                console.log('Payment sent:', txid);
+
+                const success = await updateUserImage(address, profileImageUrl, qrImageUrl, true);
+                if (success) {
+                  Alert.alert('Succès', 'Paiement effectué et images modifiées avec succès');
+                  setProfileImageUrl('');
+                  setQrImageUrl('');
+                  router.back();
+                } else {
+                  Alert.alert('Erreur', 'Paiement effectué mais impossible de modifier les images');
+                }
+              } catch (error) {
+                console.error('Payment error:', error);
+                Alert.alert('Erreur', 'Impossible d\'effectuer le paiement');
+              } finally {
+                setIsProcessing(false);
+              }
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <View style={styles.backButtonCircle}>
+            <ArrowLeft color="#FFF" size={20} strokeWidth={2.5} />
+          </View>
+        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <ImageIcon color="#FF8C00" size={24} />
+          <Text style={styles.headerTitle}>Images du Profil</Text>
+        </View>
+        <View style={styles.placeholder} />
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+      >
+        {isDevAddress && (
+          <View style={styles.devInfoBanner}>
+            <Info color="#FF8C00" size={20} />
+            <Text style={styles.devInfoText}>
+              En tant que développeur, vous utilisez l&apos;image BTC par défaut qui ne peut pas être modifiée.
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Images Actuelles</Text>
+          <View style={styles.currentImagesContainer}>
+            <View style={styles.imagePreviewCard}>
+              <Text style={styles.imagePreviewLabel}>Image de Profil</Text>
+              <Image
+                source={{ uri: imageData.profileImage }}
+                style={styles.imagePreview}
+                resizeMode="cover"
+              />
+            </View>
+            <View style={styles.imagePreviewCard}>
+              <Text style={styles.imagePreviewLabel}>Image QR Code</Text>
+              <Image
+                source={{ uri: imageData.qrImage }}
+                style={styles.imagePreview}
+                resizeMode="cover"
+              />
+            </View>
+          </View>
+        </View>
+
+        {!isDevAddress && (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Modifier les Images</Text>
+              
+              <View style={styles.infoCard}>
+                <AlertCircle color="#FF8C00" size={20} />
+                <View style={styles.infoCardText}>
+                  <Text style={styles.infoCardTitle}>Règles de modification</Text>
+                  <Text style={styles.infoCardDescription}>
+                    • Premier changement: Gratuit{'\n'}
+                    • Changements suivants: 2000 BTC ({PAYMENT_AMOUNT_SATS.toLocaleString()} sats){'\n'}
+                    • Les développeurs peuvent modifier avec le code PIN
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.changesCounter}>
+                <Text style={styles.changesCounterLabel}>Nombre de changements:</Text>
+                <Text style={styles.changesCounterValue}>{imageData.changesCount}</Text>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>URL de l&apos;image de profil</Text>
+                <TextInput
+                  style={styles.input}
+                  value={profileImageUrl}
+                  onChangeText={setProfileImageUrl}
+                  placeholder="https://example.com/profile.jpg"
+                  placeholderTextColor="#666"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>URL de l&apos;image QR Code</Text>
+                <TextInput
+                  style={styles.input}
+                  value={qrImageUrl}
+                  onChangeText={setQrImageUrl}
+                  placeholder="https://example.com/qr.jpg"
+                  placeholderTextColor="#666"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.primaryButton, isProcessing && styles.primaryButtonDisabled]}
+                onPress={handleChangeImage}
+                disabled={isProcessing || !profileImageUrl || !qrImageUrl}
+              >
+                <ImageIcon color="#000" size={20} />
+                <Text style={styles.primaryButtonText}>
+                  {canChangeFree
+                    ? 'Modifier (Gratuit)'
+                    : requiresPayment
+                    ? 'Modifier (2000 BTC)'
+                    : 'Modifier'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {checkDeveloperStatus(address) && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Modification avec Code PIN</Text>
+                <Text style={styles.sectionDescription}>
+                  En tant que développeur, vous pouvez modifier les images d&apos;un utilisateur avec votre code PIN
+                </Text>
+                
+                <TouchableOpacity
+                  style={styles.pinButton}
+                  onPress={() => setShowPinModal(true)}
+                >
+                  <Lock color="#FF8C00" size={20} />
+                  <Text style={styles.pinButtonText}>Modifier avec PIN</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
+
+      <Modal
+        visible={showPinModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowPinModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => {
+            setShowPinModal(false);
+            setPinInput('');
+          }}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <Pressable
+              style={styles.modalCloseButton}
+              onPress={() => {
+                setShowPinModal(false);
+                setPinInput('');
+              }}
+            >
+              <X color="#999" size={24} />
+            </Pressable>
+
+            <Lock color="#FF8C00" size={40} style={{ alignSelf: 'center', marginBottom: 16 }} />
+            <Text style={styles.modalTitle}>Code PIN Développeur</Text>
+            <Text style={styles.modalText}>
+              Entrez votre code PIN à 6 chiffres pour modifier les images
+            </Text>
+
+            <TextInput
+              style={styles.pinInput}
+              value={pinInput}
+              onChangeText={(text) => setPinInput(text.replace(/[^0-9]/g, '').slice(0, 6))}
+              placeholder="000000"
+              placeholderTextColor="#666"
+              keyboardType="number-pad"
+              maxLength={6}
+              secureTextEntry
+              autoFocus
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalButtonCancel}
+                onPress={() => {
+                  setShowPinModal(false);
+                  setPinInput('');
+                }}
+              >
+                <Text style={styles.modalButtonCancelText}>Annuler</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButtonConfirm, pinInput.length !== 6 && styles.modalButtonDisabled]}
+                onPress={handleChangeImageWithPin}
+                disabled={pinInput.length !== 6}
+              >
+                <Text style={styles.modalButtonConfirmText}>Confirmer</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0A0A0A',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: '#0A0A0A',
+  },
+  backButton: {
+    padding: 4,
+  },
+  backButtonCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#1A1A1A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+  },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '700' as const,
+  },
+  placeholder: {
+    width: 40,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: 20,
+  },
+  devInfoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(255, 140, 0, 0.15)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+  },
+  devInfoText: {
+    flex: 1,
+    color: '#FF8C00',
+    fontSize: 14,
+    fontWeight: '600' as const,
+    lineHeight: 20,
+  },
+  section: {
+    backgroundColor: '#141414',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  sectionTitle: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '700' as const,
+    marginBottom: 16,
+  },
+  sectionDescription: {
+    color: '#999',
+    fontSize: 14,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  currentImagesContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  imagePreviewCard: {
+    flex: 1,
+    backgroundColor: '#0A0A0A',
+    borderRadius: 16,
+    padding: 12,
+    alignItems: 'center',
+  },
+  imagePreviewLabel: {
+    color: '#999',
+    fontSize: 12,
+    fontWeight: '600' as const,
+    marginBottom: 12,
+  },
+  imagePreview: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FF8C00',
+  },
+  infoCard: {
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+  },
+  infoCardText: {
+    flex: 1,
+  },
+  infoCardTitle: {
+    color: '#FF8C00',
+    fontSize: 14,
+    fontWeight: '700' as const,
+    marginBottom: 6,
+  },
+  infoCardDescription: {
+    color: '#999',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  changesCounter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#0A0A0A',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  changesCounterLabel: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  changesCounterValue: {
+    color: '#FF8C00',
+    fontSize: 20,
+    fontWeight: '900' as const,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600' as const,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#0A0A0A',
+    borderRadius: 12,
+    padding: 16,
+    color: '#FFF',
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  primaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#FF8C00',
+    borderRadius: 12,
+    padding: 16,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: '#555',
+    opacity: 0.5,
+  },
+  primaryButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  pinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#FF8C00',
+  },
+  pinButtonText: {
+    color: '#FF8C00',
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalCloseButton: {
+    position: 'absolute' as const,
+    top: 16,
+    right: 16,
+    padding: 8,
+    zIndex: 10,
+  },
+  modalTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700' as const,
+    marginBottom: 8,
+    textAlign: 'center' as const,
+  },
+  modalText: {
+    color: '#999',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center' as const,
+    marginBottom: 24,
+  },
+  pinInput: {
+    backgroundColor: '#0A0A0A',
+    borderRadius: 12,
+    padding: 16,
+    color: '#FFF',
+    fontSize: 24,
+    textAlign: 'center' as const,
+    fontWeight: '700' as const,
+    letterSpacing: 8,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: '#333',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButtonCancel: {
+    flex: 1,
+    backgroundColor: '#2A2A2A',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  modalButtonCancelText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  modalButtonConfirm: {
+    flex: 1,
+    backgroundColor: '#FF8C00',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  modalButtonConfirmText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  modalButtonDisabled: {
+    opacity: 0.5,
+  },
+});

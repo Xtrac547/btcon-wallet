@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimens
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
+import { useUserImage } from '@/contexts/UserImageContext';
 import { Copy, Share2, ExternalLink, ArrowLeft, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
@@ -12,6 +13,7 @@ export default function ReceiveScreen() {
   const router = useRouter();
   const { address, esploraService } = useWallet();
   const { username } = useUsername();
+  const { getImageForUser } = useUserImage();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
@@ -219,7 +221,7 @@ export default function ReceiveScreen() {
             }]}>
               <View style={[styles.artworkBackground, { width: qrArtSize, height: qrArtSize }]}>
                 <Image
-                  source={{ uri: currentArt.imageUrl }}
+                  source={{ uri: getImageForUser(address).qrImage }}
                   style={styles.artworkImage}
                   resizeMode="cover"
                 />

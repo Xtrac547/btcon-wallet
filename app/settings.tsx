@@ -4,7 +4,8 @@ import { View, Text, StyleSheet, ScrollView, Platform, Alert, Pressable, useWind
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
-import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X } from 'lucide-react-native';
+import { useUserImage } from '@/contexts/UserImageContext';
+import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X, Image as ImageIcon } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,6 +13,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { mnemonic, deleteWallet, address } = useWallet();
   const { username, setUsername: saveUsername, deleteUsername } = useUsername();
+  const { isDeveloper } = useUserImage();
   const [showSeed, setShowSeed] = useState(false);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
@@ -98,6 +100,23 @@ export default function SettingsScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40, maxWidth: isWideScreen ? 700 : width, width: '100%', alignSelf: 'center' }]}>
         <View style={styles.topGradient} />
         
+        {!isDeveloper(address || '') && (
+          <Pressable
+            style={styles.imageCard}
+            onPress={() => router.push('/profile-image')}
+          >
+            <View style={styles.imageCardHeader}>
+              <View style={styles.imageCardIcon}>
+                <ImageIcon color="#FF8C00" size={20} />
+              </View>
+              <Text style={styles.imageCardTitle}>Images du Profil</Text>
+            </View>
+            <Text style={styles.imageCardDescription}>
+              Modifier les images de profil et QR code
+            </Text>
+          </Pressable>
+        )}
+
         <View style={styles.usernameCard}>
           <View style={styles.usernameHeader}>
             <Text style={styles.usernameLabel}>Pseudo</Text>
@@ -645,5 +664,39 @@ const styles = StyleSheet.create({
     color: '#FF4444',
     fontSize: 16,
     fontWeight: '600' as const,
+  },
+  imageCard: {
+    backgroundColor: '#141414',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  imageCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  imageCardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+  },
+  imageCardTitle: {
+    color: '#FFF',
+    fontSize: 17,
+    fontWeight: '700' as const,
+  },
+  imageCardDescription: {
+    color: '#999',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useUserImage } from '@/contexts/UserImageContext';
 import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw, TrendingUp, TrendingDown, Clock } from 'lucide-react-native';
 import { useState, useEffect, useRef } from 'react';
 
@@ -12,6 +13,7 @@ export default function WalletScreen() {
   const { balance, address, refreshBalance, transactions } = useWallet();
   const { username, getUsernameForAddress, isLoading: usernameLoading } = useUsername();
   const { setDeveloperStatus, isDeveloper } = useNotifications();
+  const { getImageForUser } = useUserImage();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -145,13 +147,8 @@ export default function WalletScreen() {
 
   const getCustomImageForAddress = (addr: string | null): string | null => {
     if (!addr) return null;
-    if (addr === 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd') {
-      return 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&h=400&fit=crop';
-    }
-    if (addr === 'bc1qdff8680vyy0qthr5vpe3ywzw48r8rr4jn4jvac') {
-      return 'https://i.seadn.io/gae/Ju9CkWtV-1Okvf45wo8UctR-M9He2PjILP0oOvxE89AyiPPGtrR3gysu1Zgy0hjd2xKIgjJJtWIc0ybj4Vd7wv8t3pxDGHoJBzDB?w=500';
-    }
-    return null;
+    const imageData = getImageForUser(addr);
+    return imageData.profileImage;
   };
 
   const contentMaxWidth = isWideScreen ? 800 : width;
