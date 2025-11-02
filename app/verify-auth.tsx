@@ -15,16 +15,18 @@ import * as Haptics from 'expo-haptics';
 
 export default function VerifyAuthScreen() {
   const router = useRouter();
-  const { authType, verifyPin, verifyBiometric } = useAuth();
+  const { useBiometric, verifyPin, verifyBiometric } = useAuth();
   const [pin, setPin] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [showBiometric, setShowBiometric] = useState(false);
 
   useEffect(() => {
-    if (authType === 'biometric') {
+    if (useBiometric) {
+      setShowBiometric(true);
       handleBiometricAuth();
     }
-  }, [authType]);
+  }, [useBiometric]);
 
   const handleBiometricAuth = async () => {
     setIsLoading(true);
@@ -35,10 +37,12 @@ export default function VerifyAuthScreen() {
       if (success) {
         router.replace('/wallet');
       } else {
-        setError('Authentification échouée');
+        setError('Authentification échouée. Utilisez votre code PIN.');
+        setShowBiometric(false);
       }
     } catch (error) {
-      setError('Erreur lors de l\'authentification');
+      setError('Erreur. Utilisez votre code PIN.');
+      setShowBiometric(false);
     } finally {
       setIsLoading(false);
     }
@@ -93,54 +97,73 @@ export default function VerifyAuthScreen() {
     );
   }
 
-  if (authType === 'biometric') {
-    return (
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <Fingerprint size={64} color="#FF8C00" />
-          <Text style={styles.title}>Authentification requise</Text>
-          
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleBiometricAuth}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Réessayer</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Entrez votre code PIN</Text>
+        {showBiometric ? (
+          <>
+            <Fingerprint size={64} color="#FF8C00" />
+            <Text style={styles.title}>Authentification requise</Text>
+            
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <TextInput
-          style={styles.pinInput}
-          value={pin}
-          onChangeText={handlePinChange}
-          keyboardType="number-pad"
-          maxLength={6}
-          secureTextEntry
-          placeholder="••••••"
-          placeholderTextColor="#666"
-          autoFocus
-        />
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleBiometricAuth}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.buttonText}>Réessayer la biométrie</Text>
+            </TouchableOpacity>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <TouchableOpacity
+              style={[styles.button, styles.secondaryButton]}
+              onPress={() => setShowBiometric(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.secondaryButtonText}>Utiliser le code PIN</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={styles.title}>Entrez votre code PIN</Text>
 
-        <TouchableOpacity
-          style={[styles.button, pin.length !== 6 && styles.buttonDisabled]}
-          onPress={handlePinSubmit}
-          disabled={pin.length !== 6}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.buttonText}>Déverrouiller</Text>
-        </TouchableOpacity>
+            <TextInput
+              style={styles.pinInput}
+              value={pin}
+              onChangeText={handlePinChange}
+              keyboardType="number-pad"
+              maxLength={6}
+              secureTextEntry
+              placeholder="••••••"
+              placeholderTextColor="#666"
+              autoFocus
+            />
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <TouchableOpacity
+              style={[styles.button, pin.length !== 6 && styles.buttonDisabled]}
+              onPress={handlePinSubmit}
+              disabled={pin.length !== 6}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.buttonText}>Déverrouiller</Text>
+            </TouchableOpacity>
+
+            {useBiometric && (
+              <TouchableOpacity
+                style={[styles.button, styles.secondaryButton]}
+                onPress={() => setShowBiometric(true)}
+                activeOpacity={0.7}
+              >
+                <Fingerprint size={20} color="#FF8C00" />
+                <Text style={styles.secondaryButtonText}>Utiliser la biométrie</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
       </View>
     </View>
   );
@@ -191,6 +214,19 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 18,
     fontWeight: '700',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF8C00',
+    flexDirection: 'row' as const,
+    gap: 8,
+    marginTop: 12,
+  },
+  secondaryButtonText: {
+    color: '#FF8C00',
+    fontSize: 16,
+    fontWeight: '600',
   },
   errorText: {
     color: '#FF4444',

@@ -12,7 +12,7 @@ const STORAGE_KEYS = {
   IS_AUTHENTICATED: 'btcon_is_authenticated',
 };
 
-type AuthType = 'pin' | 'biometric' | null;
+type AuthType = 'pin' | 'pin-biometric' | null;
 
 interface AuthState {
   isAuthConfigured: boolean;
@@ -20,6 +20,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isBiometricAvailable: boolean;
+  useBiometric: boolean;
 }
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
@@ -29,6 +30,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isAuthenticated: false,
     isLoading: true,
     isBiometricAvailable: false,
+    useBiometric: false,
   });
 
   const secureStorageAvailable = Platform.OS !== 'web';
@@ -72,32 +74,23 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   };
 
-  const setupPinAuth = async (pin: string) => {
-    console.log('Setting up PIN authentication');
+  const setupPinAuth = async (pin: string, enableBiometric: boolean = false) => {
+    console.log('Setting up PIN authentication', { enableBiometric });
     await storeSecurely(STORAGE_KEYS.PIN_CODE, pin);
     await AsyncStorage.setItem(STORAGE_KEYS.AUTH_CONFIGURED, 'true');
-    await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TYPE, 'pin');
+    const authType = enableBiometric ? 'pin-biometric' : 'pin';
+    await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TYPE, authType);
 
     setState(prev => ({
       ...prev,
       isAuthConfigured: true,
-      authType: 'pin',
+      authType,
       isAuthenticated: true,
+      useBiometric: enableBiometric,
     }));
   };
 
-  const setupBiometricAuth = async () => {
-    console.log('Setting up biometric authentication');
-    await AsyncStorage.setItem(STORAGE_KEYS.AUTH_CONFIGURED, 'true');
-    await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TYPE, 'biometric');
 
-    setState(prev => ({
-      ...prev,
-      isAuthConfigured: true,
-      authType: 'biometric',
-      isAuthenticated: true,
-    }));
-  };
 
   const verifyPin = async (pin: string): Promise<boolean> => {
     const storedPin = await getSecurely(STORAGE_KEYS.PIN_CODE);
@@ -176,6 +169,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         authType: (authTypeStr as AuthType) || null,
         isLoading: false,
         isBiometricAvailable: isBioAvailable,
+        useBiometric: authTypeStr === 'pin-biometric',
       }));
 
       console.log('Auth state loaded:', {
@@ -199,7 +193,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   return {
     ...state,
     setupPinAuth,
-    setupBiometricAuth,
     verifyPin,
     verifyBiometric,
     logout,

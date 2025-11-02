@@ -15,37 +15,14 @@ import * as Haptics from 'expo-haptics';
 
 export default function SetupAuthScreen() {
   const router = useRouter();
-  const { setupPinAuth, setupBiometricAuth, isBiometricAvailable } = useAuth();
+  const { setupPinAuth, isBiometricAvailable } = useAuth();
   const [pin, setPin] = useState<string>('');
   const [confirmPin, setConfirmPin] = useState<string>('');
-  const [step, setStep] = useState<'choose' | 'enter-pin' | 'confirm-pin'>('choose');
+  const [step, setStep] = useState<'enter-pin' | 'confirm-pin' | 'choose-biometric'>('enter-pin');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  const handlePinChoice = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
-    setStep('enter-pin');
-    setError('');
-  };
 
-  const handleBiometricChoice = async () => {
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
-    setIsLoading(true);
-    setError('');
-
-    try {
-      await setupBiometricAuth();
-      router.replace('/set-username');
-    } catch (error) {
-      setError('Erreur lors de la configuration');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handlePinSubmit = () => {
     if (pin.length !== 6) {
@@ -60,7 +37,7 @@ export default function SetupAuthScreen() {
     setError('');
   };
 
-  const handleConfirmPinSubmit = async () => {
+  const handleConfirmPinSubmit = () => {
     if (confirmPin !== pin) {
       setError('Les codes PIN ne correspondent pas');
       setConfirmPin('');
@@ -70,11 +47,20 @@ export default function SetupAuthScreen() {
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
+    
+    if (isBiometricAvailable) {
+      setStep('choose-biometric');
+    } else {
+      handleSetupComplete(false);
+    }
+  };
+
+  const handleSetupComplete = async (enableBiometric: boolean) => {
     setIsLoading(true);
     setError('');
 
     try {
-      await setupPinAuth(pin);
+      await setupPinAuth(pin, enableBiometric);
       router.replace('/set-username');
     } catch (error) {
       setError('Erreur lors de la configuration');
@@ -103,34 +89,42 @@ export default function SetupAuthScreen() {
     );
   }
 
-  if (step === 'choose') {
+  if (step === 'choose-biometric') {
     return (
       <View style={styles.container}>
         <View style={styles.content}>
-          <Text style={styles.title}>Sécuriser votre portefeuille</Text>
+          <Fingerprint size={64} color="#FF8C00" />
+          <Text style={styles.title}>Activer la biométrie ?</Text>
           <Text style={styles.subtitle}>
-            Choisissez une méthode d'authentification
+            Vous pourrez utiliser votre empreinte digitale ou Face ID en plus du code PIN
           </Text>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.optionButton}
-              onPress={handlePinChoice}
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.selectionAsync();
+                }
+                handleSetupComplete(true);
+              }}
               activeOpacity={0.7}
             >
-              <Text style={styles.optionButtonText}>Code PIN (6 chiffres)</Text>
+              <Text style={styles.optionButtonText}>Activer la biométrie</Text>
             </TouchableOpacity>
 
-            {isBiometricAvailable && (
-              <TouchableOpacity
-                style={styles.optionButton}
-                onPress={handleBiometricChoice}
-                activeOpacity={0.7}
-              >
-                <Fingerprint size={24} color="#FFF" style={styles.icon} />
-                <Text style={styles.optionButtonText}>Biométrie</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.optionButton, styles.secondaryButton]}
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.selectionAsync();
+                }
+                handleSetupComplete(false);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.secondaryButtonText}>Code PIN uniquement</Text>
+            </TouchableOpacity>
           </View>
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -246,6 +240,16 @@ const styles = StyleSheet.create({
   },
   optionButtonText: {
     color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF8C00',
+  },
+  secondaryButtonText: {
+    color: '#FF8C00',
     fontSize: 18,
     fontWeight: '600',
   },
