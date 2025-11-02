@@ -10,6 +10,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { FollowingProvider } from "@/contexts/FollowingContext";
 import { UserImageProvider } from "@/contexts/UserImageContext";
 import { DeveloperHierarchyProvider } from "@/contexts/DeveloperHierarchyContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Platform } from 'react-native';
 
@@ -34,6 +35,8 @@ function RootLayoutNav() {
       <Stack.Screen name="search-users" options={{ headerShown: false }} />
       <Stack.Screen name="profile-image" options={{ headerShown: false }} />
       <Stack.Screen name="buy-btc" options={{ headerShown: false }} />
+      <Stack.Screen name="setup-auth" options={{ headerShown: false }} />
+      <Stack.Screen name="verify-auth" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -57,19 +60,21 @@ export default function RootLayout() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <UsernameProvider>
-            <FollowingProvider>
-              <NotificationProvider>
-                <DeveloperHierarchyProvider>
-                  <UserImageProvider>
-                    <GestureHandlerRootView style={{ flex: 1 }}>
-                      <RootLayoutNav />
-                    </GestureHandlerRootView>
-                  </UserImageProvider>
-                </DeveloperHierarchyProvider>
-              </NotificationProvider>
-            </FollowingProvider>
-          </UsernameProvider>
+          <AuthProvider>
+            <UsernameProvider>
+              <FollowingProvider>
+                <NotificationProvider>
+                  <DeveloperHierarchyProvider>
+                    <UserImageProvider>
+                      <GestureHandlerRootView style={{ flex: 1 }}>
+                        <RootLayoutNav />
+                      </GestureHandlerRootView>
+                    </UserImageProvider>
+                  </DeveloperHierarchyProvider>
+                </NotificationProvider>
+              </FollowingProvider>
+            </UsernameProvider>
+          </AuthProvider>
         </WalletProvider>
       </QueryClientProvider>
     </ErrorBoundary>

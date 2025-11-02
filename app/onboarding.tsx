@@ -56,7 +56,7 @@ export default function OnboardingScreen() {
             text: 'Oui, j\'ai noté',
             onPress: () => {
               setSeedConfirmed(true);
-              setMode('set-username');
+              router.replace('/setup-auth');
             },
           },
         ]
@@ -83,7 +83,7 @@ export default function OnboardingScreen() {
     setIsCreating(true);
     try {
       await restoreWallet(restorePhrase.trim());
-      setMode('set-username');
+      router.replace('/setup-auth');
     } catch (error) {
       console.error('Error restoring wallet:', error);
       Alert.alert('Erreur', 'Phrase de récupération invalide. Veuillez vérifier et réessayer.');
@@ -204,49 +204,7 @@ export default function OnboardingScreen() {
     );
   }
 
-  if (mode === 'set-username') {
-    return (
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Choisir un Pseudo</Text>
-          <Text style={styles.subtitle}>Créez un pseudo unique commençant par @. Ce pseudo est obligatoire et ne pourra pas être modifié.</Text>
 
-          <View style={styles.usernameInputContainer}>
-            <Text style={styles.atSymbol}>@</Text>
-            <TextInput
-              style={styles.usernameInput}
-              value={usernameInput}
-              onChangeText={setUsernameInput}
-              placeholder="pseudo"
-              placeholderTextColor="#666"
-              autoCapitalize="none"
-              autoCorrect={false}
-              maxLength={20}
-            />
-          </View>
-
-          <Text style={styles.hintText}>
-            ⚠️ Attention : Votre pseudo est permanent et ne peut pas être changé après création. Il permettra aux autres utilisateurs de vous envoyer des Btcon plus facilement.
-          </Text>
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleSetUsername}
-              disabled={isCreating}
-              testID="confirm-username-button"
-            >
-              {isCreating ? (
-                <ActivityIndicator color="#FFF" />
-              ) : (
-                <Text style={styles.primaryButtonText}>Confirmer</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    );
-  }
 
   if (mode === 'show-seed') {
     return (
