@@ -51,8 +51,8 @@ export default function VerifyAuthScreen() {
   };
 
   const handlePinSubmit = async () => {
-    if (pin.length !== 6) {
-      setError('Le code PIN doit contenir 6 chiffres');
+    if (pin.length < 4) {
+      setError('Le code PIN doit contenir au moins 4 chiffres');
       return;
     }
 
@@ -87,9 +87,15 @@ export default function VerifyAuthScreen() {
 
   const handlePinChange = (text: string) => {
     const numericText = text.replace(/[^0-9]/g, '');
-    if (numericText.length <= 6) {
+    if (numericText.length <= 8) {
       setPin(numericText);
       setError('');
+    }
+  };
+
+  const handleLockPress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
     }
   };
 
@@ -140,16 +146,20 @@ export default function VerifyAuthScreen() {
           </>
         ) : (
           <>
-            <View style={styles.lockIconContainer}>
+            <TouchableOpacity 
+              style={styles.lockIconContainer}
+              onPress={handleLockPress}
+              activeOpacity={0.7}
+            >
               <View style={styles.lockIconCircle}>
                 <Text style={styles.lockIcon}>🔒</Text>
               </View>
-            </View>
+            </TouchableOpacity>
             <Text style={styles.title}>Entrez votre code PIN</Text>
-            <Text style={styles.subtitle}>Saisissez votre code à 6 chiffres</Text>
+            <Text style={styles.subtitle}>Appuyez sur le cadenas pour entrer le code</Text>
 
             <View style={styles.pinContainer}>
-              {[...Array(6)].map((_, index) => (
+              {[...Array(8)].map((_, index) => (
                 <View
                   key={index}
                   style={[
@@ -165,18 +175,18 @@ export default function VerifyAuthScreen() {
               value={pin}
               onChangeText={handlePinChange}
               keyboardType="number-pad"
-              maxLength={6}
+              maxLength={8}
               secureTextEntry
-              autoFocus
+              autoFocus={false}
             />
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={[styles.button, pin.length !== 6 && styles.buttonDisabled]}
+                style={[styles.button, pin.length < 4 && styles.buttonDisabled]}
                 onPress={handlePinSubmit}
-                disabled={pin.length !== 6}
+                disabled={pin.length < 4}
                 activeOpacity={0.85}
               >
                 <Text style={styles.buttonText}>Déverrouiller</Text>

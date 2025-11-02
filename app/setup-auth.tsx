@@ -24,9 +24,16 @@ export default function SetupAuthScreen() {
 
 
 
+  const handleSkipPin = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
+    router.replace('/');
+  };
+
   const handlePinSubmit = () => {
-    if (pin.length !== 6) {
-      setError('Le code PIN doit contenir 6 chiffres');
+    if (pin.length < 4 || pin.length > 8) {
+      setError('Le code PIN doit contenir entre 4 et 8 chiffres');
       return;
     }
 
@@ -73,7 +80,7 @@ export default function SetupAuthScreen() {
 
   const handlePinChange = (text: string, isConfirm: boolean = false) => {
     const numericText = text.replace(/[^0-9]/g, '');
-    if (numericText.length <= 6) {
+    if (numericText.length <= 8) {
       if (isConfirm) {
         setConfirmPin(numericText);
       } else {
@@ -155,10 +162,10 @@ export default function SetupAuthScreen() {
             </View>
           </View>
           <Text style={styles.title}>Créer un code PIN</Text>
-          <Text style={styles.subtitle}>Entrez un code à 6 chiffres</Text>
+          <Text style={styles.subtitle}>Entrez un code de 4 à 8 chiffres (optionnel)</Text>
 
           <View style={styles.pinContainer}>
-            {[...Array(6)].map((_, index) => (
+            {[...Array(8)].map((_, index) => (
               <View
                 key={index}
                 style={[
@@ -174,21 +181,29 @@ export default function SetupAuthScreen() {
             value={pin}
             onChangeText={(text) => handlePinChange(text, false)}
             keyboardType="number-pad"
-            maxLength={6}
+            maxLength={8}
             secureTextEntry
-            autoFocus
+            autoFocus={false}
           />
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[styles.button, pin.length !== 6 && styles.buttonDisabled]}
+              style={[styles.button, pin.length < 4 && styles.buttonDisabled]}
               onPress={handlePinSubmit}
-              disabled={pin.length !== 6}
+              disabled={pin.length < 4}
               activeOpacity={0.85}
             >
               <Text style={styles.buttonText}>Continuer</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.skipButton]}
+              onPress={handleSkipPin}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.skipButtonText}>Ignorer (pas de code)</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -212,7 +227,7 @@ export default function SetupAuthScreen() {
         <Text style={styles.subtitle}>Entrez à nouveau votre code</Text>
 
         <View style={styles.pinContainer}>
-          {[...Array(6)].map((_, index) => (
+          {[...Array(8)].map((_, index) => (
             <View
               key={index}
               style={[
@@ -228,18 +243,18 @@ export default function SetupAuthScreen() {
           value={confirmPin}
           onChangeText={(text) => handlePinChange(text, true)}
           keyboardType="number-pad"
-          maxLength={6}
+          maxLength={8}
           secureTextEntry
-          autoFocus
+          autoFocus={false}
         />
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.button, confirmPin.length !== 6 && styles.buttonDisabled]}
+            style={[styles.button, confirmPin.length !== pin.length && styles.buttonDisabled]}
             onPress={handleConfirmPinSubmit}
-            disabled={confirmPin.length !== 6}
+            disabled={confirmPin.length !== pin.length}
             activeOpacity={0.85}
           >
             <Text style={styles.buttonText}>Confirmer</Text>
@@ -406,5 +421,17 @@ const styles = StyleSheet.create({
     marginTop: -32,
     textAlign: 'center',
     fontWeight: '600' as const,
+  },
+  skipButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#333',
+    shadowOpacity: 0,
+  },
+  skipButtonText: {
+    color: '#999',
+    fontSize: 17,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
 });
