@@ -25,7 +25,7 @@ export default function DeveloperScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserEntry | null>(null);
   const [users, setUsers] = useState<UserEntry[]>([]);
-  const [showAllUsers, setShowAllUsers] = useState(false);
+  const [showAllUsers, setShowAllUsers] = useState(true);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [showPinVerification, setShowPinVerification] = useState(false);
   const [pinInput, setPinInput] = useState('');
@@ -42,6 +42,7 @@ export default function DeveloperScreen() {
 
   useEffect(() => {
     checkPinStatus();
+    loadUsers();
   }, []);
 
   const loadUsers = async () => {
