@@ -184,10 +184,7 @@ export default function OnboardingScreen() {
               {isCreating ? (
                 <ActivityIndicator color="#000" />
               ) : (
-                <>
-                  <Text style={styles.primaryButtonText}>Créer un Nouveau Portefeuille</Text>
-                  <Text style={styles.primaryButtonSubtext}>Commencez votre aventure Bitcoin</Text>
-                </>
+                <Text style={styles.primaryButtonText}>Nouveau</Text>
               )}
             </TouchableOpacity>
 
@@ -201,8 +198,7 @@ export default function OnboardingScreen() {
               activeOpacity={0.85}
               testID="restore-wallet-button"
             >
-              <Text style={styles.secondaryButtonText}>Restaurer un Portefeuille</Text>
-              <Text style={styles.secondaryButtonSubtext}>J'ai déjà une phrase de récupération</Text>
+              <Text style={styles.secondaryButtonText}>Ancien</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -398,7 +394,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     backgroundColor: '#FF8C00',
     borderRadius: 28,
-    paddingVertical: 28,
+    paddingVertical: 32,
     paddingHorizontal: 32,
     alignItems: 'center',
     justifyContent: 'center',
@@ -410,10 +406,9 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#000',
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: '800' as const,
-    letterSpacing: 0.5,
-    marginBottom: 4,
+    letterSpacing: 1,
   },
   primaryButtonSubtext: {
     color: 'rgba(0, 0, 0, 0.7)',
@@ -425,17 +420,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 140, 0, 0.3)',
     borderRadius: 28,
-    paddingVertical: 28,
+    paddingVertical: 32,
     paddingHorizontal: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
     color: '#FF8C00',
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: '800' as const,
-    letterSpacing: 0.5,
-    marginBottom: 4,
+    letterSpacing: 1,
   },
   secondaryButtonSubtext: {
     color: 'rgba(255, 140, 0, 0.7)',
