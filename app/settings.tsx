@@ -4,7 +4,6 @@ import { View, Text, StyleSheet, ScrollView, Platform, Alert, Pressable, useWind
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
-import { useUserImage } from '@/contexts/UserImageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X, Image as ImageIcon, Key, Fingerprint } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -14,7 +13,6 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { mnemonic, deleteWallet, address, balance, signAndBroadcastTransaction, refreshBalance } = useWallet();
   const { username, usernameChangesCount, setUsername: saveUsername } = useUsername();
-  const { isDeveloper } = useUserImage();
   const { isAuthConfigured, authType, useBiometric: biometricEnabled, isBiometricAvailable, resetAuth, toggleBiometric, changePin } = useAuth();
   const [showSeed, setShowSeed] = useState(false);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
@@ -108,22 +106,20 @@ export default function SettingsScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40, maxWidth: isWideScreen ? 700 : width, width: '100%', alignSelf: 'center' }]}>
         <View style={styles.topGradient} />
         
-        {!isDeveloper(address || '') && (
-          <Pressable
-            style={styles.imageCard}
-            onPress={() => router.push('/profile-image')}
-          >
-            <View style={styles.imageCardHeader}>
-              <View style={styles.imageCardIcon}>
-                <ImageIcon color="#FF8C00" size={20} />
-              </View>
-              <Text style={styles.imageCardTitle}>Images du Profil</Text>
+        <Pressable
+          style={styles.imageCard}
+          onPress={() => router.push('/profile-image')}
+        >
+          <View style={styles.imageCardHeader}>
+            <View style={styles.imageCardIcon}>
+              <ImageIcon color="#FF8C00" size={20} />
             </View>
-            <Text style={styles.imageCardDescription}>
-              Modifier les images de profil et QR code
-            </Text>
-          </Pressable>
-        )}
+            <Text style={styles.imageCardTitle}>Images du Profil</Text>
+          </View>
+          <Text style={styles.imageCardDescription}>
+            Modifier les images de profil et QR code
+          </Text>
+        </Pressable>
 
         <View style={styles.usernameCard}>
           <View style={styles.usernameHeader}>
