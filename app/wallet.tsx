@@ -7,6 +7,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useUserImage } from '@/contexts/UserImageContext';
 import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw, TrendingUp, TrendingDown, Clock, Plus } from 'lucide-react-native';
 import { useState, useEffect, useRef } from 'react';
+import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function WalletScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const [addressUsernameMap, setAddressUsernameMap] = useState<Record<string, string>>({});
+  const btcPrice = useBtcPrice();
 
 
 
@@ -248,6 +250,7 @@ export default function WalletScreen() {
             <Text style={styles.balanceUnit}>Btcon</Text>
           </View>
           <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
+          <Text style={styles.balanceEuro}>≈ {btconToEuro(Number(formatBalance(balance)), btcPrice)} €</Text>
 
           {address && (
             <View style={styles.addressContainer}>
@@ -336,10 +339,10 @@ export default function WalletScreen() {
                       type === 'received' && styles.transactionAmountReceived,
                       type === 'pending' && styles.transactionAmountPending,
                     ]}>
-                      {isPositive ? '+' : '-'}{Math.abs(amount).toLocaleString()}
+                      {isPositive ? '+' : '-'}{Math.abs(amount).toLocaleString()} Btcon
                     </Text>
                     <Text style={styles.transactionAmountBtc}>
-                      {(Math.abs(amount) / 100000000).toFixed(8)} BTC
+                      {(Math.abs(amount) / 100000000).toFixed(8)} BTC · ≈ {btconToEuro(Math.abs(amount), btcPrice)} €
                     </Text>
                   </View>
                 </View>
@@ -530,6 +533,12 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 16,
     marginTop: 4,
+  },
+  balanceEuro: {
+    color: '#FF8C00',
+    fontSize: 18,
+    marginTop: 6,
+    fontWeight: '700' as const,
   },
   addressContainer: {
     marginTop: 24,

@@ -34,7 +34,23 @@ export default function SendScreen() {
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [networkFees, setNetworkFees] = useState(0);
+  const [btcPrice, setBtcPrice] = useState(100000);
 
+  useEffect(() => {
+    const fetchBtcPrice = async () => {
+      try {
+        const response = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=BTC');
+        const data = await response.json();
+        const eurRate = parseFloat(data.data.rates.EUR);
+        setBtcPrice(eurRate);
+      } catch (error) {
+        console.error('Error fetching BTC price:', error);
+      }
+    };
+    fetchBtcPrice();
+    const interval = setInterval(fetchBtcPrice, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const tokenAmounts = [
     { value: 1000, shape: 'circle' as const },
@@ -47,7 +63,7 @@ export default function SendScreen() {
     return Math.floor(btcon).toString();
   };
 
-  const btconToEuro = (btcon: number, btcPrice: number = 100000): string => {
+  const btconToEuro = (btcon: number): string => {
     const satoshis = (btcon / 100000000) * 100000000;
     const btc = satoshis / 100000000;
     const euro = btc * btcPrice;
@@ -256,7 +272,7 @@ export default function SendScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {getTotalAmount() === 0 ? (
+        {getTotalAmount() === 0 && (
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Solde disponible</Text>
             <View style={styles.balanceRow}>
@@ -266,16 +282,18 @@ export default function SendScreen() {
             <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
             <Text style={styles.balanceEuro}>≈ {btconToEuro(Number(formatBalance(balance)))} €</Text>
           </View>
-        ) : (
+        )}
+
+        {getTotalAmount() === 0 && (
           <View style={styles.formCard}>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Adresse BTC</Text>
+              <Text style={styles.inputLabel}>Destinataire</Text>
               <View style={styles.inputRow}>
                 <TextInput
                   style={styles.input}
                   value={toAddress}
                   onChangeText={setToAddress}
-                  placeholder="@pseudo, adresse BTC ou scanner QR"
+                  placeholder="@pseudo, adresse BTC"
                   placeholderTextColor="#666"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -292,7 +310,7 @@ export default function SendScreen() {
           </View>
         )}
 
-        {following.length > 0 && (
+        {getTotalAmount() === 0 && following.length > 0 && (
           <View style={styles.followingSection}>
             <Text style={styles.followingSectionTitle}>Accès rapide</Text>
             <ScrollView 
@@ -380,41 +398,113 @@ export default function SendScreen() {
         )}
 
         {getTotalAmount() > 0 && (
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Jetons sélectionnés</Text>
-            <View style={styles.tokensListContainer}>
-              {Object.entries(tokenCounts).map(([value, count]) => {
-                if (count === 0) return null;
-                return (
-                  <View key={value} style={styles.tokenSummaryRow}>
-                    <Text style={styles.tokenSummaryText}>{value} Btcon</Text>
-                    <Text style={styles.tokenSummaryCount}>× {count}</Text>
-                  </View>
-                );
-              })}
-            </View>
-            <View style={styles.totalContainer}>
-              <Text style={styles.totalLabel}>Estimation:</Text>
-              <View style={styles.totalRow}>
-                <Text style={styles.totalAmount}>{Math.floor(getTotalAmount())}</Text>
-                <Text style={styles.totalUnit}>Btcon</Text>
+          <>
+            <View style={styles.formCard}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Destinataire</Text>
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.input}
+                    value={toAddress}
+                    onChangeText={setToAddress}
+                    placeholder="@pseudo, adresse BTC"
+                    placeholderTextColor="#666"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <TouchableOpacity
+                    style={styles.scanButton}
+                    onPress={handleOpenScanner}
+                    testID="scan-qr-button"
+                  >
+                    <QrCode color="#FF8C00" size={24} />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <Text style={styles.conversionText}>
-                ≈ {(getTotalAmount() / 100000000).toFixed(8)} BTC
-              </Text>
-              <Text style={styles.conversionText}>
-                ≈ {btconToEuro(getTotalAmount())} €
-              </Text>
             </View>
 
-            <View style={styles.feesContainer}>
-              <Text style={styles.feesLabel}>Frais de réseau</Text>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.feesValue}>{Math.floor(((networkFees + 500) / 100000000) * 100000000)} Btcon</Text>
-                <Text style={styles.feesEuroText}>≈ {btconToEuro((networkFees + 500))} €</Text>
+            <View style={styles.summaryCard}>
+              <View style={styles.labelWithReset}>
+                <Text style={styles.summaryLabel}>Sélectionner le montant</Text>
+                <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
+                  <Text style={styles.resetText}>Réinitialiser</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
+                <View style={styles.topTokensRow}>
+                  {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => (
+                    <View key={index} style={styles.tokenWrapper}>
+                      <TouchableOpacity
+                        style={[
+                          token.shape === 'circle' ? styles.tokenCircle : styles.tokenSquare,
+                          token.value === 1000 && styles.token1000,
+                          token.value === 5000 && styles.token5000,
+                          tokenCounts[token.value] > 0 && styles.tokenSelected,
+                          token.value === 5000 && { transform: [{ rotate: '180deg' }] },
+                        ]}
+                        onPress={() => handleTokenPress(token.value)}
+                        onLongPress={() => handleTokenLongPress(token.value)}
+                        testID={`token-${token.value}`}
+                      >
+                        <Text style={styles.tokenValue}>{token.value}</Text>
+                        <Text style={styles.tokenUnit}>Btcon</Text>
+                        {tokenCounts[token.value] > 0 && (
+                          <View style={styles.countBadge}>
+                            <Text style={styles.countText}>×{tokenCounts[token.value]}</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.bottomTokenRow}>
+                  {tokenAmounts.filter(token => token.value === 50000).map((token, index) => (
+                    <View key={index} style={styles.tokenWrapper50k}>
+                      <TouchableOpacity
+                        style={[
+                          styles.tokenSquare,
+                          tokenCounts[token.value] > 0 && styles.tokenSelected,
+                        ]}
+                        onPress={() => handleTokenPress(token.value)}
+                        onLongPress={() => handleTokenLongPress(token.value)}
+                        testID={`token-${token.value}`}
+                      >
+                        <Text style={styles.tokenValue}>{token.value}</Text>
+                        <Text style={styles.tokenUnit}>Btcon</Text>
+                        {tokenCounts[token.value] > 0 && (
+                          <View style={styles.countBadge}>
+                            <Text style={styles.countText}>×{tokenCounts[token.value]}</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.totalContainer}>
+                <Text style={styles.totalLabel}>Total:</Text>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalAmount}>{Math.floor(getTotalAmount())}</Text>
+                  <Text style={styles.totalUnit}>Btcon</Text>
+                </View>
+                <Text style={styles.conversionText}>
+                  ≈ {(getTotalAmount() / 100000000).toFixed(8)} BTC
+                </Text>
+                <Text style={styles.conversionTextEuro}>
+                  ≈ {btconToEuro(getTotalAmount())} €
+                </Text>
+              </View>
+
+              <View style={styles.feesContainer}>
+                <Text style={styles.feesLabel}>Frais de réseau</Text>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.feesValue}>{Math.floor(((networkFees + 500) / 100000000) * 100000000)} Btcon</Text>
+                  <Text style={styles.feesEuroText}>≈ {btconToEuro((networkFees + 500))} €</Text>
+                </View>
               </View>
             </View>
-          </View>
+          </>
         )}
 
         {getTotalAmount() > 0 && (
@@ -588,48 +678,51 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     backgroundColor: '#0f0f0f',
-    borderRadius: 28,
-    padding: 32,
-    marginBottom: 28,
+    borderRadius: 24,
+    padding: 40,
+    marginBottom: 20,
     alignItems: 'center',
     shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.1)',
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
   },
   balanceLabel: {
-    color: '#999',
-    fontSize: 12,
-    marginBottom: 8,
+    color: '#FFF',
+    fontSize: 16,
+    marginBottom: 16,
+    fontWeight: '600' as const,
+    letterSpacing: 0.5,
   },
   balanceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 8,
+    gap: 12,
   },
   balanceAmount: {
     color: '#FFF',
-    fontSize: 24,
-    fontWeight: '700' as const,
+    fontSize: 48,
+    fontWeight: '900' as const,
   },
   balanceUnit: {
     color: '#FF8C00',
-    fontSize: 14,
-    fontWeight: '700' as const,
+    fontSize: 20,
+    fontWeight: '900' as const,
   },
   balanceSats: {
-    color: '#666',
-    fontSize: 12,
-    marginTop: 4,
+    color: '#999',
+    fontSize: 14,
+    marginTop: 8,
+    fontWeight: '500' as const,
   },
   balanceEuro: {
     color: '#FF8C00',
-    fontSize: 12,
-    marginTop: 2,
-    fontWeight: '600' as const,
+    fontSize: 16,
+    marginTop: 6,
+    fontWeight: '700' as const,
   },
   formCard: {
     backgroundColor: '#0f0f0f',
@@ -776,33 +869,34 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   totalContainer: {
-    marginTop: 20,
-    padding: 20,
-    backgroundColor: 'rgba(255, 140, 0, 0.08)',
+    marginTop: 24,
+    padding: 24,
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
     borderRadius: 20,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
   },
   totalLabel: {
-    color: '#999',
-    fontSize: 11,
-    marginBottom: 4,
+    color: '#FFF',
+    fontSize: 14,
+    marginBottom: 8,
+    fontWeight: '600' as const,
   },
   totalRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 6,
+    gap: 8,
   },
   totalAmount: {
     color: '#FFF',
-    fontSize: 20,
-    fontWeight: '800' as const,
+    fontSize: 32,
+    fontWeight: '900' as const,
   },
   totalUnit: {
     color: '#FF8C00',
-    fontSize: 12,
-    fontWeight: '700' as const,
+    fontSize: 16,
+    fontWeight: '900' as const,
   },
   inputRow: {
     flexDirection: 'row',
@@ -829,9 +923,22 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 140, 0, 0.2)',
   },
   conversionText: {
-    color: '#666',
-    fontSize: 11,
-    marginTop: 4,
+    color: '#999',
+    fontSize: 13,
+    marginTop: 6,
+    fontWeight: '500' as const,
+  },
+  conversionTextEuro: {
+    color: '#FF8C00',
+    fontSize: 15,
+    marginTop: 6,
+    fontWeight: '700' as const,
+  },
+  labelWithReset: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   summaryCard: {
     backgroundColor: '#0f0f0f',
@@ -913,25 +1020,25 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   feesContainer: {
-    marginTop: 16,
-    padding: 16,
+    marginTop: 20,
+    padding: 20,
     backgroundColor: '#000000',
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   feesLabel: {
-    color: '#999',
-    fontSize: 12,
+    color: '#FFF',
+    fontSize: 14,
     fontWeight: '600' as const,
   },
   feesValue: {
     color: '#FF8C00',
-    fontSize: 14,
-    fontWeight: '700' as const,
+    fontSize: 16,
+    fontWeight: '900' as const,
   },
   feesSubtext: {
     color: '#666',
@@ -940,9 +1047,9 @@ const styles = StyleSheet.create({
   },
   feesEuroText: {
     color: '#FF8C00',
-    fontSize: 12,
-    fontWeight: '600' as const,
-    marginTop: 2,
+    fontSize: 14,
+    fontWeight: '700' as const,
+    marginTop: 4,
   },
   modalContainer: {
     flex: 1,
