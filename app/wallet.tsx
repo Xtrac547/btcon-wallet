@@ -34,8 +34,7 @@ export default function WalletScreen() {
   };
 
   const formatBalance = (sats: number): string => {
-    const btcon = (sats / 100000000) * 100000000;
-    return Math.floor(btcon).toString();
+    return sats.toString();
   };
 
   const formatAddress = (addr: string | null): string => {
@@ -258,10 +257,10 @@ export default function WalletScreen() {
           <Text style={styles.balanceLabel}>Solde Total</Text>
           <View style={styles.balanceRow}>
             <Text style={styles.balanceAmount}>{formatBalance(balance)}</Text>
-            <Text style={styles.balanceUnit}>Btcon</Text>
+            <Text style={styles.balanceUnit}>sats</Text>
           </View>
           <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
-          <Text style={styles.balanceEuro}>≈ {btconToEuro(Number(formatBalance(balance)), btcPrice)} €</Text>
+          <Text style={styles.balanceEuro}>≈ {btconToEuro(balance, btcPrice)} €</Text>
 
           {address && (
             <View style={styles.addressContainer}>
@@ -554,8 +553,9 @@ const styles = StyleSheet.create({
   },
   balanceUnit: {
     color: '#FF8C00',
-    fontSize: 24,
-    fontWeight: '900' as const,
+    fontSize: 20,
+    fontWeight: '800' as const,
+    textTransform: 'lowercase' as const,
   },
   balanceSats: {
     color: '#666',

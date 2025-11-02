@@ -92,8 +92,14 @@ export default function SetupAuthScreen() {
   if (step === 'choose-biometric') {
     return (
       <View style={styles.container}>
+        <View style={styles.backgroundGlow}>
+          <View style={[styles.glowCircle, { top: -80, right: -80 }]} />
+          <View style={[styles.glowCircle, { bottom: -80, left: -80 }]} />
+        </View>
         <View style={styles.content}>
-          <Fingerprint size={64} color="#FF8C00" />
+          <View style={styles.iconContainer}>
+            <Fingerprint size={72} color="#FF8C00" strokeWidth={1.5} />
+          </View>
           <Text style={styles.title}>Activer la biométrie ?</Text>
           <Text style={styles.subtitle}>
             Vous pourrez utiliser votre empreinte digitale ou Face ID en plus du code PIN
@@ -108,7 +114,7 @@ export default function SetupAuthScreen() {
                 }
                 handleSetupComplete(true);
               }}
-              activeOpacity={0.7}
+              activeOpacity={0.85}
             >
               <Text style={styles.optionButtonText}>Activer la biométrie</Text>
             </TouchableOpacity>
@@ -121,7 +127,7 @@ export default function SetupAuthScreen() {
                 }
                 handleSetupComplete(false);
               }}
-              activeOpacity={0.7}
+              activeOpacity={0.85}
             >
               <Text style={styles.secondaryButtonText}>Code PIN uniquement</Text>
             </TouchableOpacity>
@@ -136,32 +142,53 @@ export default function SetupAuthScreen() {
   if (step === 'enter-pin') {
     return (
       <View style={styles.container}>
+        <View style={styles.backgroundGlow}>
+          <View style={[styles.glowCircle, { top: -80, right: -80 }]} />
+          <View style={[styles.glowCircle, { bottom: -80, left: -80 }]} />
+        </View>
         <View style={styles.content}>
+          <View style={styles.lockIconContainer}>
+            <View style={styles.lockIconCircle}>
+              <Text style={styles.lockIcon}>🔐</Text>
+            </View>
+          </View>
           <Text style={styles.title}>Créer un code PIN</Text>
           <Text style={styles.subtitle}>Entrez un code à 6 chiffres</Text>
 
+          <View style={styles.pinContainer}>
+            {[...Array(6)].map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.pinDot,
+                  pin.length > index && styles.pinDotFilled,
+                ]}
+              />
+            ))}
+          </View>
+
           <TextInput
-            style={styles.pinInput}
+            style={styles.pinInputHidden}
             value={pin}
             onChangeText={(text) => handlePinChange(text, false)}
             keyboardType="number-pad"
             maxLength={6}
             secureTextEntry
-            placeholder="••••••"
-            placeholderTextColor="#666"
             autoFocus
           />
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={[styles.button, pin.length !== 6 && styles.buttonDisabled]}
-            onPress={handlePinSubmit}
-            disabled={pin.length !== 6}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Continuer</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, pin.length !== 6 && styles.buttonDisabled]}
+              onPress={handlePinSubmit}
+              disabled={pin.length !== 6}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.buttonText}>Continuer</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -169,32 +196,53 @@ export default function SetupAuthScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.backgroundGlow}>
+        <View style={[styles.glowCircle, { top: -80, right: -80 }]} />
+        <View style={[styles.glowCircle, { bottom: -80, left: -80 }]} />
+      </View>
       <View style={styles.content}>
+        <View style={styles.lockIconContainer}>
+          <View style={styles.lockIconCircle}>
+            <Text style={styles.lockIcon}>✅</Text>
+          </View>
+        </View>
         <Text style={styles.title}>Confirmer le code PIN</Text>
         <Text style={styles.subtitle}>Entrez à nouveau votre code</Text>
 
+        <View style={styles.pinContainer}>
+          {[...Array(6)].map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.pinDot,
+                confirmPin.length > index && styles.pinDotFilled,
+              ]}
+            />
+          ))}
+        </View>
+
         <TextInput
-          style={styles.pinInput}
+          style={styles.pinInputHidden}
           value={confirmPin}
           onChangeText={(text) => handlePinChange(text, true)}
           keyboardType="number-pad"
           maxLength={6}
           secureTextEntry
-          placeholder="••••••"
-          placeholderTextColor="#666"
           autoFocus
         />
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <TouchableOpacity
-          style={[styles.button, confirmPin.length !== 6 && styles.buttonDisabled]}
-          onPress={handleConfirmPinSubmit}
-          disabled={confirmPin.length !== 6}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.buttonText}>Confirmer</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.button, confirmPin.length !== 6 && styles.buttonDisabled]}
+            onPress={handleConfirmPinSubmit}
+            disabled={confirmPin.length !== 6}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.buttonText}>Confirmer</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -206,88 +254,155 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     justifyContent: 'center',
   },
+  backgroundGlow: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  glowCircle: {
+    position: 'absolute' as const,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: '#FF8C00',
+    opacity: 0.06,
+  },
   content: {
-    padding: 24,
+    padding: 32,
     alignItems: 'center',
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  iconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+  },
+  lockIconContainer: {
+    marginBottom: 32,
+  },
+  lockIconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+  },
+  lockIcon: {
+    fontSize: 56,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '800' as const,
     color: '#FFF',
     marginBottom: 12,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#999',
-    marginBottom: 40,
+    marginBottom: 48,
     textAlign: 'center',
   },
   buttonContainer: {
     width: '100%',
-    gap: 16,
+    gap: 12,
   },
   optionButton: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#FF8C00',
     padding: 20,
-    borderRadius: 16,
+    borderRadius: 20,
     alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#333',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
   optionButtonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '600',
+    color: '#000',
+    fontSize: 17,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#FF8C00',
+    backgroundColor: 'rgba(255, 140, 0, 0.08)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+    shadowOpacity: 0,
   },
   secondaryButtonText: {
     color: '#FF8C00',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
-  icon: {
-    marginRight: 8,
+  pinContainer: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 40,
+    justifyContent: 'center',
   },
-  pinInput: {
+  pinDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: '#1A1A1A',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#333',
-    borderRadius: 16,
-    padding: 20,
-    fontSize: 32,
-    color: '#FFF',
-    textAlign: 'center',
-    letterSpacing: 12,
-    width: '100%',
-    marginBottom: 24,
+  },
+  pinDotFilled: {
+    backgroundColor: '#FF8C00',
+    borderColor: '#FF8C00',
+  },
+  pinInputHidden: {
+    position: 'absolute',
+    opacity: 0,
+    width: 1,
+    height: 1,
   },
   button: {
     backgroundColor: '#FF8C00',
-    padding: 18,
-    borderRadius: 16,
+    padding: 20,
+    borderRadius: 20,
     width: '100%',
     alignItems: 'center',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
   buttonDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
+    shadowOpacity: 0.1,
   },
   buttonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '700',
+    color: '#000',
+    fontSize: 17,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
   errorText: {
     color: '#FF4444',
     fontSize: 14,
-    marginBottom: 16,
+    marginBottom: 24,
+    marginTop: -32,
     textAlign: 'center',
+    fontWeight: '600' as const,
   },
 });

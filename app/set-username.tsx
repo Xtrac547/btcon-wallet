@@ -53,10 +53,17 @@ export default function SetUsernameScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.backgroundGlow}>
+        <View style={[styles.glowCircle, { top: -80, right: -80 }]} />
+        <View style={[styles.glowCircle, { bottom: -80, left: -80 }]} />
+      </View>
       <View style={styles.content}>
+        <View style={styles.iconContainer}>
+          <Text style={styles.icon}>👤</Text>
+        </View>
         <Text style={styles.title}>Choisir un Pseudo</Text>
         <Text style={styles.subtitle}>
-          Choisissez votre pseudo avec soin. Une fois créé, il ne pourra plus être modifié.
+          Votre identité unique sur le réseau Bitcoin
         </Text>
 
         <View style={styles.usernameInputContainer}>
@@ -70,24 +77,29 @@ export default function SetUsernameScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             maxLength={20}
+            autoFocus
           />
         </View>
 
-        <Text style={styles.hintText}>
-          ⚠️ Attention : Votre pseudo est permanent et ne peut pas être changé après création.
-        </Text>
+        <View style={styles.hintBox}>
+          <Text style={styles.hintIcon}>✨</Text>
+          <Text style={styles.hintText}>
+            Choisissez un pseudo mémorable. Vous pourrez le modifier par la suite (2 fois gratuitement).
+          </Text>
+        </View>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.primaryButton}
+            style={[styles.primaryButton, isCreating && styles.primaryButtonDisabled]}
             onPress={handleSetUsername}
             disabled={isCreating}
+            activeOpacity={0.85}
             testID="confirm-username-button"
           >
             {isCreating ? (
               <ActivityIndicator color="#000" />
             ) : (
-              <Text style={styles.primaryButtonText}>Confirmer</Text>
+              <Text style={styles.primaryButtonText}>Continuer</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -99,83 +111,128 @@ export default function SetUsernameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#000',
+  },
+  backgroundGlow: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  glowCircle: {
+    position: 'absolute' as const,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: '#FF8C00',
+    opacity: 0.06,
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: 32,
     justifyContent: 'center',
-    maxWidth: 600,
+    maxWidth: 500,
     width: '100%',
     alignSelf: 'center',
   },
+  iconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 32,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+  },
+  icon: {
+    fontSize: 56,
+  },
   title: {
-    fontSize: 32,
-    fontWeight: '700' as const,
+    fontSize: 28,
+    fontWeight: '800' as const,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 16,
-    letterSpacing: 1,
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#999',
     textAlign: 'center',
     marginBottom: 48,
-    lineHeight: 24,
   },
   buttonContainer: {
-    gap: 20,
+    width: '100%',
   },
   primaryButton: {
-    backgroundColor: '#C17C3A',
-    borderRadius: 24,
-    paddingVertical: 24,
+    backgroundColor: '#FF8C00',
+    borderRadius: 20,
+    paddingVertical: 20,
     paddingHorizontal: 32,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#C17C3A',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 8,
   },
+  primaryButtonDisabled: {
+    opacity: 0.4,
+    shadowOpacity: 0.1,
+  },
   primaryButtonText: {
-    color: '#FFF',
-    fontSize: 22,
-    fontWeight: '700' as const,
-    letterSpacing: 1,
+    color: '#000',
+    fontSize: 17,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
   usernameInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginVertical: 24,
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 18,
+    marginBottom: 24,
     borderWidth: 2,
-    borderColor: '#333',
+    borderColor: 'rgba(255, 140, 0, 0.3)',
   },
   atSymbol: {
     color: '#FF8C00',
-    fontSize: 24,
-    fontWeight: '700' as const,
-    marginRight: 4,
+    fontSize: 26,
+    fontWeight: '800' as const,
+    marginRight: 6,
   },
   usernameInput: {
     flex: 1,
     color: '#FFF',
-    fontSize: 20,
-    fontWeight: '600' as const,
+    fontSize: 22,
+    fontWeight: '700' as const,
     padding: 0,
   },
+  hintBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 140, 0, 0.08)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+    gap: 12,
+  },
+  hintIcon: {
+    fontSize: 20,
+  },
   hintText: {
-    color: '#666',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
+    flex: 1,
+    color: '#999',
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

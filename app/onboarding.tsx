@@ -154,6 +154,10 @@ export default function OnboardingScreen() {
   if (mode === 'choose') {
     return (
       <View style={styles.container}>
+        <View style={styles.backgroundGlow}>
+          <View style={[styles.glowCircle, { top: -100, right: -50 }]} />
+          <View style={[styles.glowCircle, { bottom: -100, left: -50 }]} />
+        </View>
         <View style={styles.content}>
           <View style={styles.logoSection}>
             <Image
@@ -166,6 +170,8 @@ export default function OnboardingScreen() {
               style={styles.btcoinLogoImage}
               resizeMode="contain"
             />
+            <Text style={styles.welcomeText}>Votre Portefeuille Bitcoin</Text>
+            <Text style={styles.welcomeSubtext}>Sécurisé • Simple • Décentralisé</Text>
           </View>
 
           <View style={styles.buttonContainer}>
@@ -176,13 +182,16 @@ export default function OnboardingScreen() {
                 handleCreateWallet();
               }}
               disabled={isCreating}
-              activeOpacity={0.7}
+              activeOpacity={0.85}
               testID="create-wallet-button"
             >
               {isCreating ? (
-                <ActivityIndicator color="#FFF" />
+                <ActivityIndicator color="#000" />
               ) : (
-                <Text style={styles.primaryButtonText}>Nouveau</Text>
+                <>
+                  <Text style={styles.primaryButtonText}>Créer un Nouveau Portefeuille</Text>
+                  <Text style={styles.primaryButtonSubtext}>Commencez votre aventure Bitcoin</Text>
+                </>
               )}
             </TouchableOpacity>
 
@@ -193,10 +202,11 @@ export default function OnboardingScreen() {
                 setMode('restore');
               }}
               disabled={isCreating}
-              activeOpacity={0.7}
+              activeOpacity={0.85}
               testID="restore-wallet-button"
             >
-              <Text style={styles.secondaryButtonText}>Ancien</Text>
+              <Text style={styles.secondaryButtonText}>Restaurer un Portefeuille</Text>
+              <Text style={styles.secondaryButtonSubtext}>J'ai déjà une phrase de récupération</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -291,7 +301,23 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#000',
+  },
+  backgroundGlow: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  glowCircle: {
+    position: 'absolute' as const,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: '#FF8C00',
+    opacity: 0.08,
+    blur: 100,
   },
   scrollContent: {
     flexGrow: 1,
@@ -306,16 +332,31 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 80,
   },
   logoImage: {
-    width: 180,
-    height: 180,
-    marginBottom: 30,
+    width: 200,
+    height: 200,
+    marginBottom: 36,
   },
   btcoinLogoImage: {
-    width: 400,
-    height: 160,
+    width: 420,
+    height: 180,
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: '#FFF',
+    marginTop: 32,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  welcomeSubtext: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 8,
+    textAlign: 'center',
+    letterSpacing: 1,
   },
   btconTextLogo: {
     fontSize: 72,
@@ -360,40 +401,50 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: '#FF8C00',
-    borderRadius: 24,
-    paddingVertical: 24,
+    borderRadius: 28,
+    paddingVertical: 28,
     paddingHorizontal: 32,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.6,
+    shadowRadius: 24,
+    elevation: 12,
   },
   primaryButtonText: {
-    color: '#FFF',
-    fontSize: 22,
-    fontWeight: '700' as const,
-    letterSpacing: 1,
+    color: '#000',
+    fontSize: 18,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  primaryButtonSubtext: {
+    color: 'rgba(0, 0, 0, 0.7)',
+    fontSize: 13,
+    fontWeight: '600' as const,
   },
   secondaryButton: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 140, 0, 0.08)',
     borderWidth: 2,
-    borderColor: '#FF8C00',
-    borderRadius: 24,
-    paddingVertical: 24,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+    borderRadius: 28,
+    paddingVertical: 28,
     paddingHorizontal: 32,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
     color: '#FF8C00',
-    fontSize: 22,
-    fontWeight: '700' as const,
-    letterSpacing: 1,
+    fontSize: 18,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  secondaryButtonSubtext: {
+    color: 'rgba(255, 140, 0, 0.7)',
+    fontSize: 13,
+    fontWeight: '600' as const,
   },
   textArea: {
     backgroundColor: '#1a1a1a',
