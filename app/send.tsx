@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
@@ -17,6 +17,7 @@ export default function SendScreen() {
   const { following } = useFollowing();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (!username) {
@@ -46,8 +47,10 @@ export default function SendScreen() {
     return Math.floor(btcon).toString();
   };
 
-  const btconToEuro = (btcon: number): string => {
-    const euro = btcon;
+  const btconToEuro = (btcon: number, btcPrice: number = 100000): string => {
+    const satoshis = (btcon / 100000000) * 100000000;
+    const btc = satoshis / 100000000;
+    const euro = btc * btcPrice;
     return euro.toFixed(2);
   };
 
@@ -74,6 +77,9 @@ export default function SendScreen() {
       ...prev,
       [value]: prev[value] + 1,
     }));
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
   const handleTokenLongPress = (value: number) => {
@@ -89,6 +95,9 @@ export default function SendScreen() {
       5000: 0,
       50000: 0,
     });
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    }, 100);
   };
 
   const handleSend = async () => {
@@ -241,6 +250,7 @@ export default function SendScreen() {
       </View>
 
       <ScrollView 
+        ref={scrollViewRef}
         style={styles.scrollView} 
         contentContainerStyle={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}
         showsVerticalScrollIndicator={false}
@@ -605,7 +615,7 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     color: '#999',
-    fontSize: 14,
+    fontSize: 12,
     marginBottom: 8,
   },
   balanceRow: {
@@ -615,22 +625,22 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     color: '#FFF',
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700' as const,
   },
   balanceUnit: {
     color: '#FF8C00',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700' as const,
   },
   balanceSats: {
     color: '#666',
-    fontSize: 14,
+    fontSize: 12,
     marginTop: 4,
   },
   balanceEuro: {
     color: '#FF8C00',
-    fontSize: 14,
+    fontSize: 12,
     marginTop: 2,
     fontWeight: '600' as const,
   },
@@ -653,7 +663,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     color: '#999',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600' as const,
   },
   labelRow: {
@@ -747,7 +757,7 @@ const styles = StyleSheet.create({
   },
   tokenValue: {
     color: '#FFD700',
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900' as const,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
@@ -755,7 +765,7 @@ const styles = StyleSheet.create({
   },
   tokenUnit: {
     color: '#FFD700',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700' as const,
     marginTop: 2,
     letterSpacing: 1,
@@ -789,7 +799,7 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     color: '#999',
-    fontSize: 12,
+    fontSize: 11,
     marginBottom: 4,
   },
   totalRow: {
@@ -799,12 +809,12 @@ const styles = StyleSheet.create({
   },
   totalAmount: {
     color: '#FFF',
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800' as const,
   },
   totalUnit: {
     color: '#FF8C00',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700' as const,
   },
   inputRow: {
@@ -833,7 +843,7 @@ const styles = StyleSheet.create({
   },
   conversionText: {
     color: '#666',
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 4,
   },
   summaryCard: {
@@ -852,7 +862,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     color: '#999',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600' as const,
     marginBottom: 8,
   },
@@ -871,12 +881,12 @@ const styles = StyleSheet.create({
   },
   tokenSummaryText: {
     color: '#FFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600' as const,
   },
   tokenSummaryCount: {
     color: '#FF8C00',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700' as const,
   },
   sendButton: {
@@ -899,7 +909,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: '#000',
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: '900' as const,
     letterSpacing: 0.5,
   },
@@ -912,8 +922,8 @@ const styles = StyleSheet.create({
   },
   infoText: {
     color: '#666',
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 16,
   },
   feesContainer: {
     marginTop: 16,
@@ -928,12 +938,12 @@ const styles = StyleSheet.create({
   },
   feesLabel: {
     color: '#999',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600' as const,
   },
   feesValue: {
     color: '#FF8C00',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700' as const,
   },
   feesSubtext: {
