@@ -26,11 +26,11 @@ export default function VerifyAuthScreen() {
   const [resetStep, setResetStep] = useState<'verify' | 'enter-pin' | 'confirm-pin'>('verify');
 
   useEffect(() => {
-    if (useBiometric) {
+    if (authType === 'biometric' || useBiometric) {
       setShowBiometric(true);
       handleBiometricAuth();
     }
-  }, [useBiometric]);
+  }, [useBiometric, authType]);
 
   const handleBiometricAuth = async () => {
     setIsLoading(true);
@@ -394,7 +394,7 @@ export default function VerifyAuthScreen() {
               <Fingerprint size={72} color="#FF8C00" strokeWidth={1.5} />
             </View>
             <Text style={styles.title}>Authentification requise</Text>
-            <Text style={styles.subtitle}>Utilisez votre empreinte ou Face ID</Text>
+            <Text style={styles.subtitle}>{authType === 'biometric' ? 'Utilisez votre empreinte ou Face ID' : 'Utilisez votre empreinte ou Face ID'}</Text>
             
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -407,24 +407,51 @@ export default function VerifyAuthScreen() {
                 <Text style={styles.buttonText}>Réessayer la biométrie</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.button, styles.secondaryButton]}
-                onPress={() => setShowBiometric(false)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.secondaryButtonText}>Utiliser le code PIN</Text>
-              </TouchableOpacity>
+              {authType !== 'biometric' && (
+                <TouchableOpacity
+                  style={[styles.button, styles.secondaryButton]}
+                  onPress={() => setShowBiometric(false)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.secondaryButtonText}>Utiliser le code PIN</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </>
         ) : (
           <>
-            <View style={styles.lockIconContainer}>
-              <View style={styles.lockIconCircle}>
-                <Text style={styles.lockIcon}>🔒</Text>
-              </View>
-            </View>
-            <Text style={styles.title}>Entrez votre code PIN</Text>
-            <Text style={styles.subtitle}>Entrez votre code à 6 chiffres</Text>
+            {authType === 'biometric' ? (
+              <>
+                <View style={styles.iconContainer}>
+                  <Fingerprint size={72} color="#FF8C00" strokeWidth={1.5} />
+                </View>
+                <Text style={styles.title}>Authentification requise</Text>
+                <Text style={styles.subtitle}>Utilisez votre empreinte ou Face ID</Text>
+                
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => {
+                      setShowBiometric(true);
+                      handleBiometricAuth();
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.buttonText}>Authentifier</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.lockIconContainer}>
+                  <View style={styles.lockIconCircle}>
+                    <Text style={styles.lockIcon}>🔒</Text>
+                  </View>
+                </View>
+                <Text style={styles.title}>Entrez votre code PIN</Text>
+                <Text style={styles.subtitle}>Entrez votre code à 6 chiffres</Text>
 
             <View style={styles.pinContainer}>
               {[...Array(6)].map((_, index) => (
@@ -450,7 +477,7 @@ export default function VerifyAuthScreen() {
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            {useBiometric && (
+            {authType !== 'biometric' && useBiometric && (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.secondaryButton]}
@@ -463,19 +490,21 @@ export default function VerifyAuthScreen() {
               </View>
             )}
 
-            {authType === 'pin-biometric' && (
-              <TouchableOpacity
-                style={styles.forgotPinButton}
-                onPress={() => {
-                  if (Platform.OS !== 'web') {
-                    Haptics.selectionAsync();
-                  }
-                  setShowResetPin(true);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.forgotPinText}>Code oublié ?</Text>
-              </TouchableOpacity>
+                {authType === 'pin-biometric' && (
+                  <TouchableOpacity
+                    style={styles.forgotPinButton}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') {
+                        Haptics.selectionAsync();
+                      }
+                      setShowResetPin(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.forgotPinText}>Code oublié ?</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
           </>
         )}

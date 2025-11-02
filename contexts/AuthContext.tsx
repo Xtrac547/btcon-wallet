@@ -12,7 +12,7 @@ const STORAGE_KEYS = {
   IS_AUTHENTICATED: 'btcon_is_authenticated',
 };
 
-type AuthType = 'pin' | 'pin-biometric' | null;
+export type AuthType = 'pin' | 'pin-biometric' | 'biometric' | null;
 
 interface AuthState {
   isAuthConfigured: boolean;
@@ -75,11 +75,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   const setupPinAuth = async (pin: string, enableBiometric: boolean = false) => {
-    console.log('Setting up PIN authentication', { enableBiometric });
+    console.log('Setting up PIN authentication', { enableBiometric, hasPin: pin.length > 0 });
     try {
-      await storeSecurely(STORAGE_KEYS.PIN_CODE, pin);
+      if (pin.length > 0) {
+        await storeSecurely(STORAGE_KEYS.PIN_CODE, pin);
+      }
       await AsyncStorage.setItem(STORAGE_KEYS.AUTH_CONFIGURED, 'true');
-      const authType = enableBiometric ? 'pin-biometric' : 'pin';
+      const authType = pin.length === 0 ? 'biometric' : (enableBiometric ? 'pin-biometric' : 'pin');
       await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TYPE, authType);
 
       setState(prev => ({
@@ -87,7 +89,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         isAuthConfigured: true,
         authType,
         isAuthenticated: true,
-        useBiometric: enableBiometric,
+        useBiometric: enableBiometric || pin.length === 0,
       }));
       
       console.log('PIN auth setup complete');
@@ -101,6 +103,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const verifyPin = async (pin: string): Promise<boolean> => {
     const storedPin = await getSecurely(STORAGE_KEYS.PIN_CODE);
+    if (!storedPin) {
+      return false;
+    }
     const isValid = storedPin === pin;
 
     if (isValid) {
@@ -221,7 +226,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         authType: (authTypeStr as AuthType) || null,
         isLoading: false,
         isBiometricAvailable: isBioAvailable,
-        useBiometric: authTypeStr === 'pin-biometric',
+        useBiometric: authTypeStr === 'pin-biometric' || authTypeStr === 'biometric',
       }));
 
       console.log('Auth state loaded:', {

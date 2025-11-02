@@ -18,7 +18,7 @@ export default function SetupAuthScreen() {
   const { setupPinAuth, isBiometricAvailable } = useAuth();
   const [pin, setPin] = useState<string>('');
   const [confirmPin, setConfirmPin] = useState<string>('');
-  const [step, setStep] = useState<'enter-pin' | 'confirm-pin' | 'choose-biometric'>('enter-pin');
+  const [step, setStep] = useState<'choose-method' | 'enter-pin' | 'confirm-pin' | 'choose-biometric'>('choose-method');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
@@ -73,6 +73,22 @@ export default function SetupAuthScreen() {
     }
   };
 
+  const handleSkipPin = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await setupPinAuth('', true);
+      console.log('Biometric-only setup complete');
+      router.replace('/');
+    } catch (error) {
+      console.error('Setup error:', error);
+      setError('Erreur lors de la configuration');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handlePinChange = (text: string, isConfirm: boolean = false) => {
     const numericText = text.replace(/[^0-9]/g, '');
     if (numericText.length <= 6) {
@@ -89,6 +105,59 @@ export default function SetupAuthScreen() {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#FF8C00" />
+      </View>
+    );
+  }
+
+  if (step === 'choose-method') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.backgroundGlow}>
+          <View style={[styles.glowCircle, { top: -80, right: -80 }]} />
+          <View style={[styles.glowCircle, { bottom: -80, left: -80 }]} />
+        </View>
+        <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <Fingerprint size={72} color="#FF8C00" strokeWidth={1.5} />
+          </View>
+          <Text style={styles.title}>Sécuriser votre wallet</Text>
+          <Text style={styles.subtitle}>
+            Choisissez votre méthode de sécurité
+          </Text>
+
+          <View style={styles.buttonContainer}>
+            {isBiometricAvailable && (
+              <TouchableOpacity
+                style={styles.optionButton}
+                onPress={() => {
+                  if (Platform.OS !== 'web') {
+                    Haptics.selectionAsync();
+                  }
+                  handleSkipPin();
+                }}
+                activeOpacity={0.85}
+              >
+                <Fingerprint size={24} color="#000" strokeWidth={2} />
+                <Text style={styles.optionButtonText}>Empreinte digitale uniquement</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={[styles.optionButton, !isBiometricAvailable && styles.optionButton]}
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.selectionAsync();
+                }
+                setStep('enter-pin');
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.optionButtonText}>Code PIN {isBiometricAvailable ? '+ Empreinte' : ''}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        </View>
       </View>
     );
   }
@@ -157,7 +226,7 @@ export default function SetupAuthScreen() {
             </View>
           </View>
           <Text style={styles.title}>Créer un code PIN</Text>
-          <Text style={styles.subtitle}>Entrez un code à 6 chiffres (obligatoire)</Text>
+          <Text style={styles.subtitle}>Entrez un code à 6 chiffres</Text>
 
           <View style={styles.pinContainer}>
             {[...Array(6)].map((_, index) => (
