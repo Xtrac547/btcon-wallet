@@ -495,6 +495,30 @@ export default function SendScreen() {
         </View>
 
         {getTotalAmount() > 0 && (
+          <View style={styles.addressInputCard}>
+            <Text style={styles.inputLabel}>Destinataire</Text>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                value={toAddress}
+                onChangeText={setToAddress}
+                placeholder="@pseudo, adresse BTC, jetons, solde"
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity
+                style={styles.scanButton}
+                onPress={handleOpenScanner}
+                testID="scan-qr-button-bottom"
+              >
+                <QrCode color="#FF8C00" size={24} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {getTotalAmount() > 0 && (
           <View style={styles.totalContainer}>
             <Text style={styles.totalLabel}>Total:</Text>
             <View style={styles.totalRow}>
@@ -867,6 +891,19 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 12,
     fontWeight: '700' as const,
+  },
+  addressInputCard: {
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: '#0f0f0f',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   totalContainer: {
     marginTop: 20,
