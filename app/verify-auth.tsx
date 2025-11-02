@@ -55,8 +55,8 @@ export default function VerifyAuthScreen() {
   };
 
   const handlePinSubmit = async () => {
-    if (pin.length !== 6) {
-      setError('Le code PIN doit contenir exactement 6 chiffres');
+    if (pin.length < 4 || pin.length > 6) {
+      setError('Le code PIN doit contenir entre 4 et 6 chiffres');
       return;
     }
 
@@ -94,44 +94,10 @@ export default function VerifyAuthScreen() {
     if (numericText.length <= 6) {
       setPin(numericText);
       setError('');
-      
-      if (numericText.length === 6) {
-        setTimeout(() => {
-          handlePinSubmitAuto(numericText);
-        }, 100);
-      }
     }
   };
 
-  const handlePinSubmitAuto = async (pinToVerify: string) => {
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
-    setIsLoading(true);
-    setError('');
 
-    try {
-      const success = await verifyPin(pinToVerify);
-      if (success) {
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-        console.log('PIN auth successful, redirecting to index');
-        router.replace('/');
-      } else {
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        }
-        setError('Code PIN incorrect');
-        setPin('');
-      }
-    } catch (error) {
-      console.error('PIN verification error:', error);
-      setError('Erreur lors de la vérification');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleResetPinWithBio = async () => {
     setIsLoading(true);
@@ -156,8 +122,8 @@ export default function VerifyAuthScreen() {
   };
 
   const handleNewPinSubmit = () => {
-    if (newPin.length !== 6) {
-      setError('Le code PIN doit contenir exactement 6 chiffres');
+    if (newPin.length < 4 || newPin.length > 6) {
+      setError('Le code PIN doit contenir entre 4 et 6 chiffres');
       return;
     }
 
@@ -282,37 +248,29 @@ export default function VerifyAuthScreen() {
               </View>
             </View>
             <Text style={styles.title}>Nouveau code PIN</Text>
-            <Text style={styles.subtitle}>Entrez un nouveau code à 6 chiffres</Text>
+            <Text style={styles.subtitle}>Entrez un nouveau code (4-6 chiffres)</Text>
 
-            <View style={styles.pinContainer}>
-              {[...Array(6)].map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.pinDot,
-                    newPin.length > index && styles.pinDotFilled,
-                  ]}
-                />
-              ))}
+            <View style={styles.pinInputContainer}>
+              <TextInput
+                style={styles.pinInput}
+                value={newPin}
+                onChangeText={(text) => handleNewPinChange(text, false)}
+                keyboardType="number-pad"
+                maxLength={6}
+                secureTextEntry
+                placeholder="••••••"
+                placeholderTextColor="#444"
+                autoFocus={true}
+              />
             </View>
-
-            <TextInput
-              style={styles.pinInputHidden}
-              value={newPin}
-              onChangeText={(text) => handleNewPinChange(text, false)}
-              keyboardType="number-pad"
-              maxLength={6}
-              secureTextEntry
-              autoFocus={true}
-            />
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={[styles.button, newPin.length !== 6 && styles.buttonDisabled]}
+                style={[styles.button, (newPin.length < 4 || newPin.length > 6) && styles.buttonDisabled]}
                 onPress={handleNewPinSubmit}
-                disabled={newPin.length !== 6}
+                disabled={newPin.length < 4 || newPin.length > 6}
                 activeOpacity={0.85}
               >
                 <Text style={styles.buttonText}>Continuer</Text>
@@ -339,35 +297,27 @@ export default function VerifyAuthScreen() {
             <Text style={styles.title}>Confirmer le code PIN</Text>
             <Text style={styles.subtitle}>Entrez à nouveau votre code</Text>
 
-            <View style={styles.pinContainer}>
-              {[...Array(6)].map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.pinDot,
-                    confirmNewPin.length > index && styles.pinDotFilled,
-                  ]}
-                />
-              ))}
+            <View style={styles.pinInputContainer}>
+              <TextInput
+                style={styles.pinInput}
+                value={confirmNewPin}
+                onChangeText={(text) => handleNewPinChange(text, true)}
+                keyboardType="number-pad"
+                maxLength={6}
+                secureTextEntry
+                placeholder="••••••"
+                placeholderTextColor="#444"
+                autoFocus={true}
+              />
             </View>
-
-            <TextInput
-              style={styles.pinInputHidden}
-              value={confirmNewPin}
-              onChangeText={(text) => handleNewPinChange(text, true)}
-              keyboardType="number-pad"
-              maxLength={6}
-              secureTextEntry
-              autoFocus={true}
-            />
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={[styles.button, confirmNewPin.length !== 6 && styles.buttonDisabled]}
+                style={[styles.button, (confirmNewPin.length < 4 || confirmNewPin.length > 6) && styles.buttonDisabled]}
                 onPress={handleConfirmNewPinSubmit}
-                disabled={confirmNewPin.length !== 6}
+                disabled={confirmNewPin.length < 4 || confirmNewPin.length > 6}
                 activeOpacity={0.85}
               >
                 <Text style={styles.buttonText}>Confirmer</Text>
@@ -451,33 +401,36 @@ export default function VerifyAuthScreen() {
                   </View>
                 </View>
                 <Text style={styles.title}>Entrez votre code PIN</Text>
-                <Text style={styles.subtitle}>Entrez votre code à 6 chiffres</Text>
+                <Text style={styles.subtitle}>Entrez votre code (4-6 chiffres)</Text>
 
-            <View style={styles.pinContainer}>
-              {[...Array(6)].map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.pinDot,
-                    pin.length > index && styles.pinDotFilled,
-                  ]}
-                />
-              ))}
+            <View style={styles.pinInputContainer}>
+              <TextInput
+                style={styles.pinInput}
+                value={pin}
+                onChangeText={handlePinChange}
+                keyboardType="number-pad"
+                maxLength={6}
+                secureTextEntry
+                placeholder="••••••"
+                placeholderTextColor="#444"
+                autoFocus={true}
+              />
             </View>
-
-            <TextInput
-              style={styles.pinInputHidden}
-              value={pin}
-              onChangeText={handlePinChange}
-              keyboardType="number-pad"
-              maxLength={6}
-              secureTextEntry
-              autoFocus={true}
-            />
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            {(authType === 'pin' || authType === 'pin-biometric') && useBiometric && (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, (pin.length < 4 || pin.length > 6) && styles.buttonDisabled]}
+                onPress={handlePinSubmit}
+                disabled={pin.length < 4 || pin.length > 6}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.buttonText}>Confirmer</Text>
+              </TouchableOpacity>
+            </View>
+
+            {useBiometric && (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.secondaryButton]}
@@ -605,6 +558,22 @@ const styles = StyleSheet.create({
     opacity: 0,
     width: 1,
     height: 1,
+  },
+  pinInputContainer: {
+    width: '100%',
+    marginBottom: 32,
+  },
+  pinInput: {
+    backgroundColor: '#1A1A1A',
+    borderWidth: 2,
+    borderColor: '#333',
+    borderRadius: 16,
+    padding: 20,
+    fontSize: 24,
+    color: '#FFF',
+    textAlign: 'center' as const,
+    fontWeight: '700' as const,
+    letterSpacing: 8,
   },
   buttonContainer: {
     width: '100%',

@@ -27,8 +27,8 @@ export default function SetupAuthScreen() {
 
 
   const handlePinSubmit = () => {
-    if (pin.length !== 6) {
-      setError('Le code PIN doit contenir exactement 6 chiffres');
+    if (pin.length < 4 || pin.length > 6) {
+      setError('Le code PIN doit contenir entre 4 et 6 chiffres');
       return;
     }
 
@@ -226,37 +226,29 @@ export default function SetupAuthScreen() {
             </View>
           </View>
           <Text style={styles.title}>Créer un code PIN</Text>
-          <Text style={styles.subtitle}>Entrez un code à 6 chiffres</Text>
+          <Text style={styles.subtitle}>Entrez un code (4-6 chiffres)</Text>
 
-          <View style={styles.pinContainer}>
-            {[...Array(6)].map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.pinDot,
-                  pin.length > index && styles.pinDotFilled,
-                ]}
-              />
-            ))}
+          <View style={styles.pinInputContainer}>
+            <TextInput
+              style={styles.pinInput}
+              value={pin}
+              onChangeText={(text) => handlePinChange(text, false)}
+              keyboardType="number-pad"
+              maxLength={6}
+              secureTextEntry
+              placeholder="••••••"
+              placeholderTextColor="#444"
+              autoFocus={true}
+            />
           </View>
-
-          <TextInput
-            style={styles.pinInputHidden}
-            value={pin}
-            onChangeText={(text) => handlePinChange(text, false)}
-            keyboardType="number-pad"
-            maxLength={6}
-            secureTextEntry
-            autoFocus={true}
-          />
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[styles.button, pin.length !== 6 && styles.buttonDisabled]}
+              style={[styles.button, (pin.length < 4 || pin.length > 6) && styles.buttonDisabled]}
               onPress={handlePinSubmit}
-              disabled={pin.length !== 6}
+              disabled={pin.length < 4 || pin.length > 6}
               activeOpacity={0.85}
             >
               <Text style={styles.buttonText}>Continuer</Text>
@@ -282,35 +274,27 @@ export default function SetupAuthScreen() {
         <Text style={styles.title}>Confirmer le code PIN</Text>
         <Text style={styles.subtitle}>Entrez à nouveau votre code</Text>
 
-        <View style={styles.pinContainer}>
-          {[...Array(6)].map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.pinDot,
-                confirmPin.length > index && styles.pinDotFilled,
-              ]}
-            />
-          ))}
+        <View style={styles.pinInputContainer}>
+          <TextInput
+            style={styles.pinInput}
+            value={confirmPin}
+            onChangeText={(text) => handlePinChange(text, true)}
+            keyboardType="number-pad"
+            maxLength={6}
+            secureTextEntry
+            placeholder="••••••"
+            placeholderTextColor="#444"
+            autoFocus={true}
+          />
         </View>
-
-        <TextInput
-          style={styles.pinInputHidden}
-          value={confirmPin}
-          onChangeText={(text) => handlePinChange(text, true)}
-          keyboardType="number-pad"
-          maxLength={6}
-          secureTextEntry
-          autoFocus={true}
-        />
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.button, confirmPin.length !== pin.length && styles.buttonDisabled]}
+            style={[styles.button, (confirmPin.length < 4 || confirmPin.length > 6 || confirmPin.length !== pin.length) && styles.buttonDisabled]}
             onPress={handleConfirmPinSubmit}
-            disabled={confirmPin.length !== pin.length}
+            disabled={confirmPin.length < 4 || confirmPin.length > 6 || confirmPin.length !== pin.length}
             activeOpacity={0.85}
           >
             <Text style={styles.buttonText}>Confirmer</Text>
@@ -489,5 +473,21 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '800' as const,
     letterSpacing: 0.5,
+  },
+  pinInputContainer: {
+    width: '100%',
+    marginBottom: 32,
+  },
+  pinInput: {
+    backgroundColor: '#1A1A1A',
+    borderWidth: 2,
+    borderColor: '#333',
+    borderRadius: 16,
+    padding: 20,
+    fontSize: 24,
+    color: '#FFF',
+    textAlign: 'center' as const,
+    fontWeight: '700' as const,
+    letterSpacing: 8,
   },
 });
