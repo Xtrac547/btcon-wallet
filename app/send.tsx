@@ -46,6 +46,12 @@ export default function SendScreen() {
     return Math.floor(btcon).toString();
   };
 
+  const btconToEuro = (btcon: number): string => {
+    const conversionRate = 0.000001;
+    const euro = btcon * conversionRate;
+    return euro.toFixed(2);
+  };
+
   const getTotalAmount = (): number => {
     return Object.entries(tokenCounts).reduce((total, [value, count]) => {
       return total + (Number(value) * count);
@@ -248,6 +254,7 @@ export default function SendScreen() {
               <Text style={styles.balanceUnit}>Btcon</Text>
             </View>
             <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
+            <Text style={styles.balanceEuro}>≈ {btconToEuro(Number(formatBalance(balance)))} €</Text>
           </View>
         ) : (
           <View style={styles.formCard}>
@@ -385,11 +392,24 @@ export default function SendScreen() {
               <Text style={styles.conversionText}>
                 ≈ {(getTotalAmount() / 100000000).toFixed(8)} BTC
               </Text>
+              <Text style={styles.conversionText}>
+                ≈ {btconToEuro(getTotalAmount())} €
+              </Text>
             </View>
 
             <View style={styles.feesContainer}>
-              <Text style={styles.feesLabel}>Frais de réseau</Text>
-              <Text style={styles.feesValue}>{networkFees} sats</Text>
+              <View>
+                <Text style={styles.feesLabel}>Frais de réseau</Text>
+                <Text style={styles.feesValue}>{networkFees} sats</Text>
+              </View>
+            </View>
+
+            <View style={styles.feesContainer}>
+              <View>
+                <Text style={styles.feesLabel}>Frais additionnels (500 Btcon)</Text>
+                <Text style={styles.feesSubtext}>Envoyés à bc1qh78...0eyyd</Text>
+              </View>
+              <Text style={styles.feesValue}>≈ {btconToEuro(500)} €</Text>
             </View>
           </View>
         )}
@@ -417,7 +437,7 @@ export default function SendScreen() {
             • Frais de réseau: calculés automatiquement selon le taux actuel du réseau Bitcoin
           </Text>
           <Text style={styles.infoText}>
-            • Frais additionnels: 500 sats par transaction
+            • Frais additionnels: 500 Btcon (≈ {btconToEuro(500)} €) envoyés à bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd
           </Text>
           <Text style={styles.infoText}>
             • Les frais seront déduits de votre solde lors de l'envoi
@@ -611,6 +631,12 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
     marginTop: 4,
+  },
+  balanceEuro: {
+    color: '#FF8C00',
+    fontSize: 14,
+    marginTop: 2,
+    fontWeight: '600' as const,
   },
   formCard: {
     backgroundColor: '#0f0f0f',
@@ -913,6 +939,11 @@ const styles = StyleSheet.create({
     color: '#FF8C00',
     fontSize: 16,
     fontWeight: '700' as const,
+  },
+  feesSubtext: {
+    color: '#666',
+    fontSize: 11,
+    marginTop: 2,
   },
   modalContainer: {
     flex: 1,

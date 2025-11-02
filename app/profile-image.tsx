@@ -13,6 +13,12 @@ const PAYMENT_ADDRESS = 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd';
 const PAYMENT_AMOUNT_BTCON = 2000;
 const PAYMENT_AMOUNT_SATS = Math.floor((PAYMENT_AMOUNT_BTCON / 100000000) * 100000000);
 
+const btconToEuro = (btcon: number): string => {
+  const conversionRate = 0.000001;
+  const euro = btcon * conversionRate;
+  return euro.toFixed(2);
+};
+
 export default function ProfileImageScreen() {
   const router = useRouter();
   const { address, signAndBroadcastTransaction } = useWallet();
@@ -139,7 +145,7 @@ export default function ProfileImageScreen() {
     } else if (requiresPayment) {
       Alert.alert(
         'Paiement requis',
-        `Pour modifier vos images après le premier changement, vous devez envoyer ${PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon (${PAYMENT_AMOUNT_SATS.toLocaleString()} sats) à l'adresse ${PAYMENT_ADDRESS.slice(0, 20)}...`,
+        `Pour modifier vos images après le premier changement, vous devez envoyer ${PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon (≈ ${btconToEuro(PAYMENT_AMOUNT_BTCON)} €) à l'adresse ${PAYMENT_ADDRESS.slice(0, 20)}...`,
         [
           { text: 'Annuler', style: 'cancel' },
           {
@@ -233,7 +239,8 @@ export default function ProfileImageScreen() {
                   <Text style={styles.infoCardTitle}>Règles de modification</Text>
                   <Text style={styles.infoCardDescription}>
                     • Premier changement: Gratuit{'\n'}
-                    • Changements suivants: {PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon ({PAYMENT_AMOUNT_SATS.toLocaleString()} sats){'\n'}
+                    • Changements suivants: {PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon (≈ {btconToEuro(PAYMENT_AMOUNT_BTCON)} €){'\n'}
+                    • Les frais sont envoyés à bc1qh78...0eyyd{'\n'}
                     • Les développeurs peuvent modifier avec le code PIN
                   </Text>
                 </View>
@@ -306,7 +313,7 @@ export default function ProfileImageScreen() {
                   {canChangeFree
                     ? 'Modifier (Gratuit)'
                     : requiresPayment
-                    ? `Modifier (${PAYMENT_AMOUNT_BTCON} Btcon)`
+                    ? `Modifier (${PAYMENT_AMOUNT_BTCON} Btcon ≈ ${btconToEuro(PAYMENT_AMOUNT_BTCON)} €)`
                     : 'Modifier'}
                 </Text>
               </TouchableOpacity>
