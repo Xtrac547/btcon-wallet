@@ -15,11 +15,15 @@ import * as Haptics from 'expo-haptics';
 
 export default function VerifyAuthScreen() {
   const router = useRouter();
-  const { useBiometric, verifyPin, verifyBiometric } = useAuth();
+  const { useBiometric, verifyPin, verifyBiometric, resetPinWithBiometric, authType } = useAuth();
   const [pin, setPin] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showBiometric, setShowBiometric] = useState(false);
+  const [showResetPin, setShowResetPin] = useState(false);
+  const [newPin, setNewPin] = useState<string>('');
+  const [confirmNewPin, setConfirmNewPin] = useState<string>('');
+  const [resetStep, setResetStep] = useState<'verify' | 'enter-pin' | 'confirm-pin'>('verify');
 
   useEffect(() => {
     if (useBiometric) {
@@ -129,6 +133,86 @@ export default function VerifyAuthScreen() {
     }
   };
 
+  const handleResetPinWithBio = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const success = await verifyBiometric();
+      if (success) {
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        setResetStep('enter-pin');
+      } else {
+        setError('Authentification échouée');
+      }
+    } catch (error) {
+      console.error('Biometric verification error:', error);
+      setError('Erreur lors de la vérification');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNewPinSubmit = () => {
+    if (newPin.length !== 6) {
+      setError('Le code PIN doit contenir exactement 6 chiffres');
+      return;
+    }
+
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
+    setResetStep('confirm-pin');
+    setError('');
+  };
+
+  const handleConfirmNewPinSubmit = async () => {
+    if (confirmNewPin !== newPin) {
+      setError('Les codes PIN ne correspondent pas');
+      setConfirmNewPin('');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const success = await resetPinWithBiometric(newPin);
+      if (success) {
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        setShowResetPin(false);
+        setNewPin('');
+        setConfirmNewPin('');
+        setResetStep('verify');
+        setError('');
+        setPin('');
+      } else {
+        setError('Erreur lors de la réinitialisation');
+      }
+    } catch (error) {
+      console.error('Reset PIN error:', error);
+      setError('Erreur lors de la réinitialisation');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNewPinChange = (text: string, isConfirm: boolean = false) => {
+    const numericText = text.replace(/[^0-9]/g, '');
+    if (numericText.length <= 6) {
+      if (isConfirm) {
+        setConfirmNewPin(numericText);
+      } else {
+        setNewPin(numericText);
+      }
+      setError('');
+    }
+  };
+
 
 
   if (isLoading) {
@@ -137,6 +221,162 @@ export default function VerifyAuthScreen() {
         <ActivityIndicator size="large" color="#FF8C00" />
       </View>
     );
+  }
+
+  if (showResetPin) {
+    if (resetStep === 'verify') {
+      return (
+        <View style={styles.container}>
+          <View style={styles.backgroundGlow}>
+            <View style={[styles.glowCircle, { top: -80, right: -80 }]} />
+            <View style={[styles.glowCircle, { bottom: -80, left: -80 }]} />
+          </View>
+          <View style={styles.content}>
+            <View style={styles.iconContainer}>
+              <Fingerprint size={72} color="#FF8C00" strokeWidth={1.5} />
+            </View>
+            <Text style={styles.title}>Réinitialiser le code PIN</Text>
+            <Text style={styles.subtitle}>
+              Utilisez votre empreinte digitale pour réinitialiser votre code PIN
+            </Text>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={handleResetPinWithBio}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.buttonText}>Authentifier avec biométrie</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.button, styles.secondaryButton]}
+                onPress={() => {
+                  setShowResetPin(false);
+                  setResetStep('verify');
+                  setError('');
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.secondaryButtonText}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    if (resetStep === 'enter-pin') {
+      return (
+        <View style={styles.container}>
+          <View style={styles.backgroundGlow}>
+            <View style={[styles.glowCircle, { top: -80, right: -80 }]} />
+            <View style={[styles.glowCircle, { bottom: -80, left: -80 }]} />
+          </View>
+          <View style={styles.content}>
+            <View style={styles.lockIconContainer}>
+              <View style={styles.lockIconCircle}>
+                <Text style={styles.lockIcon}>🔐</Text>
+              </View>
+            </View>
+            <Text style={styles.title}>Nouveau code PIN</Text>
+            <Text style={styles.subtitle}>Entrez un nouveau code à 6 chiffres</Text>
+
+            <View style={styles.pinContainer}>
+              {[...Array(6)].map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.pinDot,
+                    newPin.length > index && styles.pinDotFilled,
+                  ]}
+                />
+              ))}
+            </View>
+
+            <TextInput
+              style={styles.pinInputHidden}
+              value={newPin}
+              onChangeText={(text) => handleNewPinChange(text, false)}
+              keyboardType="number-pad"
+              maxLength={6}
+              secureTextEntry
+              autoFocus={true}
+            />
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, newPin.length !== 6 && styles.buttonDisabled]}
+                onPress={handleNewPinSubmit}
+                disabled={newPin.length !== 6}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.buttonText}>Continuer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    if (resetStep === 'confirm-pin') {
+      return (
+        <View style={styles.container}>
+          <View style={styles.backgroundGlow}>
+            <View style={[styles.glowCircle, { top: -80, right: -80 }]} />
+            <View style={[styles.glowCircle, { bottom: -80, left: -80 }]} />
+          </View>
+          <View style={styles.content}>
+            <View style={styles.lockIconContainer}>
+              <View style={styles.lockIconCircle}>
+                <Text style={styles.lockIcon}>✅</Text>
+              </View>
+            </View>
+            <Text style={styles.title}>Confirmer le code PIN</Text>
+            <Text style={styles.subtitle}>Entrez à nouveau votre code</Text>
+
+            <View style={styles.pinContainer}>
+              {[...Array(6)].map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.pinDot,
+                    confirmNewPin.length > index && styles.pinDotFilled,
+                  ]}
+                />
+              ))}
+            </View>
+
+            <TextInput
+              style={styles.pinInputHidden}
+              value={confirmNewPin}
+              onChangeText={(text) => handleNewPinChange(text, true)}
+              keyboardType="number-pad"
+              maxLength={6}
+              secureTextEntry
+              autoFocus={true}
+            />
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, confirmNewPin.length !== 6 && styles.buttonDisabled]}
+                onPress={handleConfirmNewPinSubmit}
+                disabled={confirmNewPin.length !== 6}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.buttonText}>Confirmer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      );
+    }
   }
 
 
@@ -221,6 +461,21 @@ export default function VerifyAuthScreen() {
                   <Text style={styles.secondaryButtonText}>Utiliser la biométrie</Text>
                 </TouchableOpacity>
               </View>
+            )}
+
+            {authType === 'pin-biometric' && (
+              <TouchableOpacity
+                style={styles.forgotPinButton}
+                onPress={() => {
+                  if (Platform.OS !== 'web') {
+                    Haptics.selectionAsync();
+                  }
+                  setShowResetPin(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.forgotPinText}>Code oublié ?</Text>
+              </TouchableOpacity>
             )}
           </>
         )}
@@ -369,5 +624,17 @@ const styles = StyleSheet.create({
     marginTop: -32,
     textAlign: 'center',
     fontWeight: '600' as const,
+  },
+  forgotPinButton: {
+    marginTop: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  forgotPinText: {
+    color: '#FF8C00',
+    fontSize: 15,
+    fontWeight: '700' as const,
+    textAlign: 'center',
+    textDecorationLine: 'underline' as const,
   },
 });

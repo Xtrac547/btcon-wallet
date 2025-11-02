@@ -174,6 +174,29 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return true;
   };
 
+  const resetPinWithBiometric = async (newPin: string): Promise<boolean> => {
+    if (Platform.OS === 'web' || state.authType !== 'pin-biometric') {
+      return false;
+    }
+
+    try {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Confirmer votre identité pour réinitialiser le PIN',
+        cancelLabel: 'Annuler',
+        disableDeviceFallback: false,
+      });
+
+      if (result.success) {
+        await storeSecurely(STORAGE_KEYS.PIN_CODE, newPin);
+        return true;
+      }
+    } catch (error) {
+      console.error('Biometric reset error:', error);
+    }
+
+    return false;
+  };
+
   const toggleBiometric = async (enable: boolean) => {
     const newAuthType = enable ? 'pin-biometric' : 'pin';
     await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TYPE, newAuthType);
@@ -228,5 +251,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     resetAuth,
     changePin,
     toggleBiometric,
+    resetPinWithBiometric,
   };
 });
