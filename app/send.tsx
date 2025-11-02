@@ -752,7 +752,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f0f0f',
     borderRadius: 28,
     padding: 28,
-    marginBottom: 28,
+    marginBottom: 0,
     gap: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
@@ -893,7 +893,7 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   addressInputCard: {
-    marginTop: 20,
+    marginTop: 0,
     padding: 20,
     backgroundColor: '#0f0f0f',
     borderRadius: 20,
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   totalContainer: {
-    marginTop: 20,
+    marginTop: 0,
     padding: 20,
     backgroundColor: 'rgba(61, 40, 25, 0.8)',
     borderRadius: 16,
