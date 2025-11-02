@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { CreditCard, Gift, Smartphone, DollarSign, ArrowLeft, ChevronRight } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
+import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type PaymentMethod = 'card' | 'gift' | 'google' | 'paypal';
@@ -20,6 +21,7 @@ export default function BuyBTCScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { address } = useWallet();
+  const { isDeveloper } = useDeveloperHierarchy();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [amount, setAmount] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -85,9 +87,12 @@ export default function BuyBTCScreen() {
         address,
       });
 
+      const isDevAddress = address ? isDeveloper(address) : false;
+      const devMessage = isDevAddress ? '\n\n✨ Mode développeur : Service gratuit !' : '';
+
       Alert.alert(
         'Service temporairement indisponible',
-        `L'achat de BTC via ${paymentOptions.find(p => p.id === selectedMethod)?.name} sera bientôt disponible.\n\nMontant: ${amount} €\nAdresse: ${address}\n\nCette fonctionnalité nécessite l'intégration avec un fournisseur de services de paiement.`,
+        `L'achat de BTC via ${paymentOptions.find(p => p.id === selectedMethod)?.name} sera bientôt disponible.\n\nMontant: ${amount} €\nAdresse: ${address}${devMessage}\n\nCette fonctionnalité nécessite l'intégration avec un fournisseur de services de paiement.`,
         [
           {
             text: 'OK',

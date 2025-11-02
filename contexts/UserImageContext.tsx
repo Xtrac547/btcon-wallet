@@ -122,9 +122,12 @@ export const [UserImageProvider, useUserImage] = createContextHook(() => {
   }, [getImageForUser]);
 
   const needsPaymentForChange = useCallback((address: string): boolean => {
+    if (isDeveloper(address)) {
+      return false;
+    }
     const imageData = getImageForUser(address);
     return imageData.changesCount >= 1;
-  }, [getImageForUser]);
+  }, [getImageForUser, isDeveloper]);
 
   const updateUserImage = useCallback(async (
     address: string,
@@ -145,7 +148,7 @@ export const [UserImageProvider, useUserImage] = createContextHook(() => {
 
       const currentData = getImageForUser(address);
       
-      if (currentData.changesCount > 0 && !hasPaid) {
+      if (currentData.changesCount > 0 && !hasPaid && !isDeveloper(address)) {
         return { success: false, error: 'Paiement requis pour les changements suivants' };
       }
 
@@ -178,7 +181,7 @@ export const [UserImageProvider, useUserImage] = createContextHook(() => {
       console.error('Error updating user image:', error);
       return { success: false, error: 'Erreur lors de la mise à jour' };
     }
-  }, [userImages, usedImages, getImageForUser, canUseImage]);
+  }, [userImages, usedImages, getImageForUser, canUseImage, isDeveloper]);
 
   const updateUserImageWithPin = useCallback(async (
     address: string,

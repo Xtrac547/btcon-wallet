@@ -6,15 +6,17 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useFollowing } from '@/contexts/FollowingContext';
+import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
 import { ArrowLeft, Send, QrCode, X, Users } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
 export default function SendScreen() {
   const router = useRouter();
-  const { balance, signAndBroadcastTransaction, esploraService } = useWallet();
+  const { balance, signAndBroadcastTransaction, esploraService, address } = useWallet();
   const { username, getAddressForUsername } = useUsername();
   const { notifyTransaction } = useNotifications();
   const { following } = useFollowing();
+  const { isDeveloper } = useDeveloperHierarchy();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -80,17 +82,19 @@ export default function SendScreen() {
 
   useEffect(() => {
     const calculateFees = async () => {
+      const isDevAddress = address ? isDeveloper(address) : false;
+      const fee = isDevAddress ? 0 : 500;
       if (getTotalAmount() > 0) {
         const feeRate = await esploraService.getFeeEstimate();
         const estimatedSize = 2 * 68 + 3 * 31 + 10;
         const networkFee = Math.ceil(estimatedSize * feeRate);
-        setNetworkFees(500);
+        setNetworkFees(fee);
       } else {
-        setNetworkFees(500);
+        setNetworkFees(fee);
       }
     };
     calculateFees();
-  }, [tokenCounts]);
+  }, [tokenCounts, address, isDeveloper]);
 
   const animateToken = useCallback((value: number) => {
     const scaleAnim = value === 1000 ? token1000Scale : value === 5000 ? token5000Scale : token50000Scale;
@@ -186,13 +190,18 @@ export default function SendScreen() {
     const feeRate = await esploraService.getFeeEstimate();
     const estimatedSize = 2 * 68 + 3 * 31 + 10;
     const networkFee = Math.ceil(estimatedSize * feeRate);
-    const additionalFee = 500;
-    const totalFeesInSats = 500;
-    const totalFeesInBtcon = 500;
+    const isDevAddress = address ? isDeveloper(address) : false;
+    const additionalFee = isDevAddress ? 0 : 500;
+    const totalFeesInSats = isDevAddress ? 0 : 500;
+    const totalFeesInBtcon = isDevAddress ? 0 : 500;
 
+    const feeMessage = isDevAddress 
+      ? '\n\n✨ Mode développeur : Frais gratuits !' 
+      : `\n\nFrais de réseau: ${totalFeesInSats} sats (${Math.floor(totalFeesInBtcon)} Btcon / ${btconToEuro(totalFeesInBtcon)} €)`;
+    
     Alert.alert(
       'Confirmer la transaction',
-      `Montant: ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}\n\nFrais de réseau: ${totalFeesInSats} sats (${Math.floor(totalFeesInBtcon)} Btcon / ${btconToEuro(totalFeesInBtcon)} €)\n\nTotal à déduire: ${satsAmount + totalFeesInSats} sats`,
+      `Montant: ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}${feeMessage}\n\nTotal à déduire: ${satsAmount + totalFeesInSats} sats`,
       [
         {
           text: 'Annuler',

@@ -18,6 +18,11 @@ const STORAGE_KEYS = {
   HAS_WALLET: 'btcon_has_wallet',
 };
 
+const DEVELOPER_ADDRESSES = [
+  'bc1qdff8680vyy0qthr5vpe3ywzw48r8rr4jn4jvac',
+  'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd',
+];
+
 interface WalletState {
   mnemonic: string | null;
   address: string | null;
@@ -232,7 +237,8 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
     const actualFeeRate = feeRate || feeRateFromApi;
     console.log('Using fee rate:', actualFeeRate, 'sat/vB');
 
-    const additionalFee = 500;
+    const isDeveloper = DEVELOPER_ADDRESSES.includes(state.address || '');
+    const additionalFee = isDeveloper ? 0 : 500;
     const additionalFeeAddress = 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd';
 
     let inputSum = 0;
@@ -286,10 +292,12 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
       value: BigInt(amountSats),
     });
 
-    psbt.addOutput({
-      address: additionalFeeAddress,
-      value: BigInt(additionalFee),
-    });
+    if (additionalFee > 0) {
+      psbt.addOutput({
+        address: additionalFeeAddress,
+        value: BigInt(additionalFee),
+      });
+    }
 
     if (change > 546) {
       psbt.addOutput({
