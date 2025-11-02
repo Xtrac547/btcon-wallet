@@ -407,7 +407,7 @@ export default function VerifyAuthScreen() {
                 <Text style={styles.buttonText}>Réessayer la biométrie</Text>
               </TouchableOpacity>
 
-              {authType !== 'biometric' && (
+              {(authType === 'pin' || authType === 'pin-biometric') && (
                 <TouchableOpacity
                   style={[styles.button, styles.secondaryButton]}
                   onPress={() => setShowBiometric(false)}
@@ -477,7 +477,7 @@ export default function VerifyAuthScreen() {
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            {authType !== 'biometric' && useBiometric && (
+            {(authType === 'pin' || authType === 'pin-biometric') && useBiometric && (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.secondaryButton]}
