@@ -4,35 +4,24 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function IndexScreen() {
   const router = useRouter();
   const { hasWallet, isLoading: walletLoading } = useWallet();
   const { username, isLoading: usernameLoading } = useUsername();
-  const { isAuthConfigured, isAuthenticated, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
     console.log('Index navigation check:', {
       walletLoading,
       usernameLoading,
-      authLoading,
       hasWallet,
-      isAuthConfigured,
-      isAuthenticated,
       username
     });
 
-    if (!walletLoading && !usernameLoading && !authLoading) {
+    if (!walletLoading && !usernameLoading) {
       if (!hasWallet) {
         console.log('Redirecting to onboarding');
         router.replace('/onboarding');
-      } else if (!isAuthConfigured) {
-        console.log('Redirecting to setup-auth');
-        router.replace('/setup-auth');
-      } else if (!isAuthenticated) {
-        console.log('Redirecting to verify-auth');
-        router.replace('/verify-auth');
       } else if (!username) {
         console.log('Redirecting to set-username');
         router.replace('/set-username');
@@ -41,7 +30,7 @@ export default function IndexScreen() {
         router.replace('/wallet');
       }
     }
-  }, [hasWallet, walletLoading, username, usernameLoading, isAuthConfigured, isAuthenticated, authLoading, router]);
+  }, [hasWallet, walletLoading, username, usernameLoading, router]);
 
   return (
     <View style={styles.container}>
