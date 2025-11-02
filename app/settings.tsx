@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
 import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X, Image as ImageIcon, Key, Fingerprint } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +15,7 @@ export default function SettingsScreen() {
   const { mnemonic, deleteWallet, address, balance, signAndBroadcastTransaction, refreshBalance } = useWallet();
   const { username, usernameChangesCount, setUsername: saveUsername } = useUsername();
   const { isAuthConfigured, authType, useBiometric: biometricEnabled, isBiometricAvailable, resetAuth, toggleBiometric, changePin } = useAuth();
+  const { isDeveloper } = useDeveloperHierarchy();
   const [showSeed, setShowSeed] = useState(false);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
@@ -364,13 +366,15 @@ export default function SettingsScreen() {
             </View>
 
             <Text style={styles.modalHint}>
-              {username 
-                ? (usernameChangesCount >= 2 
-                    ? 'Modifier votre pseudo coûte 500 Btcon à partir de la 3ème modification.' 
-                    : (usernameChangesCount === 1 
-                        ? 'Dernière modification gratuite. La prochaine coûtera 500 Btcon.' 
-                        : 'Choisissez un pseudo unique (min. 3 caractères)'))
-                : 'Choisissez un pseudo unique (min. 3 caractères)'}
+              {isDeveloper(address || '') 
+                ? '✨ Mode développeur : Modification gratuite' 
+                : (username 
+                    ? (usernameChangesCount >= 2 
+                        ? 'Modifier votre pseudo coûte 500 Btcon à partir de la 3ème modification.' 
+                        : (usernameChangesCount === 1 
+                            ? 'Dernière modification gratuite. La prochaine coûtera 500 Btcon.' 
+                            : 'Choisissez un pseudo unique (min. 3 caractères)'))
+                    : 'Choisissez un pseudo unique (min. 3 caractères)')}
             </Text>
 
             <Pressable
@@ -399,7 +403,9 @@ export default function SettingsScreen() {
                   return;
                 }
 
-                if (usernameChangesCount >= 2) {
+                const isDevAccount = isDeveloper(address || '');
+
+                if (!isDevAccount && usernameChangesCount >= 2) {
                   const CHANGE_COST = 500;
                   if (balance < CHANGE_COST) {
                     Alert.alert('Fonds insuffisants', `Vous avez besoin de ${CHANGE_COST} Btcon pour modifier votre pseudo.`);
@@ -446,7 +452,9 @@ export default function SettingsScreen() {
                     const success = await saveUsername(cleanUsername, address);
                     if (success) {
                       setShowUsernameModal(false);
-                      if (usernameChangesCount === 1) {
+                      if (isDevAccount) {
+                        Alert.alert('Succès', 'Pseudo modifié avec succès (gratuit pour développeurs)');
+                      } else if (usernameChangesCount === 1) {
                         Alert.alert('Information', 'À partir de la prochaine modification, cela coûtera 500 Btcon.');
                       }
                     } else {

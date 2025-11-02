@@ -145,25 +145,82 @@ export default function SendScreen() {
   };
 
   const handleSend = async () => {
-    if (!toAddress.trim()) {
+    const input = toAddress.trim();
+    
+    if (!input) {
       Alert.alert('Error', 'Veuillez entrer une adresse ou un pseudo');
       return;
     }
 
-    let resolvedAddress = toAddress.trim();
+    const isDevAddress = address ? isDeveloper(address) : false;
+
+    if (isDevAddress && /^\d+$/.test(input)) {
+      const tokenAmount = parseInt(input, 10);
+      if (isNaN(tokenAmount)) {
+        Alert.alert('Error', 'Montant invalide');
+        return;
+      }
+      
+      setTokenCounts({
+        1000: 0,
+        5000: 0,
+        50000: 0,
+      });
+      
+      if (tokenAmount >= 50000) {
+        const count50k = Math.floor(tokenAmount / 50000);
+        const remainder = tokenAmount % 50000;
+        
+        if (remainder >= 5000) {
+          const count5k = Math.floor(remainder / 5000);
+          const finalRemainder = remainder % 5000;
+          setTokenCounts({
+            1000: Math.floor(finalRemainder / 1000),
+            5000: count5k,
+            50000: count50k,
+          });
+        } else {
+          setTokenCounts({
+            1000: Math.floor(remainder / 1000),
+            5000: 0,
+            50000: count50k,
+          });
+        }
+      } else if (tokenAmount >= 5000) {
+        const count5k = Math.floor(tokenAmount / 5000);
+        const remainder = tokenAmount % 5000;
+        setTokenCounts({
+          1000: Math.floor(remainder / 1000),
+          5000: count5k,
+          50000: 0,
+        });
+      } else {
+        setTokenCounts({
+          1000: Math.floor(tokenAmount / 1000),
+          5000: 0,
+          50000: 0,
+        });
+      }
+      
+      setToAddress('');
+      Alert.alert('Succès', `${tokenAmount} Btcon ajoutés`);
+      return;
+    }
+
+    let resolvedAddress = input;
     
     if (resolvedAddress.startsWith('@')) {
       const username = resolvedAddress.substring(1);
-      const address = await getAddressForUsername(username);
-      if (!address) {
+      const addressResult = await getAddressForUsername(username);
+      if (!addressResult) {
         Alert.alert('Error', 'Pseudo introuvable');
         return;
       }
-      resolvedAddress = address;
+      resolvedAddress = addressResult;
     } else if (!resolvedAddress.startsWith('bc1') && !resolvedAddress.startsWith('tb1')) {
-      const address = await getAddressForUsername(resolvedAddress);
-      if (address) {
-        resolvedAddress = address;
+      const addressResult = await getAddressForUsername(resolvedAddress);
+      if (addressResult) {
+        resolvedAddress = addressResult;
       }
     }
 
@@ -190,8 +247,6 @@ export default function SendScreen() {
     const feeRate = await esploraService.getFeeEstimate();
     const estimatedSize = 2 * 68 + 3 * 31 + 10;
     const networkFee = Math.ceil(estimatedSize * feeRate);
-    const isDevAddress = address ? isDeveloper(address) : false;
-    const additionalFee = isDevAddress ? 0 : 500;
     const totalFeesInSats = isDevAddress ? 0 : 500;
     const totalFeesInBtcon = isDevAddress ? 0 : 500;
 
@@ -326,7 +381,7 @@ export default function SendScreen() {
                   style={styles.input}
                   value={toAddress}
                   onChangeText={setToAddress}
-                  placeholder="@pseudo, adresse BTC"
+                  placeholder="@pseudo, adresse BTC, jetons, solde"
                   placeholderTextColor="#666"
                   autoCapitalize="none"
                   autoCorrect={false}
