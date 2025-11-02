@@ -13,20 +13,35 @@ export default function IndexScreen() {
   const { isAuthConfigured, isAuthenticated, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
+    console.log('Index navigation check:', {
+      walletLoading,
+      usernameLoading,
+      authLoading,
+      hasWallet,
+      isAuthConfigured,
+      isAuthenticated,
+      username
+    });
+
     if (!walletLoading && !usernameLoading && !authLoading) {
       if (!hasWallet) {
+        console.log('Redirecting to onboarding');
         router.replace('/onboarding');
       } else if (!isAuthConfigured) {
+        console.log('Redirecting to setup-auth');
         router.replace('/setup-auth');
       } else if (!isAuthenticated) {
+        console.log('Redirecting to verify-auth');
         router.replace('/verify-auth');
       } else if (!username) {
+        console.log('Redirecting to set-username');
         router.replace('/set-username');
       } else {
+        console.log('Redirecting to wallet');
         router.replace('/wallet');
       }
     }
-  }, [hasWallet, walletLoading, username, usernameLoading, isAuthConfigured, isAuthenticated, authLoading]);
+  }, [hasWallet, walletLoading, username, usernameLoading, isAuthConfigured, isAuthenticated, authLoading, router]);
 
   return (
     <View style={styles.container}>

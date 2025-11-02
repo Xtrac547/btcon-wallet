@@ -61,8 +61,10 @@ export default function SetupAuthScreen() {
 
     try {
       await setupPinAuth(pin, enableBiometric);
-      router.replace('/set-username');
+      console.log('PIN setup complete, redirecting to index');
+      router.replace('/');
     } catch (error) {
+      console.error('Setup error:', error);
       setError('Erreur lors de la configuration');
     } finally {
       setIsLoading(false);

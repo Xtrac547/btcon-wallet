@@ -76,18 +76,25 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const setupPinAuth = async (pin: string, enableBiometric: boolean = false) => {
     console.log('Setting up PIN authentication', { enableBiometric });
-    await storeSecurely(STORAGE_KEYS.PIN_CODE, pin);
-    await AsyncStorage.setItem(STORAGE_KEYS.AUTH_CONFIGURED, 'true');
-    const authType = enableBiometric ? 'pin-biometric' : 'pin';
-    await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TYPE, authType);
+    try {
+      await storeSecurely(STORAGE_KEYS.PIN_CODE, pin);
+      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_CONFIGURED, 'true');
+      const authType = enableBiometric ? 'pin-biometric' : 'pin';
+      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TYPE, authType);
 
-    setState(prev => ({
-      ...prev,
-      isAuthConfigured: true,
-      authType,
-      isAuthenticated: true,
-      useBiometric: enableBiometric,
-    }));
+      setState(prev => ({
+        ...prev,
+        isAuthConfigured: true,
+        authType,
+        isAuthenticated: true,
+        useBiometric: enableBiometric,
+      }));
+      
+      console.log('PIN auth setup complete');
+    } catch (error) {
+      console.error('Error in setupPinAuth:', error);
+      throw error;
+    }
   };
 
 

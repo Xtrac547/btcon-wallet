@@ -35,12 +35,14 @@ export default function VerifyAuthScreen() {
     try {
       const success = await verifyBiometric();
       if (success) {
-        router.replace('/wallet');
+        console.log('Biometric auth successful, redirecting to index');
+        router.replace('/');
       } else {
         setError('Authentification échouée. Utilisez votre code PIN.');
         setShowBiometric(false);
       }
     } catch (error) {
+      console.error('Biometric auth error:', error);
       setError('Erreur. Utilisez votre code PIN.');
       setShowBiometric(false);
     } finally {
@@ -66,7 +68,8 @@ export default function VerifyAuthScreen() {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
-        router.replace('/wallet');
+        console.log('PIN auth successful, redirecting to index');
+        router.replace('/');
       } else {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -75,6 +78,7 @@ export default function VerifyAuthScreen() {
         setPin('');
       }
     } catch (error) {
+      console.error('PIN verification error:', error);
       setError('Erreur lors de la vérification');
     } finally {
       setIsLoading(false);
