@@ -12,7 +12,7 @@ const STORAGE_KEYS = {
   IS_AUTHENTICATED: 'btcon_is_authenticated',
 };
 
-export type AuthType = 'pin' | 'pin-biometric' | 'biometric' | null;
+export type AuthType = 'pin' | 'pin-biometric' | 'biometric' | 'none' | null;
 
 interface AuthState {
   isAuthConfigured: boolean;
@@ -81,7 +81,18 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         await storeSecurely(STORAGE_KEYS.PIN_CODE, pin);
       }
       await AsyncStorage.setItem(STORAGE_KEYS.AUTH_CONFIGURED, 'true');
-      const authType = pin.length === 0 ? 'biometric' : (enableBiometric ? 'pin-biometric' : 'pin');
+      
+      let authType: AuthType;
+      if (pin.length === 0 && enableBiometric) {
+        authType = 'biometric';
+      } else if (pin.length === 0 && !enableBiometric) {
+        authType = 'none';
+      } else if (enableBiometric) {
+        authType = 'pin-biometric';
+      } else {
+        authType = 'pin';
+      }
+      
       await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TYPE, authType);
 
       setState(prev => ({
@@ -89,10 +100,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         isAuthConfigured: true,
         authType,
         isAuthenticated: true,
-        useBiometric: enableBiometric || pin.length === 0,
+        useBiometric: enableBiometric || (pin.length === 0 && enableBiometric),
       }));
       
-      console.log('PIN auth setup complete');
+      console.log('PIN auth setup complete', { authType });
     } catch (error) {
       console.error('Error in setupPinAuth:', error);
       throw error;

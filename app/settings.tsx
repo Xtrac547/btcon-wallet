@@ -15,7 +15,7 @@ export default function SettingsScreen() {
   const { mnemonic, deleteWallet, address, balance, signAndBroadcastTransaction, refreshBalance } = useWallet();
   const { username, usernameChangesCount, setUsername: saveUsername } = useUsername();
   const { isDeveloper } = useUserImage();
-  const { isAuthConfigured, useBiometric: biometricEnabled, isBiometricAvailable, resetAuth, toggleBiometric, changePin } = useAuth();
+  const { isAuthConfigured, authType, useBiometric: biometricEnabled, isBiometricAvailable, resetAuth, toggleBiometric, changePin } = useAuth();
   const [showSeed, setShowSeed] = useState(false);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
@@ -213,25 +213,43 @@ export default function SettingsScreen() {
               </View>
               <View style={styles.securityHeaderText}>
                 <Text style={styles.securityTitle}>Authentification</Text>
-                <Text style={styles.securitySubtitle}>Gérer votre code PIN et biométrie</Text>
+                <Text style={styles.securitySubtitle}>
+                  {authType === 'none' ? 'Aucune sécurité activée' : 'Gérer votre code PIN et biométrie'}
+                </Text>
               </View>
             </View>
 
             <View style={styles.authOptions}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.authOptionButton,
-                  pressed && styles.buttonPressed
-                ]}
-                onPress={() => setShowChangePinModal(true)}
-              >
-                <View style={styles.authOptionContent}>
-                  <Key color="#FFF" size={20} strokeWidth={2} />
-                  <Text style={styles.authOptionText}>Modifier le code PIN</Text>
-                </View>
-              </Pressable>
+              {authType === 'none' && (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.authOptionButton,
+                    pressed && styles.buttonPressed
+                  ]}
+                  onPress={() => router.push('/setup-auth')}
+                >
+                  <View style={styles.authOptionContent}>
+                    <Key color="#FFF" size={20} strokeWidth={2} />
+                    <Text style={styles.authOptionText}>Configurer la sécurité</Text>
+                  </View>
+                </Pressable>
+              )}
+              {authType !== 'none' && authType !== 'biometric' && (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.authOptionButton,
+                    pressed && styles.buttonPressed
+                  ]}
+                  onPress={() => setShowChangePinModal(true)}
+                >
+                  <View style={styles.authOptionContent}>
+                    <Key color="#FFF" size={20} strokeWidth={2} />
+                    <Text style={styles.authOptionText}>Modifier le code PIN</Text>
+                  </View>
+                </Pressable>
+              )}
 
-              {isBiometricAvailable && (
+              {isBiometricAvailable && authType !== 'none' && authType !== 'biometric' && (
                 <Pressable
                   style={({ pressed }) => [
                     styles.authOptionButton,
@@ -249,35 +267,37 @@ export default function SettingsScreen() {
                 </Pressable>
               )}
 
-              <Pressable
-                style={({ pressed }) => [
-                  styles.authOptionButton,
-                  styles.dangerButton,
-                  pressed && styles.dangerButtonPressed
-                ]}
-                onPress={() => {
-                  if (Platform.OS === 'web') {
-                    const confirmed = window.confirm('Êtes-vous sûr de vouloir désactiver l\u0027authentification ?');
-                    if (confirmed) {
-                      resetAuth();
+              {authType !== 'none' && (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.authOptionButton,
+                    styles.dangerButton,
+                    pressed && styles.dangerButtonPressed
+                  ]}
+                  onPress={() => {
+                    if (Platform.OS === 'web') {
+                      const confirmed = window.confirm('Êtes-vous sûr de vouloir désactiver l\u0027authentification ?');
+                      if (confirmed) {
+                        resetAuth();
+                      }
+                    } else {
+                      Alert.alert(
+                        'Désactiver l\u0027authentification',
+                        'Êtes-vous sûr de vouloir désactiver l\u0027authentification ?',
+                        [
+                          { text: 'Annuler', style: 'cancel' },
+                          { text: 'Désactiver', style: 'destructive', onPress: () => resetAuth() },
+                        ]
+                      );
                     }
-                  } else {
-                    Alert.alert(
-                      'Désactiver l\u0027authentification',
-                      'Êtes-vous sûr de vouloir désactiver l\u0027authentification ?',
-                      [
-                        { text: 'Annuler', style: 'cancel' },
-                        { text: 'Désactiver', style: 'destructive', onPress: () => resetAuth() },
-                      ]
-                    );
-                  }
-                }}
-              >
-                <View style={styles.authOptionContent}>
-                  <AlertCircle color="#FF4444" size={20} strokeWidth={2} />
-                  <Text style={styles.dangerButtonText}>Désactiver l\u0027authentification</Text>
-                </View>
-              </Pressable>
+                  }}
+                >
+                  <View style={styles.authOptionContent}>
+                    <AlertCircle color="#FF4444" size={20} strokeWidth={2} />
+                    <Text style={styles.dangerButtonText}>Désactiver l\u0027authentification</Text>
+                  </View>
+                </Pressable>
+              )}
             </View>
           </View>
         )}

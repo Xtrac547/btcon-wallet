@@ -89,6 +89,22 @@ export default function SetupAuthScreen() {
     }
   };
 
+  const handleNoAuth = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await setupPinAuth('', false);
+      console.log('No auth setup, can configure later');
+      router.replace('/');
+    } catch (error) {
+      console.error('Setup error:', error);
+      setError('Erreur lors de la configuration');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handlePinChange = (text: string, isConfirm: boolean = false) => {
     const numericText = text.replace(/[^0-9]/g, '');
     if (numericText.length <= 6) {
@@ -154,7 +170,24 @@ export default function SetupAuthScreen() {
             >
               <Text style={styles.optionButtonText}>Code PIN {isBiometricAvailable ? '+ Empreinte' : ''}</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.optionButton, styles.secondaryButton]}
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.selectionAsync();
+                }
+                handleNoAuth();
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.secondaryButtonText}>Aucune sécurité</Text>
+            </TouchableOpacity>
           </View>
+
+          <Text style={styles.configHint}>
+            Vous pourrez configurer la sécurité plus tard dans les paramètres
+          </Text>
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
@@ -489,5 +522,12 @@ const styles = StyleSheet.create({
     textAlign: 'center' as const,
     fontWeight: '700' as const,
     letterSpacing: 8,
+  },
+  configHint: {
+    color: '#666',
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 16,
+    lineHeight: 18,
   },
 });
