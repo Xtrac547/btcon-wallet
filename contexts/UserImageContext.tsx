@@ -108,22 +108,13 @@ export const [UserImageProvider, useUserImage] = createContextHook(() => {
       };
     }
 
-    if (isDeveloper(address)) {
-      return {
-        profileImage: BTC_IMAGE_URL,
-        qrImage: BTC_IMAGE_URL,
-        changesCount: 0,
-        lastChangeTimestamp: null,
-      };
-    }
-
     return userImages[address] || {
       profileImage: BTC_IMAGE_URL,
       qrImage: BTC_IMAGE_URL,
       changesCount: 0,
       lastChangeTimestamp: null,
     };
-  }, [userImages, isDeveloper]);
+  }, [userImages]);
 
   const canChangeImage = useCallback((address: string): boolean => {
     const imageData = getImageForUser(address);
@@ -142,10 +133,6 @@ export const [UserImageProvider, useUserImage] = createContextHook(() => {
     hasPaid: boolean = false
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      if (isDeveloper(address)) {
-        return { success: false, error: 'Les développeurs utilisent l\'image BTC par défaut' };
-      }
-
       const profileCheck = canUseImage(profileImage, address);
       if (!profileCheck.canUse) {
         return { success: false, error: profileCheck.reason };
@@ -191,7 +178,7 @@ export const [UserImageProvider, useUserImage] = createContextHook(() => {
       console.error('Error updating user image:', error);
       return { success: false, error: 'Erreur lors de la mise à jour' };
     }
-  }, [userImages, usedImages, getImageForUser, isDeveloper, canUseImage]);
+  }, [userImages, usedImages, getImageForUser, canUseImage]);
 
   const updateUserImageWithPin = useCallback(async (
     address: string,

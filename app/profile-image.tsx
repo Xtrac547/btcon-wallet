@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUserImage } from '@/contexts/UserImageContext';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { ArrowLeft, Image as ImageIcon, Lock, AlertCircle, Info, X, Upload } from 'lucide-react-native';
+import { ArrowLeft, Image as ImageIcon, Lock, AlertCircle, X, Upload } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
@@ -17,7 +17,7 @@ const PAYMENT_AMOUNT_SATS = Math.floor((PAYMENT_AMOUNT_BTCON / 100000000) * 1000
 export default function ProfileImageScreen() {
   const router = useRouter();
   const { address, signAndBroadcastTransaction } = useWallet();
-  const { getImageForUser, canChangeImage, needsPaymentForChange, updateUserImage, updateUserImageWithPin, isDeveloper } = useUserImage();
+  const { getImageForUser, canChangeImage, needsPaymentForChange, updateUserImage, updateUserImageWithPin } = useUserImage();
   const { verifyDeveloperPin, checkDeveloperStatus } = useNotifications();
   const insets = useSafeAreaInsets();
 
@@ -29,7 +29,6 @@ export default function ProfileImageScreen() {
   const btcPrice = useBtcPrice();
 
   const imageData = getImageForUser(address);
-  const isDevAddress = address ? isDeveloper(address) : false;
   const canChangeFree = canChangeImage(address || '');
   const requiresPayment = needsPaymentForChange(address || '');
 
@@ -111,11 +110,6 @@ export default function ProfileImageScreen() {
       return;
     }
 
-    if (isDevAddress) {
-      Alert.alert('Information', 'Les développeurs utilisent toujours l\'image BTC par défaut');
-      return;
-    }
-
     if (canChangeFree) {
       Alert.alert(
         'Confirmation',
@@ -193,15 +187,6 @@ export default function ProfileImageScreen() {
         style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
       >
-        {isDevAddress && (
-          <View style={styles.devInfoBanner}>
-            <Info color="#FF8C00" size={20} />
-            <Text style={styles.devInfoText}>
-              En tant que développeur, vous utilisez l&apos;image BTC par défaut qui ne peut pas être modifiée.
-            </Text>
-          </View>
-        )}
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Images Actuelles</Text>
           <View style={styles.currentImagesContainer}>
@@ -224,8 +209,7 @@ export default function ProfileImageScreen() {
           </View>
         </View>
 
-        {!isDevAddress && (
-          <>
+        <>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Modifier les Images</Text>
               
@@ -332,7 +316,6 @@ export default function ProfileImageScreen() {
               </View>
             )}
           </>
-        )}
       </ScrollView>
 
       <Modal
