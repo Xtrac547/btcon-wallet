@@ -6,7 +6,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useUserImage } from '@/contexts/UserImageContext';
-import { ArrowLeft, UserX, Users, Trash2, Search, Shield, Lock } from 'lucide-react-native';
+import { ArrowLeft, UserX, Users, Trash2, Search, Shield, Lock, Pyramid } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface UserEntry {
@@ -187,6 +187,21 @@ export default function DeveloperScreen() {
             Vous avez accès aux fonctionnalités développeur car vous utilisez une adresse autorisée.
           </Text>
         </View>
+
+        <Pressable
+          style={styles.hierarchyButton}
+          onPress={() => router.push('/developer-hierarchy')}
+        >
+          <View style={styles.hierarchyButtonIcon}>
+            <Pyramid color="#FF8C00" size={24} />
+          </View>
+          <View style={styles.hierarchyButtonContent}>
+            <Text style={styles.hierarchyButtonTitle}>Hiérarchie des développeurs</Text>
+            <Text style={styles.hierarchyButtonSubtitle}>
+              Gérer les niveaux et permissions des développeurs
+            </Text>
+          </View>
+        </Pressable>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -643,6 +658,41 @@ const styles = StyleSheet.create({
   },
   infoText: {
     color: '#666',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  hierarchyButton: {
+    backgroundColor: '#141414',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#222',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  hierarchyButtonIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 140, 0, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+  },
+  hierarchyButtonContent: {
+    flex: 1,
+  },
+  hierarchyButtonTitle: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700' as const,
+    marginBottom: 4,
+  },
+  hierarchyButtonSubtitle: {
+    color: '#999',
     fontSize: 13,
     lineHeight: 18,
   },
