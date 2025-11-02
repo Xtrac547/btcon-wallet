@@ -32,6 +32,7 @@ export default function SendScreen() {
   const [isSending, setIsSending] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  const [networkFees, setNetworkFees] = useState(0);
 
 
   const tokenAmounts = [
@@ -50,6 +51,18 @@ export default function SendScreen() {
       return total + (Number(value) * count);
     }, 0);
   };
+
+  useEffect(() => {
+    const calculateFees = async () => {
+      if (getTotalAmount() > 0) {
+        const feeRate = await esploraService.getFeeEstimate();
+        const estimatedSize = 2 * 68 + 3 * 31 + 10;
+        const networkFee = Math.ceil(estimatedSize * feeRate);
+        setNetworkFees(networkFee);
+      }
+    };
+    calculateFees();
+  }, [tokenCounts]);
 
   const handleTokenPress = (value: number) => {
     setTokenCounts(prev => ({
@@ -372,6 +385,11 @@ export default function SendScreen() {
               <Text style={styles.conversionText}>
                 ≈ {(getTotalAmount() / 100000000).toFixed(8)} BTC
               </Text>
+            </View>
+
+            <View style={styles.feesContainer}>
+              <Text style={styles.feesLabel}>Frais de réseau</Text>
+              <Text style={styles.feesValue}>{networkFees} sats</Text>
             </View>
           </View>
         )}
@@ -874,6 +892,27 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 13,
     lineHeight: 18,
+  },
+  feesContainer: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#000000',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  feesLabel: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  feesValue: {
+    color: '#FF8C00',
+    fontSize: 16,
+    fontWeight: '700' as const,
   },
   modalContainer: {
     flex: 1,
