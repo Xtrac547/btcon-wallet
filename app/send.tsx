@@ -227,7 +227,7 @@ export default function SendScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {getTotalAmount() === 0 && (
+        {getTotalAmount() === 0 ? (
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Solde disponible</Text>
             <View style={styles.balanceRow}>
@@ -236,12 +236,10 @@ export default function SendScreen() {
             </View>
             <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
           </View>
-        )}
-
-        {getTotalAmount() > 0 && (
+        ) : (
           <View style={styles.formCard}>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Destinataire</Text>
+              <Text style={styles.inputLabel}>Adresse BTC</Text>
               <View style={styles.inputRow}>
                 <TextInput
                   style={styles.input}
@@ -290,17 +288,13 @@ export default function SendScreen() {
           </View>
         )}
 
-        <View style={styles.formCard}>
-          <View style={styles.inputContainer}>
-            <View style={styles.labelRow}>
-              <Text style={styles.inputLabel}>Sélectionner le montant</Text>
-              {getTotalAmount() > 0 && (
-                <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
-                  <Text style={styles.resetText}>Réinitialiser</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
+        {getTotalAmount() === 0 && (
+          <View style={styles.formCard}>
+            <View style={styles.inputContainer}>
+              <View style={styles.labelRow}>
+                <Text style={styles.inputLabel}>Sélectionner le montant</Text>
+              </View>
+              <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
               <View style={styles.topTokensRow}>
                 {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => (
                   <View key={index} style={styles.tokenWrapper}>
@@ -351,20 +345,36 @@ export default function SendScreen() {
                 ))}
               </View>
             </View>
-            {getTotalAmount() > 0 && (
-              <View style={styles.totalContainer}>
-                <Text style={styles.totalLabel}>Total:</Text>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalAmount}>{Math.floor(getTotalAmount())}</Text>
-                  <Text style={styles.totalUnit}>Btcon</Text>
-                </View>
-                <Text style={styles.conversionText}>
-                  ≈ {(getTotalAmount() / 100000000).toFixed(8)} BTC
-                </Text>
-              </View>
-            )}
+            </View>
           </View>
-        </View>
+        )}
+
+        {getTotalAmount() > 0 && (
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>Jetons sélectionnés</Text>
+            <View style={styles.tokensListContainer}>
+              {Object.entries(tokenCounts).map(([value, count]) => {
+                if (count === 0) return null;
+                return (
+                  <View key={value} style={styles.tokenSummaryRow}>
+                    <Text style={styles.tokenSummaryText}>{value} Btcon</Text>
+                    <Text style={styles.tokenSummaryCount}>× {count}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Estimation:</Text>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalAmount}>{Math.floor(getTotalAmount())}</Text>
+                <Text style={styles.totalUnit}>Btcon</Text>
+              </View>
+              <Text style={styles.conversionText}>
+                ≈ {(getTotalAmount() / 100000000).toFixed(8)} BTC
+              </Text>
+            </View>
+          </View>
+        )}
 
         {getTotalAmount() > 0 && (
           <TouchableOpacity
@@ -785,6 +795,49 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 12,
     marginTop: 4,
+  },
+  summaryCard: {
+    backgroundColor: '#0f0f0f',
+    borderRadius: 28,
+    padding: 28,
+    marginBottom: 28,
+    gap: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  summaryLabel: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600' as const,
+    marginBottom: 8,
+  },
+  tokensListContainer: {
+    gap: 12,
+  },
+  tokenSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+  },
+  tokenSummaryText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  tokenSummaryCount: {
+    color: '#FF8C00',
+    fontSize: 16,
+    fontWeight: '700' as const,
   },
   sendButton: {
     backgroundColor: '#FF8C00',

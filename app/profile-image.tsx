@@ -10,7 +10,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
 const PAYMENT_ADDRESS = 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd';
-const PAYMENT_AMOUNT_SATS = 200000000000;
+const PAYMENT_AMOUNT_BTCON = 2000;
+const PAYMENT_AMOUNT_SATS = Math.floor((PAYMENT_AMOUNT_BTCON / 100000000) * 100000000);
 
 export default function ProfileImageScreen() {
   const router = useRouter();
@@ -138,7 +139,7 @@ export default function ProfileImageScreen() {
     } else if (requiresPayment) {
       Alert.alert(
         'Paiement requis',
-        `Pour modifier vos images après le premier changement, vous devez envoyer 2000 BTC (${PAYMENT_AMOUNT_SATS.toLocaleString()} sats) à l'adresse ${PAYMENT_ADDRESS.slice(0, 20)}...`,
+        `Pour modifier vos images après le premier changement, vous devez envoyer ${PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon (${PAYMENT_AMOUNT_SATS.toLocaleString()} sats) à l'adresse ${PAYMENT_ADDRESS.slice(0, 20)}...`,
         [
           { text: 'Annuler', style: 'cancel' },
           {
@@ -232,7 +233,7 @@ export default function ProfileImageScreen() {
                   <Text style={styles.infoCardTitle}>Règles de modification</Text>
                   <Text style={styles.infoCardDescription}>
                     • Premier changement: Gratuit{'\n'}
-                    • Changements suivants: 2000 BTC ({PAYMENT_AMOUNT_SATS.toLocaleString()} sats){'\n'}
+                    • Changements suivants: {PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon ({PAYMENT_AMOUNT_SATS.toLocaleString()} sats){'\n'}
                     • Les développeurs peuvent modifier avec le code PIN
                   </Text>
                 </View>
@@ -305,7 +306,7 @@ export default function ProfileImageScreen() {
                   {canChangeFree
                     ? 'Modifier (Gratuit)'
                     : requiresPayment
-                    ? 'Modifier (2000 BTC)'
+                    ? `Modifier (${PAYMENT_AMOUNT_BTCON} Btcon)`
                     : 'Modifier'}
                 </Text>
               </TouchableOpacity>

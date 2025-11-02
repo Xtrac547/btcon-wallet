@@ -261,21 +261,6 @@ export default function WalletScreen() {
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => {
-              console.log('Buy BTC button pressed');
-              router.push('/buy-btc');
-            }}
-            activeOpacity={0.7}
-            testID="buy-btc-button"
-          >
-            <View style={styles.actionIconContainer}>
-              <Plus color="#FF8C00" size={24} />
-            </View>
-            <Text style={styles.actionText}>Acheter</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => {
               console.log('Receive button pressed');
               router.push('/receive');
             }}
