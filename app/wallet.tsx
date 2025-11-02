@@ -5,7 +5,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useUserImage } from '@/contexts/UserImageContext';
-import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw, TrendingUp, TrendingDown, Clock } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw, TrendingUp, TrendingDown, Clock, Plus } from 'lucide-react-native';
 import { useState, useEffect, useRef } from 'react';
 
 export default function WalletScreen() {
@@ -258,6 +258,21 @@ export default function WalletScreen() {
         </Animated.View>
 
         <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              console.log('Buy BTC button pressed');
+              router.push('/buy-btc');
+            }}
+            activeOpacity={0.7}
+            testID="buy-btc-button"
+          >
+            <View style={styles.actionIconContainer}>
+              <Plus color="#FF8C00" size={24} />
+            </View>
+            <Text style={styles.actionText}>Acheter</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => {
@@ -547,7 +562,7 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     flexDirection: 'row',
-    gap: 20,
+    gap: 12,
     marginBottom: 32,
   },
   actionButton: {

@@ -33,6 +33,7 @@ function RootLayoutNav() {
       <Stack.Screen name="developer-hierarchy" options={{ headerShown: false }} />
       <Stack.Screen name="search-users" options={{ headerShown: false }} />
       <Stack.Screen name="profile-image" options={{ headerShown: false }} />
+      <Stack.Screen name="buy-btc" options={{ headerShown: false }} />
     </Stack>
   );
 }
