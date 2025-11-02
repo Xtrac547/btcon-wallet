@@ -201,31 +201,46 @@ export default function WalletScreen() {
         </View>
         <View style={styles.headerActions}>
           {isDeveloper && (
+            <>
+              <TouchableOpacity 
+                onPress={() => {
+                  console.log('Developer button pressed');
+                  router.push('/developer');
+                }} 
+                style={styles.settingsButton}
+                activeOpacity={0.7}
+                testID="developer-button"
+              >
+                <View style={styles.developerBadge}>
+                  <Text style={styles.developerBadgeText}>DEV</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => {
+                  console.log('Settings button pressed');
+                  router.push('/settings');
+                }} 
+                style={styles.settingsButton}
+                activeOpacity={0.7}
+                testID="settings-button"
+              >
+                <Settings color="#FFF" size={24} />
+              </TouchableOpacity>
+            </>
+          )}
+          {!isDeveloper && (
             <TouchableOpacity 
               onPress={() => {
-                console.log('Developer button pressed');
-                router.push('/developer');
+                console.log('Settings button pressed');
+                router.push('/settings');
               }} 
               style={styles.settingsButton}
               activeOpacity={0.7}
-              testID="developer-button"
+              testID="settings-button"
             >
-              <View style={styles.developerBadge}>
-                <Text style={styles.developerBadgeText}>DEV</Text>
-              </View>
+              <Settings color="#FFF" size={24} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity 
-            onPress={() => {
-              console.log('Settings button pressed');
-              router.push('/settings');
-            }} 
-            style={styles.settingsButton}
-            activeOpacity={0.7}
-            testID="settings-button"
-          >
-            <Settings color="#FFF" size={24} />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -459,7 +474,7 @@ const styles = StyleSheet.create({
     height: 70,
   },
   headerActions: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     gap: 12,
   },
