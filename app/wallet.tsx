@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated, useWindowDimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated, useWindowDimensions, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
@@ -20,8 +20,10 @@ export default function WalletScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const cardAnim = useRef(new Animated.Value(0)).current;
   const [addressUsernameMap, setAddressUsernameMap] = useState<Record<string, string>>({});
   const btcPrice = useBtcPrice();
+  const [pressedAction, setPressedAction] = useState<'send' | 'receive' | null>(null);
 
 
 
@@ -101,16 +103,25 @@ export default function WalletScreen() {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 600,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        friction: 8,
-        tension: 40,
+        friction: 7,
+        tension: 35,
         useNativeDriver: true,
       }),
     ]).start();
+
+    setTimeout(() => {
+      Animated.spring(cardAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    }, 200);
   }, []);
 
   useEffect(() => {
@@ -260,37 +271,54 @@ export default function WalletScreen() {
           )}
         </Animated.View>
 
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={styles.actionButton}
+        <Animated.View style={[
+          styles.actionsContainer,
+          {
+            opacity: cardAnim,
+            transform: [
+              {
+                translateY: cardAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                }),
+              },
+            ],
+          },
+        ]}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.actionButtonPressed,
+            ]}
             onPress={() => {
               console.log('Receive button pressed');
               router.push('/receive');
             }}
-            activeOpacity={0.7}
             testID="receive-button"
           >
             <View style={styles.actionIconContainer}>
-              <ArrowDownLeft color="#FF8C00" size={24} />
+              <ArrowDownLeft color="#FF8C00" size={24} strokeWidth={2.5} />
             </View>
             <Text style={styles.actionText}>Recevoir</Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
-            style={styles.actionButton}
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.actionButtonPressed,
+            ]}
             onPress={() => {
               console.log('Send button pressed');
               router.push('/send');
             }}
-            activeOpacity={0.7}
             testID="send-button"
           >
             <View style={styles.actionIconContainer}>
-              <ArrowUpRight color="#FF8C00" size={24} />
+              <ArrowUpRight color="#FF8C00" size={24} strokeWidth={2.5} />
             </View>
             <Text style={styles.actionText}>Envoyer</Text>
-          </TouchableOpacity>
-        </View>
+          </Pressable>
+        </Animated.View>
 
         {transactions.length > 0 && (
           <View style={styles.historyContainer}>
@@ -574,6 +602,11 @@ const styles = StyleSheet.create({
     zIndex: 5,
     borderWidth: 1,
     borderColor: 'rgba(255, 140, 0, 0.15)',
+  },
+  actionButtonPressed: {
+    transform: [{ scale: 0.96 }],
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
   actionIconContainer: {
     width: 72,

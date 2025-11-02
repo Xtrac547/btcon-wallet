@@ -1,6 +1,6 @@
 import '@/utils/shim';
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions } from 'react-native';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions, Animated, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
@@ -18,6 +18,9 @@ export default function SendScreen() {
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const scrollViewRef = useRef<ScrollView>(null);
+  const token1000Scale = useRef(new Animated.Value(1)).current;
+  const token5000Scale = useRef(new Animated.Value(1)).current;
+  const token50000Scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!username) {
@@ -89,7 +92,27 @@ export default function SendScreen() {
     calculateFees();
   }, [tokenCounts]);
 
+  const animateToken = useCallback((value: number) => {
+    const scaleAnim = value === 1000 ? token1000Scale : value === 5000 ? token5000Scale : token50000Scale;
+    
+    Animated.sequence([
+      Animated.spring(scaleAnim, {
+        toValue: 1.15,
+        friction: 3,
+        tension: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [token1000Scale, token5000Scale, token50000Scale]);
+
   const handleTokenPress = (value: number) => {
+    animateToken(value);
     setTokenCounts(prev => ({
       ...prev,
       [value]: prev[value] + 1,
@@ -349,50 +372,57 @@ export default function SendScreen() {
             </View>
             <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
               <View style={styles.topTokensRow}>
-                {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => (
-                  <View key={index} style={styles.tokenWrapper}>
-                    <TouchableOpacity
-                      style={[
-                        token.shape === 'circle' ? styles.tokenCircle : styles.tokenSquare,
-                        token.value === 1000 && styles.token1000,
-                        token.value === 5000 && styles.token5000,
-                        tokenCounts[token.value] > 0 && styles.tokenSelected,
-                      ]}
-                      onPress={() => handleTokenPress(token.value)}
-                      onLongPress={() => handleTokenLongPress(token.value)}
-                      testID={`token-${token.value}`}
-                    >
-                      <Text style={styles.tokenValue}>{token.value}</Text>
-                      <Text style={styles.tokenUnit}>BTCON</Text>
-                      {tokenCounts[token.value] > 0 && (
-                        <View style={styles.countBadge}>
-                          <Text style={styles.countText}>{tokenCounts[token.value]}x</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                ))}
+                {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => {
+                  const scaleAnim = token.value === 1000 ? token1000Scale : token5000Scale;
+                  return (
+                    <View key={index} style={styles.tokenWrapper}>
+                      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                        <Pressable
+                          style={[
+                            token.shape === 'circle' ? styles.tokenCircle : styles.tokenSquare,
+                            token.value === 1000 && styles.token1000,
+                            token.value === 5000 && styles.token5000,
+                            tokenCounts[token.value] > 0 && styles.tokenSelected,
+                          ]}
+                          onPress={() => handleTokenPress(token.value)}
+                          onLongPress={() => handleTokenLongPress(token.value)}
+                          testID={`token-${token.value}`}
+                        >
+                          <Text style={styles.tokenValue}>{token.value}</Text>
+                          <Text style={styles.tokenUnit}>BTCON</Text>
+                          {tokenCounts[token.value] > 0 && (
+                            <View style={styles.countBadge}>
+                              <Text style={styles.countText}>{tokenCounts[token.value]}x</Text>
+                            </View>
+                          )}
+                        </Pressable>
+                      </Animated.View>
+                    </View>
+                  );
+                })}
               </View>
               <View style={styles.bottomTokenRow}>
                 {tokenAmounts.filter(token => token.value === 50000).map((token, index) => (
                   <View key={index} style={styles.tokenWrapper50k}>
-                    <TouchableOpacity
-                      style={[
-                        styles.tokenSquare,
-                        tokenCounts[token.value] > 0 && styles.tokenSelected,
-                      ]}
-                      onPress={() => handleTokenPress(token.value)}
-                      onLongPress={() => handleTokenLongPress(token.value)}
-                      testID={`token-${token.value}`}
-                    >
-                      <Text style={styles.tokenValue}>{token.value}</Text>
-                      <Text style={styles.tokenUnit}>BTCON</Text>
-                      {tokenCounts[token.value] > 0 && (
-                        <View style={styles.countBadge}>
-                          <Text style={styles.countText}>{tokenCounts[token.value]}x</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
+                    <Animated.View style={{ transform: [{ scale: token50000Scale }] }}>
+                      <Pressable
+                        style={[
+                          styles.tokenSquare,
+                          tokenCounts[token.value] > 0 && styles.tokenSelected,
+                        ]}
+                        onPress={() => handleTokenPress(token.value)}
+                        onLongPress={() => handleTokenLongPress(token.value)}
+                        testID={`token-${token.value}`}
+                      >
+                        <Text style={styles.tokenValue}>{token.value}</Text>
+                        <Text style={styles.tokenUnit}>BTCON</Text>
+                        {tokenCounts[token.value] > 0 && (
+                          <View style={styles.countBadge}>
+                            <Text style={styles.countText}>{tokenCounts[token.value]}x</Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    </Animated.View>
                   </View>
                 ))}
               </View>
