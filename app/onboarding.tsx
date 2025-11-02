@@ -70,19 +70,28 @@ export default function OnboardingScreen() {
       return;
     }
 
-    const words = restorePhrase.trim().split(/\s+/);
+    const cleanedPhrase = restorePhrase.trim().toLowerCase().replace(/\s+/g, ' ');
+    const words = cleanedPhrase.split(' ');
+    
+    console.log('Attempting to restore wallet with', words.length, 'words');
+    
     if (words.length !== 12) {
-      Alert.alert('Erreur', 'La phrase de récupération doit contenir 12 mots');
+      Alert.alert('Erreur', `La phrase de récupération doit contenir 12 mots (vous en avez ${words.length})`);
       return;
     }
 
     setIsCreating(true);
     try {
-      await restoreWallet(restorePhrase.trim());
+      await restoreWallet(cleanedPhrase);
+      console.log('Wallet restored successfully, navigating to setup-auth');
       router.replace('/setup-auth');
     } catch (error) {
       console.error('Error restoring wallet:', error);
-      Alert.alert('Erreur', 'Phrase de récupération invalide. Veuillez vérifier et réessayer.');
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      Alert.alert(
+        'Erreur de restauration',
+        `Phrase de récupération invalide. Veuillez vérifier que:\n\n• Les 12 mots sont corrects\n• Ils sont dans le bon ordre\n• Il n'y a pas de fautes de frappe\n\nDétails: ${errorMessage}`
+      );
     } finally {
       setIsCreating(false);
     }
