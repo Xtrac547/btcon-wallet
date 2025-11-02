@@ -59,13 +59,12 @@ export default function SendScreen() {
   ];
 
   const formatBalance = (sats: number): string => {
-    const btcon = (sats / 100000000) * 100000000;
+    const btcon = sats;
     return Math.floor(btcon).toString();
   };
 
   const btconToEuro = (btcon: number): string => {
-    const satoshis = (btcon / 100000000) * 100000000;
-    const btc = satoshis / 100000000;
+    const btc = btcon / 100000000;
     const euro = btc * btcPrice;
     return euro.toFixed(2);
   };
@@ -82,7 +81,9 @@ export default function SendScreen() {
         const feeRate = await esploraService.getFeeEstimate();
         const estimatedSize = 2 * 68 + 3 * 31 + 10;
         const networkFee = Math.ceil(estimatedSize * feeRate);
-        setNetworkFees(networkFee);
+        setNetworkFees(500);
+      } else {
+        setNetworkFees(500);
       }
     };
     calculateFees();
@@ -147,7 +148,7 @@ export default function SendScreen() {
     }
 
     const btconAmount = totalAmount;
-    const satsAmount = Math.floor((btconAmount / 100000000) * 100000000);
+    const satsAmount = Math.floor(btconAmount);
 
     if (satsAmount > balance) {
       Alert.alert('Error', 'Fonds insuffisants');
@@ -163,8 +164,8 @@ export default function SendScreen() {
     const estimatedSize = 2 * 68 + 3 * 31 + 10;
     const networkFee = Math.ceil(estimatedSize * feeRate);
     const additionalFee = 500;
-    const totalFeesInSats = networkFee + additionalFee;
-    const totalFeesInBtcon = (totalFeesInSats / 100000000) * 100000000;
+    const totalFeesInSats = 500;
+    const totalFeesInBtcon = 500;
 
     Alert.alert(
       'Confirmer la transaction',
@@ -280,7 +281,7 @@ export default function SendScreen() {
               <Text style={styles.balanceUnit}>Btcon</Text>
             </View>
             <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
-            <Text style={styles.balanceEuro}>≈ {btconToEuro(Number(formatBalance(balance)))} €</Text>
+            <Text style={styles.balanceEuro}>≈ {btconToEuro(balance)} €</Text>
           </View>
         )}
 
@@ -336,13 +337,17 @@ export default function SendScreen() {
           </View>
         )}
 
-        {getTotalAmount() === 0 && (
-          <View style={styles.formCard}>
-            <View style={styles.inputContainer}>
-              <View style={styles.labelRow}>
-                <Text style={styles.inputLabel}>Sélectionner le montant</Text>
-              </View>
-              <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
+        <View style={styles.formCard}>
+          <View style={styles.inputContainer}>
+            <View style={styles.labelRow}>
+              <Text style={styles.inputLabel}>Sélectionner le montant</Text>
+              {getTotalAmount() > 0 && (
+                <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
+                  <Text style={styles.resetText}>Réinitialiser</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
               <View style={styles.topTokensRow}>
                 {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => (
                   <View key={index} style={styles.tokenWrapper}>
@@ -352,17 +357,16 @@ export default function SendScreen() {
                         token.value === 1000 && styles.token1000,
                         token.value === 5000 && styles.token5000,
                         tokenCounts[token.value] > 0 && styles.tokenSelected,
-                        token.value === 5000 && { transform: [{ rotate: '180deg' }] },
                       ]}
                       onPress={() => handleTokenPress(token.value)}
                       onLongPress={() => handleTokenLongPress(token.value)}
                       testID={`token-${token.value}`}
                     >
                       <Text style={styles.tokenValue}>{token.value}</Text>
-                      <Text style={styles.tokenUnit}>Btcon</Text>
+                      <Text style={styles.tokenUnit}>BTCON</Text>
                       {tokenCounts[token.value] > 0 && (
                         <View style={styles.countBadge}>
-                          <Text style={styles.countText}>×{tokenCounts[token.value]}</Text>
+                          <Text style={styles.countText}>{tokenCounts[token.value]}x</Text>
                         </View>
                       )}
                     </TouchableOpacity>
@@ -382,10 +386,10 @@ export default function SendScreen() {
                       testID={`token-${token.value}`}
                     >
                       <Text style={styles.tokenValue}>{token.value}</Text>
-                      <Text style={styles.tokenUnit}>Btcon</Text>
+                      <Text style={styles.tokenUnit}>BTCON</Text>
                       {tokenCounts[token.value] > 0 && (
                         <View style={styles.countBadge}>
-                          <Text style={styles.countText}>×{tokenCounts[token.value]}</Text>
+                          <Text style={styles.countText}>{tokenCounts[token.value]}x</Text>
                         </View>
                       )}
                     </TouchableOpacity>
@@ -393,118 +397,20 @@ export default function SendScreen() {
                 ))}
               </View>
             </View>
-            </View>
           </View>
-        )}
+        </View>
 
         {getTotalAmount() > 0 && (
-          <>
-            <View style={styles.formCard}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Destinataire</Text>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={styles.input}
-                    value={toAddress}
-                    onChangeText={setToAddress}
-                    placeholder="@pseudo, adresse BTC"
-                    placeholderTextColor="#666"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                  <TouchableOpacity
-                    style={styles.scanButton}
-                    onPress={handleOpenScanner}
-                    testID="scan-qr-button"
-                  >
-                    <QrCode color="#FF8C00" size={24} />
-                  </TouchableOpacity>
-                </View>
-              </View>
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Total:</Text>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalAmount}>{Math.floor(getTotalAmount())}</Text>
+              <Text style={styles.totalUnit}>Btcon</Text>
             </View>
-
-            <View style={styles.summaryCard}>
-              <View style={styles.labelWithReset}>
-                <Text style={styles.summaryLabel}>Sélectionner le montant</Text>
-                <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
-                  <Text style={styles.resetText}>Réinitialiser</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
-                <View style={styles.topTokensRow}>
-                  {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => (
-                    <View key={index} style={styles.tokenWrapper}>
-                      <TouchableOpacity
-                        style={[
-                          token.shape === 'circle' ? styles.tokenCircle : styles.tokenSquare,
-                          token.value === 1000 && styles.token1000,
-                          token.value === 5000 && styles.token5000,
-                          tokenCounts[token.value] > 0 && styles.tokenSelected,
-                          token.value === 5000 && { transform: [{ rotate: '180deg' }] },
-                        ]}
-                        onPress={() => handleTokenPress(token.value)}
-                        onLongPress={() => handleTokenLongPress(token.value)}
-                        testID={`token-${token.value}`}
-                      >
-                        <Text style={styles.tokenValue}>{token.value}</Text>
-                        <Text style={styles.tokenUnit}>Btcon</Text>
-                        {tokenCounts[token.value] > 0 && (
-                          <View style={styles.countBadge}>
-                            <Text style={styles.countText}>×{tokenCounts[token.value]}</Text>
-                          </View>
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.bottomTokenRow}>
-                  {tokenAmounts.filter(token => token.value === 50000).map((token, index) => (
-                    <View key={index} style={styles.tokenWrapper50k}>
-                      <TouchableOpacity
-                        style={[
-                          styles.tokenSquare,
-                          tokenCounts[token.value] > 0 && styles.tokenSelected,
-                        ]}
-                        onPress={() => handleTokenPress(token.value)}
-                        onLongPress={() => handleTokenLongPress(token.value)}
-                        testID={`token-${token.value}`}
-                      >
-                        <Text style={styles.tokenValue}>{token.value}</Text>
-                        <Text style={styles.tokenUnit}>Btcon</Text>
-                        {tokenCounts[token.value] > 0 && (
-                          <View style={styles.countBadge}>
-                            <Text style={styles.countText}>×{tokenCounts[token.value]}</Text>
-                          </View>
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.totalContainer}>
-                <Text style={styles.totalLabel}>Total:</Text>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalAmount}>{Math.floor(getTotalAmount())}</Text>
-                  <Text style={styles.totalUnit}>Btcon</Text>
-                </View>
-                <Text style={styles.conversionText}>
-                  ≈ {(getTotalAmount() / 100000000).toFixed(8)} BTC
-                </Text>
-                <Text style={styles.conversionTextEuro}>
-                  ≈ {btconToEuro(getTotalAmount())} €
-                </Text>
-              </View>
-
-              <View style={styles.feesContainer}>
-                <Text style={styles.feesLabel}>Frais de réseau</Text>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.feesValue}>{Math.floor(((networkFees + 500) / 100000000) * 100000000)} Btcon</Text>
-                  <Text style={styles.feesEuroText}>≈ {btconToEuro((networkFees + 500))} €</Text>
-                </View>
-              </View>
-            </View>
-          </>
+            <Text style={styles.conversionText}>
+              ≈ {(getTotalAmount() / 100000000).toFixed(8)} BTC
+            </Text>
+          </View>
         )}
 
         {getTotalAmount() > 0 && (
@@ -679,7 +585,7 @@ const styles = StyleSheet.create({
   balanceCard: {
     backgroundColor: '#0f0f0f',
     borderRadius: 24,
-    padding: 40,
+    padding: 28,
     marginBottom: 20,
     alignItems: 'center',
     shadowColor: '#FF8C00',
@@ -692,8 +598,8 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     color: '#FFF',
-    fontSize: 16,
-    marginBottom: 16,
+    fontSize: 14,
+    marginBottom: 12,
     fontWeight: '600' as const,
     letterSpacing: 0.5,
   },
@@ -704,12 +610,12 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     color: '#FFF',
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '900' as const,
   },
   balanceUnit: {
     color: '#FF8C00',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900' as const,
   },
   balanceSats: {
@@ -804,12 +710,12 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   token1000: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#6BA4E8',
+    backgroundColor: '#5B9BD5',
+    borderColor: '#75ADE0',
   },
   token5000: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E0E0E0',
+    backgroundColor: '#FF9F47',
+    borderColor: '#FFB366',
   },
   tokenSquare: {
     width: '100%',
@@ -836,21 +742,21 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   tokenValue: {
-    color: '#FFD700',
-    fontSize: 22,
+    color: '#FFF',
+    fontSize: 28,
     fontWeight: '900' as const,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   tokenUnit: {
-    color: '#FFD700',
-    fontSize: 7,
+    color: '#FFF',
+    fontSize: 11,
     fontWeight: '700' as const,
-    marginTop: 2,
-    letterSpacing: 1,
+    marginTop: 4,
+    letterSpacing: 0.5,
     textTransform: 'uppercase' as const,
-    opacity: 0.9,
+    opacity: 1,
   },
   countBadge: {
     position: 'absolute',
@@ -869,13 +775,13 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   totalContainer: {
-    marginTop: 24,
-    padding: 24,
-    backgroundColor: 'rgba(255, 140, 0, 0.1)',
-    borderRadius: 20,
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: 'rgba(61, 40, 25, 0.8)',
+    borderRadius: 16,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 140, 0, 0.3)',
+    borderColor: 'rgba(255, 140, 0, 0.4)',
   },
   totalLabel: {
     color: '#FFF',
@@ -890,7 +796,7 @@ const styles = StyleSheet.create({
   },
   totalAmount: {
     color: '#FFF',
-    fontSize: 26,
+    fontSize: 32,
     fontWeight: '900' as const,
   },
   totalUnit: {
@@ -985,13 +891,14 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     backgroundColor: '#FF8C00',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 20,
+    padding: 22,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
     marginBottom: 20,
+    marginTop: 8,
     shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
@@ -1003,7 +910,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: '#000',
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '900' as const,
     letterSpacing: 0.5,
   },
