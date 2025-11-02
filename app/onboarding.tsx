@@ -43,27 +43,23 @@ export default function OnboardingScreen() {
   };
 
   const handleConfirmSeed = () => {
-    if (!seedConfirmed) {
-      Alert.alert(
-        'Confirmation',
-        'Avez-vous bien noté vos 12 mots de récupération ? Ils sont nécessaires pour restaurer votre portefeuille.',
-        [
-          {
-            text: 'Non, je veux les revoir',
-            style: 'cancel',
+    Alert.alert(
+      'Confirmation',
+      'Avez-vous bien noté vos 12 mots de récupération ? Ils sont nécessaires pour restaurer votre portefeuille.',
+      [
+        {
+          text: 'Non, je veux les revoir',
+          style: 'cancel',
+        },
+        {
+          text: 'Oui, j\'ai noté',
+          onPress: () => {
+            setSeedConfirmed(true);
+            router.replace('/setup-auth');
           },
-          {
-            text: 'Oui, j\'ai noté',
-            onPress: () => {
-              setSeedConfirmed(true);
-              router.replace('/setup-auth');
-            },
-          },
-        ]
-      );
-    } else {
-      setMode('set-username');
-    }
+        },
+      ]
+    );
   };
 
 

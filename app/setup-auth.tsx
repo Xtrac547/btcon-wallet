@@ -24,16 +24,11 @@ export default function SetupAuthScreen() {
 
 
 
-  const handleSkipPin = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
-    router.replace('/');
-  };
+
 
   const handlePinSubmit = () => {
-    if (pin.length < 4 || pin.length > 8) {
-      setError('Le code PIN doit contenir entre 4 et 8 chiffres');
+    if (pin.length !== 6) {
+      setError('Le code PIN doit contenir exactement 6 chiffres');
       return;
     }
 
@@ -68,8 +63,8 @@ export default function SetupAuthScreen() {
 
     try {
       await setupPinAuth(pin, enableBiometric);
-      console.log('PIN setup complete, redirecting to index');
-      router.replace('/');
+      console.log('PIN setup complete, redirecting to verify-auth');
+      router.replace('/verify-auth');
     } catch (error) {
       console.error('Setup error:', error);
       setError('Erreur lors de la configuration');
@@ -80,7 +75,7 @@ export default function SetupAuthScreen() {
 
   const handlePinChange = (text: string, isConfirm: boolean = false) => {
     const numericText = text.replace(/[^0-9]/g, '');
-    if (numericText.length <= 8) {
+    if (numericText.length <= 6) {
       if (isConfirm) {
         setConfirmPin(numericText);
       } else {
@@ -162,10 +157,10 @@ export default function SetupAuthScreen() {
             </View>
           </View>
           <Text style={styles.title}>Créer un code PIN</Text>
-          <Text style={styles.subtitle}>Entrez un code de 4 à 8 chiffres (optionnel)</Text>
+          <Text style={styles.subtitle}>Entrez un code à 6 chiffres (obligatoire)</Text>
 
           <View style={styles.pinContainer}>
-            {[...Array(8)].map((_, index) => (
+            {[...Array(6)].map((_, index) => (
               <View
                 key={index}
                 style={[
@@ -181,29 +176,21 @@ export default function SetupAuthScreen() {
             value={pin}
             onChangeText={(text) => handlePinChange(text, false)}
             keyboardType="number-pad"
-            maxLength={8}
+            maxLength={6}
             secureTextEntry
-            autoFocus={false}
+            autoFocus={true}
           />
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[styles.button, pin.length < 4 && styles.buttonDisabled]}
+              style={[styles.button, pin.length !== 6 && styles.buttonDisabled]}
               onPress={handlePinSubmit}
-              disabled={pin.length < 4}
+              disabled={pin.length !== 6}
               activeOpacity={0.85}
             >
               <Text style={styles.buttonText}>Continuer</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.skipButton]}
-              onPress={handleSkipPin}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.skipButtonText}>Ignorer (pas de code)</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -227,7 +214,7 @@ export default function SetupAuthScreen() {
         <Text style={styles.subtitle}>Entrez à nouveau votre code</Text>
 
         <View style={styles.pinContainer}>
-          {[...Array(8)].map((_, index) => (
+          {[...Array(6)].map((_, index) => (
             <View
               key={index}
               style={[
@@ -243,9 +230,9 @@ export default function SetupAuthScreen() {
           value={confirmPin}
           onChangeText={(text) => handlePinChange(text, true)}
           keyboardType="number-pad"
-          maxLength={8}
+          maxLength={6}
           secureTextEntry
-          autoFocus={false}
+          autoFocus={true}
         />
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}

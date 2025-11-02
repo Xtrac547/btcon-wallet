@@ -51,8 +51,8 @@ export default function VerifyAuthScreen() {
   };
 
   const handlePinSubmit = async () => {
-    if (pin.length < 4) {
-      setError('Le code PIN doit contenir au moins 4 chiffres');
+    if (pin.length !== 6) {
+      setError('Le code PIN doit contenir exactement 6 chiffres');
       return;
     }
 
@@ -87,17 +87,49 @@ export default function VerifyAuthScreen() {
 
   const handlePinChange = (text: string) => {
     const numericText = text.replace(/[^0-9]/g, '');
-    if (numericText.length <= 8) {
+    if (numericText.length <= 6) {
       setPin(numericText);
       setError('');
+      
+      if (numericText.length === 6) {
+        setTimeout(() => {
+          handlePinSubmitAuto(numericText);
+        }, 100);
+      }
     }
   };
 
-  const handleLockPress = () => {
+  const handlePinSubmitAuto = async (pinToVerify: string) => {
     if (Platform.OS !== 'web') {
       Haptics.selectionAsync();
     }
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const success = await verifyPin(pinToVerify);
+      if (success) {
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        console.log('PIN auth successful, redirecting to index');
+        router.replace('/');
+      } else {
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        setError('Code PIN incorrect');
+        setPin('');
+      }
+    } catch (error) {
+      console.error('PIN verification error:', error);
+      setError('Erreur lors de la vérification');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+
 
   if (isLoading) {
     return (
@@ -146,20 +178,16 @@ export default function VerifyAuthScreen() {
           </>
         ) : (
           <>
-            <TouchableOpacity 
-              style={styles.lockIconContainer}
-              onPress={handleLockPress}
-              activeOpacity={0.7}
-            >
+            <View style={styles.lockIconContainer}>
               <View style={styles.lockIconCircle}>
                 <Text style={styles.lockIcon}>🔒</Text>
               </View>
-            </TouchableOpacity>
+            </View>
             <Text style={styles.title}>Entrez votre code PIN</Text>
-            <Text style={styles.subtitle}>Appuyez sur le cadenas pour entrer le code</Text>
+            <Text style={styles.subtitle}>Entrez votre code à 6 chiffres</Text>
 
             <View style={styles.pinContainer}>
-              {[...Array(8)].map((_, index) => (
+              {[...Array(6)].map((_, index) => (
                 <View
                   key={index}
                   style={[
@@ -175,24 +203,15 @@ export default function VerifyAuthScreen() {
               value={pin}
               onChangeText={handlePinChange}
               keyboardType="number-pad"
-              maxLength={8}
+              maxLength={6}
               secureTextEntry
-              autoFocus={false}
+              autoFocus={true}
             />
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.button, pin.length < 4 && styles.buttonDisabled]}
-                onPress={handlePinSubmit}
-                disabled={pin.length < 4}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.buttonText}>Déverrouiller</Text>
-              </TouchableOpacity>
-
-              {useBiometric && (
+            {useBiometric && (
+              <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.secondaryButton]}
                   onPress={() => setShowBiometric(true)}
@@ -201,8 +220,8 @@ export default function VerifyAuthScreen() {
                   <Fingerprint size={20} color="#FF8C00" strokeWidth={2} />
                   <Text style={styles.secondaryButtonText}>Utiliser la biométrie</Text>
                 </TouchableOpacity>
-              )}
-            </View>
+              </View>
+            )}
           </>
         )}
       </View>
