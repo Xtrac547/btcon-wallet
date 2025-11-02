@@ -238,6 +238,32 @@ export default function SendScreen() {
           </View>
         )}
 
+        {getTotalAmount() > 0 && (
+          <View style={styles.formCard}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Destinataire</Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.input}
+                  value={toAddress}
+                  onChangeText={setToAddress}
+                  placeholder="@pseudo, adresse BTC ou scanner QR"
+                  placeholderTextColor="#666"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <TouchableOpacity
+                  style={styles.scanButton}
+                  onPress={handleOpenScanner}
+                  testID="scan-qr-button"
+                >
+                  <QrCode color="#FF8C00" size={24} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
         {following.length > 0 && (
           <View style={styles.followingSection}>
             <Text style={styles.followingSectionTitle}>Accès rapide</Text>
@@ -265,28 +291,6 @@ export default function SendScreen() {
         )}
 
         <View style={styles.formCard}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Destinataire</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.input}
-                value={toAddress}
-                onChangeText={setToAddress}
-                placeholder="@pseudo, adresse BTC ou scanner QR"
-                placeholderTextColor="#666"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity
-                style={styles.scanButton}
-                onPress={handleOpenScanner}
-                testID="scan-qr-button"
-              >
-                <QrCode color="#FF8C00" size={24} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
           <View style={styles.inputContainer}>
             <View style={styles.labelRow}>
               <Text style={styles.inputLabel}>Sélectionner le montant</Text>
