@@ -5,7 +5,8 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useUserImage } from '@/contexts/UserImageContext';
-import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X, Image as ImageIcon } from 'lucide-react-native';
+import { useAuth } from '@/contexts/AuthContext';
+import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X, Image as ImageIcon, Key, Fingerprint } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,10 +15,16 @@ export default function SettingsScreen() {
   const { mnemonic, deleteWallet, address, balance, signAndBroadcastTransaction, refreshBalance } = useWallet();
   const { username, usernameChangesCount, setUsername: saveUsername } = useUsername();
   const { isDeveloper } = useUserImage();
+  const { isAuthConfigured, useBiometric: biometricEnabled, isBiometricAvailable, resetAuth, toggleBiometric, changePin } = useAuth();
   const [showSeed, setShowSeed] = useState(false);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
   const [isChangingUsername, setIsChangingUsername] = useState(false);
+  const [showChangePinModal, setShowChangePinModal] = useState(false);
+  const [oldPin, setOldPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [confirmNewPin, setConfirmNewPin] = useState('');
+  const [pinError, setPinError] = useState('');
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
@@ -198,6 +205,83 @@ export default function SettingsScreen() {
           )}
         </View>
 
+        {isAuthConfigured && (
+          <View style={styles.authCard}>
+            <View style={styles.authHeader}>
+              <View style={styles.iconContainer}>
+                <Key color="#FF8C00" size={24} strokeWidth={2} />
+              </View>
+              <View style={styles.securityHeaderText}>
+                <Text style={styles.securityTitle}>Authentification</Text>
+                <Text style={styles.securitySubtitle}>Gérer votre code PIN et biométrie</Text>
+              </View>
+            </View>
+
+            <View style={styles.authOptions}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.authOptionButton,
+                  pressed && styles.buttonPressed
+                ]}
+                onPress={() => setShowChangePinModal(true)}
+              >
+                <View style={styles.authOptionContent}>
+                  <Key color="#FFF" size={20} strokeWidth={2} />
+                  <Text style={styles.authOptionText}>Modifier le code PIN</Text>
+                </View>
+              </Pressable>
+
+              {isBiometricAvailable && (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.authOptionButton,
+                    biometricEnabled && styles.authOptionButtonActive,
+                    pressed && styles.buttonPressed
+                  ]}
+                  onPress={() => toggleBiometric(!biometricEnabled)}
+                >
+                  <View style={styles.authOptionContent}>
+                    <Fingerprint color={biometricEnabled ? "#FF8C00" : "#FFF"} size={20} strokeWidth={2} />
+                    <Text style={[styles.authOptionText, biometricEnabled && styles.authOptionTextActive]}>
+                      {biometricEnabled ? 'Biométrie activée' : 'Activer la biométrie'}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.authOptionButton,
+                  styles.dangerButton,
+                  pressed && styles.dangerButtonPressed
+                ]}
+                onPress={() => {
+                  if (Platform.OS === 'web') {
+                    const confirmed = window.confirm('Êtes-vous sûr de vouloir désactiver l\u0027authentification ?');
+                    if (confirmed) {
+                      resetAuth();
+                    }
+                  } else {
+                    Alert.alert(
+                      'Désactiver l\u0027authentification',
+                      'Êtes-vous sûr de vouloir désactiver l\u0027authentification ?',
+                      [
+                        { text: 'Annuler', style: 'cancel' },
+                        { text: 'Désactiver', style: 'destructive', onPress: () => resetAuth() },
+                      ]
+                    );
+                  }
+                }}
+              >
+                <View style={styles.authOptionContent}>
+                  <AlertCircle color="#FF4444" size={20} strokeWidth={2} />
+                  <Text style={styles.dangerButtonText}>Désactiver l\u0027authentification</Text>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         <View style={styles.dangerZone}>
           <View style={styles.dangerHeader}>
             <AlertCircle color="#FF4444" size={20} strokeWidth={2.5} />
@@ -361,6 +445,139 @@ export default function SettingsScreen() {
               <Text style={styles.modalButtonText}>
                 {isChangingUsername ? 'Modification...' : (username ? 'Modifier' : 'Définir')}
               </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showChangePinModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => {
+          setShowChangePinModal(false);
+          setOldPin('');
+          setNewPin('');
+          setConfirmNewPin('');
+          setPinError('');
+        }}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => {
+            setShowChangePinModal(false);
+            setOldPin('');
+            setNewPin('');
+            setConfirmNewPin('');
+            setPinError('');
+          }}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Modifier le code PIN</Text>
+              <Pressable onPress={() => {
+                setShowChangePinModal(false);
+                setOldPin('');
+                setNewPin('');
+                setConfirmNewPin('');
+                setPinError('');
+              }}>
+                <X color="#999" size={24} />
+              </Pressable>
+            </View>
+
+            <View style={styles.pinInputGroup}>
+              <Text style={styles.pinInputLabel}>Code PIN actuel</Text>
+              <TextInput
+                style={styles.pinTextInput}
+                value={oldPin}
+                onChangeText={(text) => {
+                  const numericText = text.replace(/[^0-9]/g, '');
+                  if (numericText.length <= 6) {
+                    setOldPin(numericText);
+                    setPinError('');
+                  }
+                }}
+                placeholder="Entrez votre code actuel"
+                placeholderTextColor="#666"
+                keyboardType="number-pad"
+                maxLength={6}
+                secureTextEntry
+                autoFocus
+              />
+            </View>
+
+            <View style={styles.pinInputGroup}>
+              <Text style={styles.pinInputLabel}>Nouveau code PIN</Text>
+              <TextInput
+                style={styles.pinTextInput}
+                value={newPin}
+                onChangeText={(text) => {
+                  const numericText = text.replace(/[^0-9]/g, '');
+                  if (numericText.length <= 6) {
+                    setNewPin(numericText);
+                    setPinError('');
+                  }
+                }}
+                placeholder="Entrez le nouveau code"
+                placeholderTextColor="#666"
+                keyboardType="number-pad"
+                maxLength={6}
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.pinInputGroup}>
+              <Text style={styles.pinInputLabel}>Confirmer le nouveau code</Text>
+              <TextInput
+                style={styles.pinTextInput}
+                value={confirmNewPin}
+                onChangeText={(text) => {
+                  const numericText = text.replace(/[^0-9]/g, '');
+                  if (numericText.length <= 6) {
+                    setConfirmNewPin(numericText);
+                    setPinError('');
+                  }
+                }}
+                placeholder="Confirmez le nouveau code"
+                placeholderTextColor="#666"
+                keyboardType="number-pad"
+                maxLength={6}
+                secureTextEntry
+              />
+            </View>
+
+            {pinError ? <Text style={styles.pinErrorText}>{pinError}</Text> : null}
+
+            <Pressable
+              style={[styles.modalButton, (oldPin.length !== 6 || newPin.length !== 6 || confirmNewPin.length !== 6) && styles.modalButtonDisabled]}
+              disabled={oldPin.length !== 6 || newPin.length !== 6 || confirmNewPin.length !== 6}
+              onPress={async () => {
+                if (newPin !== confirmNewPin) {
+                  setPinError('Les codes PIN ne correspondent pas');
+                  return;
+                }
+
+                try {
+                  const success = await changePin(oldPin, newPin);
+                  
+                  if (success) {
+                    setShowChangePinModal(false);
+                    setOldPin('');
+                    setNewPin('');
+                    setConfirmNewPin('');
+                    setPinError('');
+                    Alert.alert('Succès', 'Code PIN modifié avec succès');
+                  } else {
+                    setPinError('Code PIN actuel incorrect');
+                  }
+                } catch (error) {
+                  console.error('Error changing PIN:', error);
+                  setPinError('Erreur lors de la modification');
+                }
+              }}
+            >
+              <Text style={styles.modalButtonText}>Modifier</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -732,5 +949,73 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 14,
     lineHeight: 20,
+  },
+  authCard: {
+    backgroundColor: '#141414',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  authHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  authOptions: {
+    gap: 12,
+  },
+  authOptionButton: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+  },
+  authOptionButtonActive: {
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+  },
+  authOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  authOptionText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  authOptionTextActive: {
+    color: '#FF8C00',
+  },
+  pinInputGroup: {
+    marginBottom: 20,
+  },
+  pinInputLabel: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600' as const,
+    marginBottom: 8,
+  },
+  pinTextInput: {
+    backgroundColor: '#0A0A0A',
+    borderRadius: 12,
+    padding: 16,
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600' as const,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  pinErrorText: {
+    color: '#FF4444',
+    fontSize: 14,
+    marginBottom: 16,
+    marginTop: -12,
+    textAlign: 'center',
+    fontWeight: '600' as const,
   },
 });

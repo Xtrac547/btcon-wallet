@@ -163,6 +163,28 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }));
   };
 
+  const changePin = async (oldPin: string, newPin: string): Promise<boolean> => {
+    const storedPin = await getSecurely(STORAGE_KEYS.PIN_CODE);
+    
+    if (storedPin !== oldPin) {
+      return false;
+    }
+
+    await storeSecurely(STORAGE_KEYS.PIN_CODE, newPin);
+    return true;
+  };
+
+  const toggleBiometric = async (enable: boolean) => {
+    const newAuthType = enable ? 'pin-biometric' : 'pin';
+    await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TYPE, newAuthType);
+    
+    setState(prev => ({
+      ...prev,
+      authType: newAuthType,
+      useBiometric: enable,
+    }));
+  };
+
   const loadAuthState = async () => {
     console.log('Loading auth state...');
     try {
@@ -204,5 +226,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     verifyBiometric,
     logout,
     resetAuth,
+    changePin,
+    toggleBiometric,
   };
 });
