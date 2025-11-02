@@ -520,23 +520,23 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     color: '#FFFFFF',
-    fontSize: 64,
+    fontSize: 48,
     fontWeight: '900' as const,
     letterSpacing: -3,
   },
   balanceUnit: {
     color: '#FF8C00',
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '900' as const,
   },
   balanceSats: {
     color: '#666',
-    fontSize: 16,
+    fontSize: 13,
     marginTop: 4,
   },
   balanceEuro: {
     color: '#FF8C00',
-    fontSize: 18,
+    fontSize: 15,
     marginTop: 6,
     fontWeight: '700' as const,
   },
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700' as const,
     letterSpacing: 0.5,
   },
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
   },
   historyTitle: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800' as const,
     marginBottom: 20,
     paddingLeft: 4,
@@ -657,20 +657,20 @@ const styles = StyleSheet.create({
   },
   transactionType: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700' as const,
     marginBottom: 4,
     letterSpacing: 0.3,
   },
   transactionDate: {
     color: '#666',
-    fontSize: 13,
+    fontSize: 11,
   },
   transactionAmountContainer: {
     alignItems: 'flex-end',
   },
   transactionAmount: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '800' as const,
     marginBottom: 2,
     letterSpacing: 0.3,
@@ -686,6 +686,6 @@ const styles = StyleSheet.create({
   },
   transactionAmountBtc: {
     color: '#666',
-    fontSize: 12,
+    fontSize: 10,
   },
 });

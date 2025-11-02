@@ -704,23 +704,23 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     color: '#FFF',
-    fontSize: 48,
+    fontSize: 38,
     fontWeight: '900' as const,
   },
   balanceUnit: {
     color: '#FF8C00',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '900' as const,
   },
   balanceSats: {
     color: '#999',
-    fontSize: 14,
+    fontSize: 12,
     marginTop: 8,
     fontWeight: '500' as const,
   },
   balanceEuro: {
     color: '#FF8C00',
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 6,
     fontWeight: '700' as const,
   },
@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
   },
   tokenValue: {
     color: '#FFD700',
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '900' as const,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
@@ -845,7 +845,7 @@ const styles = StyleSheet.create({
   },
   tokenUnit: {
     color: '#FFD700',
-    fontSize: 9,
+    fontSize: 7,
     fontWeight: '700' as const,
     marginTop: 2,
     letterSpacing: 1,
@@ -890,12 +890,12 @@ const styles = StyleSheet.create({
   },
   totalAmount: {
     color: '#FFF',
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '900' as const,
   },
   totalUnit: {
     color: '#FF8C00',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900' as const,
   },
   inputRow: {
@@ -924,13 +924,13 @@ const styles = StyleSheet.create({
   },
   conversionText: {
     color: '#999',
-    fontSize: 13,
+    fontSize: 11,
     marginTop: 6,
     fontWeight: '500' as const,
   },
   conversionTextEuro: {
     color: '#FF8C00',
-    fontSize: 15,
+    fontSize: 13,
     marginTop: 6,
     fontWeight: '700' as const,
   },
@@ -1003,7 +1003,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: '#000',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '900' as const,
     letterSpacing: 0.5,
   },
@@ -1037,7 +1037,7 @@ const styles = StyleSheet.create({
   },
   feesValue: {
     color: '#FF8C00',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900' as const,
   },
   feesSubtext: {
@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
   },
   feesEuroText: {
     color: '#FF8C00',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700' as const,
     marginTop: 4,
   },
