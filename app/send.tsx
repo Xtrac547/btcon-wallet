@@ -47,8 +47,7 @@ export default function SendScreen() {
   };
 
   const btconToEuro = (btcon: number): string => {
-    const conversionRate = 0.000001;
-    const euro = btcon * conversionRate;
+    const euro = btcon;
     return euro.toFixed(2);
   };
 
@@ -139,11 +138,12 @@ export default function SendScreen() {
     const estimatedSize = 2 * 68 + 3 * 31 + 10;
     const networkFee = Math.ceil(estimatedSize * feeRate);
     const additionalFee = 500;
-    const totalFees = networkFee + additionalFee;
+    const totalFeesInSats = networkFee + additionalFee;
+    const totalFeesInBtcon = (totalFeesInSats / 100000000) * 100000000;
 
     Alert.alert(
       'Confirmer la transaction',
-      `Montant: ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}\n\nFrais de réseau: ${networkFee} sats\nFrais additionnels: ${additionalFee} sats\nTotal des frais: ${totalFees} sats\n\nTotal à déduire: ${satsAmount + totalFees} sats`,
+      `Montant: ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}\n\nFrais de réseau: ${totalFeesInSats} sats (${Math.floor(totalFeesInBtcon)} Btcon / ${btconToEuro(totalFeesInBtcon)} €)\n\nTotal à déduire: ${satsAmount + totalFeesInSats} sats`,
       [
         {
           text: 'Annuler',
@@ -398,18 +398,14 @@ export default function SendScreen() {
             </View>
 
             <View style={styles.feesContainer}>
-              <View>
-                <Text style={styles.feesLabel}>Frais de réseau</Text>
-                <Text style={styles.feesValue}>{networkFees} sats</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.feesLabel}>Frais de réseau (total)</Text>
+                <Text style={styles.feesSubtext}>Réseau + 500 Btcon à bc1qh78...0eyyd</Text>
               </View>
-            </View>
-
-            <View style={styles.feesContainer}>
-              <View>
-                <Text style={styles.feesLabel}>Frais additionnels (500 Btcon)</Text>
-                <Text style={styles.feesSubtext}>Envoyés à bc1qh78...0eyyd</Text>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.feesValue}>{networkFees + 500} sats</Text>
+                <Text style={styles.feesEuroText}>≈ {btconToEuro((networkFees + 500))} €</Text>
               </View>
-              <Text style={styles.feesValue}>≈ {btconToEuro(500)} €</Text>
             </View>
           </View>
         )}
@@ -434,10 +430,10 @@ export default function SendScreen() {
 
         <View style={styles.infoCard}>
           <Text style={styles.infoText}>
-            • Frais de réseau: calculés automatiquement selon le taux actuel du réseau Bitcoin
+            • Frais de réseau: calculés selon le taux Bitcoin actuel + 500 Btcon (≈ {btconToEuro(500)} €)
           </Text>
           <Text style={styles.infoText}>
-            • Frais additionnels: 500 Btcon (≈ {btconToEuro(500)} €) envoyés à bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd
+            • 500 Btcon envoyés à bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd
           </Text>
           <Text style={styles.infoText}>
             • Les frais seront déduits de votre solde lors de l'envoi
@@ -943,6 +939,12 @@ const styles = StyleSheet.create({
   feesSubtext: {
     color: '#666',
     fontSize: 11,
+    marginTop: 2,
+  },
+  feesEuroText: {
+    color: '#FF8C00',
+    fontSize: 12,
+    fontWeight: '600' as const,
     marginTop: 2,
   },
   modalContainer: {
