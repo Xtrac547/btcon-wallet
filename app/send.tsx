@@ -408,12 +408,9 @@ export default function SendScreen() {
             </View>
 
             <View style={styles.feesContainer}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.feesLabel}>Frais de réseau (total)</Text>
-                <Text style={styles.feesSubtext}>Réseau + 500 Btcon à bc1qh78...0eyyd</Text>
-              </View>
+              <Text style={styles.feesLabel}>Frais de réseau</Text>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.feesValue}>{networkFees + 500} sats</Text>
+                <Text style={styles.feesValue}>{Math.floor(((networkFees + 500) / 100000000) * 100000000)} Btcon</Text>
                 <Text style={styles.feesEuroText}>≈ {btconToEuro((networkFees + 500))} €</Text>
               </View>
             </View>
@@ -438,17 +435,7 @@ export default function SendScreen() {
           </TouchableOpacity>
         )}
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoText}>
-            • Frais de réseau: calculés selon le taux Bitcoin actuel + 500 Btcon (≈ {btconToEuro(500)} €)
-          </Text>
-          <Text style={styles.infoText}>
-            • 500 Btcon envoyés à bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd
-          </Text>
-          <Text style={styles.infoText}>
-            • Les frais seront déduits de votre solde lors de l'envoi
-          </Text>
-        </View>
+
       </ScrollView>
 
       <Modal
