@@ -11,13 +11,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 
 const PAYMENT_ADDRESS = 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd';
-const PAYMENT_AMOUNT_BTCON = 2000;
+const PAYMENT_AMOUNT_BTCON = 1000;
 const PAYMENT_AMOUNT_SATS = Math.floor((PAYMENT_AMOUNT_BTCON / 100000000) * 100000000);
 
 export default function ProfileImageScreen() {
   const router = useRouter();
-  const { address, signAndBroadcastTransaction } = useWallet();
-  const { getImageForUser, canChangeImage, needsPaymentForChange, updateUserImage, updateUserImageWithPin } = useUserImage();
+  const { address, signAndBroadcastTransaction, balance } = useWallet();
+  const { getImageForUser, canChangeImage, needsPaymentForChange, updateUserImage, updateUserImageWithPin, isDeveloper } = useUserImage();
   const { verifyDeveloperPin, checkDeveloperStatus } = useNotifications();
   const insets = useSafeAreaInsets();
 
@@ -31,6 +31,7 @@ export default function ProfileImageScreen() {
   const imageData = getImageForUser(address);
   const canChangeFree = canChangeImage(address || '');
   const requiresPayment = needsPaymentForChange(address || '');
+  const isDevAccount = isDeveloper(address || '');
 
   const pickImage = async (type: 'profile' | 'qr') => {
     try {
@@ -110,7 +111,17 @@ export default function ProfileImageScreen() {
       return;
     }
 
-    if (canChangeFree) {
+    if (isDevAccount) {
+      const result = await updateUserImage(address, profileImageUrl, qrImageUrl, true);
+      if (result.success) {
+        Alert.alert('Succès', 'Images modifiées avec succès (gratuit pour développeurs)');
+        setProfileImageUrl('');
+        setQrImageUrl('');
+        router.back();
+      } else {
+        Alert.alert('Erreur', result.error || 'Impossible de modifier les images');
+      }
+    } else if (canChangeFree) {
       Alert.alert(
         'Confirmation',
         'Ceci est votre premier changement gratuit. Voulez-vous continuer ?',
@@ -133,6 +144,14 @@ export default function ProfileImageScreen() {
         ]
       );
     } else if (requiresPayment) {
+      if (balance < PAYMENT_AMOUNT_BTCON) {
+        Alert.alert(
+          'Fonds insuffisants',
+          `Vous avez besoin de ${PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon (≈ ${btconToEuro(PAYMENT_AMOUNT_BTCON, btcPrice)} €) pour modifier vos images.\n\nSolde actuel: ${balance.toLocaleString()} Btcon`
+        );
+        return;
+      }
+
       Alert.alert(
         'Paiement requis',
         `Pour modifier vos images après le premier changement, vous devez envoyer ${PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon (≈ ${btconToEuro(PAYMENT_AMOUNT_BTCON, btcPrice)} €) à l'adresse ${PAYMENT_ADDRESS.slice(0, 20)}...`,
@@ -218,10 +237,9 @@ export default function ProfileImageScreen() {
                 <View style={styles.infoCardText}>
                   <Text style={styles.infoCardTitle}>Règles de modification</Text>
                   <Text style={styles.infoCardDescription}>
-                    • Premier changement: Gratuit{'\n'}
-                    • Changements suivants: {PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon (≈ {btconToEuro(PAYMENT_AMOUNT_BTCON, btcPrice)} €){'\n'}
-                    • Les frais sont envoyés à bc1qh78...0eyyd{'\n'}
-                    • Les développeurs peuvent modifier avec le code PIN
+                    {isDevAccount
+                      ? '• En tant que développeur, tous les changements sont gratuits!'
+                      : `• Premier changement: Gratuit{'\n'}• Changements suivants: ${PAYMENT_AMOUNT_BTCON.toLocaleString()} Btcon (≈ ${btconToEuro(PAYMENT_AMOUNT_BTCON, btcPrice)} €){'\n'}• Les frais sont envoyés à bc1qh78...0eyyd`}
                   </Text>
                 </View>
               </View>
@@ -290,7 +308,9 @@ export default function ProfileImageScreen() {
               >
                 <ImageIcon color="#000" size={20} />
                 <Text style={styles.primaryButtonText}>
-                  {canChangeFree
+                  {isDevAccount
+                    ? 'Modifier (Gratuit - Dev)'
+                    : canChangeFree
                     ? 'Modifier (Gratuit)'
                     : requiresPayment
                     ? `Modifier (${PAYMENT_AMOUNT_BTCON} Btcon ≈ ${btconToEuro(PAYMENT_AMOUNT_BTCON, btcPrice)} €)`
