@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const STORAGE_KEYS = {
   USERNAME: 'btcon_username',
   USERNAME_REGISTRY: 'btcon_username_registry',
+  USERNAME_CHANGES_COUNT: 'btcon_username_changes_count',
 };
 
 interface UsernameRegistry {
@@ -13,6 +14,7 @@ interface UsernameRegistry {
 
 export const [UsernameProvider, useUsername] = createContextHook(() => {
   const [username, setUsernameState] = useState<string | null>(null);
+  const [usernameChangesCount, setUsernameChangesCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadUsername = async () => {
@@ -20,6 +22,10 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
       const stored = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
       if (stored) {
         setUsernameState(stored);
+      }
+      const changesCount = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME_CHANGES_COUNT);
+      if (changesCount) {
+        setUsernameChangesCount(parseInt(changesCount, 10));
       }
     } catch (error) {
       console.error('Error loading username:', error);
@@ -65,12 +71,6 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
         return false;
       }
 
-      const existingUsername = await getUsernameForAddress(address);
-      if (existingUsername) {
-        console.warn('Username already set for this address:', existingUsername);
-        return false;
-      }
-
       const registry = await getRegistry();
       
       const existingAddress = registry[cleanUsername];
@@ -78,18 +78,27 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
         return false;
       }
 
+      const existingUsername = await getUsernameForAddress(address);
+      if (existingUsername) {
+        delete registry[existingUsername];
+      }
+
       registry[cleanUsername] = address;
       await saveRegistry(registry);
       await AsyncStorage.setItem(STORAGE_KEYS.USERNAME, cleanUsername);
       setUsernameState(cleanUsername);
 
-      console.log('Username set:', cleanUsername, 'for address:', address);
+      const newCount = usernameChangesCount + 1;
+      setUsernameChangesCount(newCount);
+      await AsyncStorage.setItem(STORAGE_KEYS.USERNAME_CHANGES_COUNT, newCount.toString());
+
+      console.log('Username set:', cleanUsername, 'for address:', address, 'Changes count:', newCount);
       return true;
     } catch (error) {
       console.error('Error setting username:', error);
       return false;
     }
-  }, [getUsernameForAddress]);
+  }, [getUsernameForAddress, usernameChangesCount]);
 
   const getAddressForUsername = useCallback(async (username: string): Promise<string | null> => {
     try {
@@ -110,7 +119,9 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
         await saveRegistry(registry);
       }
       await AsyncStorage.removeItem(STORAGE_KEYS.USERNAME);
+      await AsyncStorage.removeItem(STORAGE_KEYS.USERNAME_CHANGES_COUNT);
       setUsernameState(null);
+      setUsernameChangesCount(0);
     } catch (error) {
       console.error('Error deleting username:', error);
     }
@@ -151,6 +162,7 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
 
   return useMemo(() => ({
     username,
+    usernameChangesCount,
     isLoading,
     setUsername,
     getUsernameForAddress,
@@ -158,5 +170,5 @@ export const [UsernameProvider, useUsername] = createContextHook(() => {
     deleteUsername,
     getAllUsers,
     deleteUserByAddress,
-  }), [username, isLoading, setUsername, getUsernameForAddress, getAddressForUsername, deleteUsername, getAllUsers, deleteUserByAddress]);
+  }), [username, usernameChangesCount, isLoading, setUsername, getUsernameForAddress, getAddressForUsername, deleteUsername, getAllUsers, deleteUserByAddress]);
 });

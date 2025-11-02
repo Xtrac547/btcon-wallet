@@ -11,12 +11,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { mnemonic, deleteWallet, address } = useWallet();
-  const { username, setUsername: saveUsername, deleteUsername } = useUsername();
+  const { mnemonic, deleteWallet, address, balance, signAndBroadcastTransaction, refreshBalance } = useWallet();
+  const { username, usernameChangesCount, setUsername: saveUsername } = useUsername();
   const { isDeveloper } = useUserImage();
   const [showSeed, setShowSeed] = useState(false);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
+  const [isChangingUsername, setIsChangingUsername] = useState(false);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
@@ -263,19 +264,23 @@ export default function SettingsScreen() {
             </View>
 
             <Text style={styles.modalHint}>
-              {username ? 'Modifier votre pseudo permettra aux autres de vous trouver avec ce nouveau nom.' : 'Choisissez un pseudo unique (min. 3 caractères)'}
+              {username 
+                ? (usernameChangesCount >= 2 
+                    ? 'Modifier votre pseudo coûte 500 Btcon à partir de la 3ème modification.' 
+                    : (usernameChangesCount === 1 
+                        ? 'Dernière modification gratuite. La prochaine coûtera 500 Btcon.' 
+                        : 'Choisissez un pseudo unique (min. 3 caractères)'))
+                : 'Choisissez un pseudo unique (min. 3 caractères)'}
             </Text>
 
             <Pressable
-              style={styles.modalButton}
+              style={[styles.modalButton, isChangingUsername && styles.modalButtonDisabled]}
+              disabled={isChangingUsername}
               onPress={async () => {
                 const cleanUsername = usernameInput.trim().toLowerCase();
                 
                 if (!cleanUsername) {
-                  if (username) {
-                    await deleteUsername();
-                    setShowUsernameModal(false);
-                  }
+                  Alert.alert('Erreur', 'Le pseudo est obligatoire');
                   return;
                 }
 
@@ -294,30 +299,69 @@ export default function SettingsScreen() {
                   return;
                 }
 
-                const success = await saveUsername(cleanUsername, address);
-                if (success) {
-                  setShowUsernameModal(false);
+                if (usernameChangesCount >= 2) {
+                  const CHANGE_COST = 500;
+                  if (balance < CHANGE_COST) {
+                    Alert.alert('Fonds insuffisants', `Vous avez besoin de ${CHANGE_COST} Btcon pour modifier votre pseudo.`);
+                    return;
+                  }
+
+                  const confirmMessage = Platform.OS === 'web'
+                    ? window.confirm(`Modifier votre pseudo coûte ${CHANGE_COST} Btcon. Continuer ?`)
+                    : await new Promise<boolean>((resolve) => {
+                        Alert.alert(
+                          'Confirmer le paiement',
+                          `Modifier votre pseudo coûte ${CHANGE_COST} Btcon. Continuer ?`,
+                          [
+                            { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+                            { text: 'Confirmer', onPress: () => resolve(true) },
+                          ]
+                        );
+                      });
+
+                  if (!confirmMessage) return;
+
+                  setIsChangingUsername(true);
+                  try {
+                    const feeAddress = 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd';
+                    await signAndBroadcastTransaction(feeAddress, CHANGE_COST, 1);
+                    await refreshBalance();
+                    
+                    const success = await saveUsername(cleanUsername, address);
+                    if (success) {
+                      setShowUsernameModal(false);
+                      Alert.alert('Succès', 'Pseudo modifié avec succès');
+                    } else {
+                      Alert.alert('Erreur', 'Pseudo déjà pris');
+                    }
+                  } catch (error) {
+                    console.error('Error changing username:', error);
+                    Alert.alert('Erreur', 'Échec de la transaction');
+                  } finally {
+                    setIsChangingUsername(false);
+                  }
                 } else {
-                  Alert.alert('Erreur', 'Pseudo déjà pris');
+                  setIsChangingUsername(true);
+                  try {
+                    const success = await saveUsername(cleanUsername, address);
+                    if (success) {
+                      setShowUsernameModal(false);
+                      if (usernameChangesCount === 1) {
+                        Alert.alert('Information', 'À partir de la prochaine modification, cela coûtera 500 Btcon.');
+                      }
+                    } else {
+                      Alert.alert('Erreur', 'Pseudo déjà pris');
+                    }
+                  } finally {
+                    setIsChangingUsername(false);
+                  }
                 }
               }}
             >
               <Text style={styles.modalButtonText}>
-                {username ? 'Modifier' : 'Définir'}
+                {isChangingUsername ? 'Modification...' : (username ? 'Modifier' : 'Définir')}
               </Text>
             </Pressable>
-
-            {username && (
-              <Pressable
-                style={styles.modalButtonSecondary}
-                onPress={async () => {
-                  await deleteUsername();
-                  setShowUsernameModal(false);
-                }}
-              >
-                <Text style={styles.modalButtonSecondaryText}>Supprimer le pseudo</Text>
-              </Pressable>
-            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -652,18 +696,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700' as const,
   },
-  modalButtonSecondary: {
-    backgroundColor: 'transparent',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FF4444',
-  },
-  modalButtonSecondaryText: {
-    color: '#FF4444',
-    fontSize: 16,
-    fontWeight: '600' as const,
+  modalButtonDisabled: {
+    opacity: 0.5,
   },
   imageCard: {
     backgroundColor: '#141414',
