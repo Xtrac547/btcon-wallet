@@ -34,7 +34,8 @@ export default function WalletScreen() {
   };
 
   const formatBalance = (sats: number): string => {
-    return sats.toString();
+    const btc = sats / 100000000;
+    return btc.toFixed(8);
   };
 
   const formatAddress = (addr: string | null): string => {
@@ -272,9 +273,8 @@ export default function WalletScreen() {
           <Text style={styles.balanceLabel}>Solde Total</Text>
           <View style={styles.balanceRow}>
             <Text style={styles.balanceAmount}>{formatBalance(balance)}</Text>
-            <Text style={styles.balanceUnit}>sats</Text>
+            <Text style={styles.balanceUnit}>BTC</Text>
           </View>
-          <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
           <Text style={styles.balanceEuro}>≈ {btconToEuro(balance, btcPrice)} €</Text>
 
           {address && (
@@ -381,10 +381,10 @@ export default function WalletScreen() {
                       type === 'received' && styles.transactionAmountReceived,
                       type === 'pending' && styles.transactionAmountPending,
                     ]}>
-                      {isPositive ? '+' : '-'}{Math.abs(amount).toLocaleString()} Btcon
+                      {isPositive ? '+' : ''}{(amount / 100000000).toFixed(8)} BTC
                     </Text>
                     <Text style={styles.transactionAmountBtc}>
-                      {(Math.abs(amount) / 100000000).toFixed(8)} BTC · ≈ {btconToEuro(Math.abs(amount), btcPrice)} €
+                      ≈ {btconToEuro(Math.abs(amount), btcPrice)} €
                     </Text>
                   </View>
                 </View>

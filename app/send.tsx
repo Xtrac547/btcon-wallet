@@ -64,8 +64,8 @@ export default function SendScreen() {
   ];
 
   const formatBalance = (sats: number): string => {
-    const btcon = sats;
-    return Math.floor(btcon).toString();
+    const btc = sats / 100000000;
+    return btc.toFixed(8);
   };
 
   const btconToEuro = (btcon: number): string => {
@@ -365,9 +365,8 @@ export default function SendScreen() {
             <Text style={styles.balanceLabel}>Solde disponible</Text>
             <View style={styles.balanceRow}>
               <Text style={styles.balanceAmount}>{formatBalance(balance)}</Text>
-              <Text style={styles.balanceUnit}>Btcon</Text>
+              <Text style={styles.balanceUnit}>BTC</Text>
             </View>
-            <Text style={styles.balanceSats}>{(balance / 100000000).toFixed(8)} BTC</Text>
             <Text style={styles.balanceEuro}>≈ {btconToEuro(balance)} €</Text>
           </View>
         )}
@@ -522,11 +521,11 @@ export default function SendScreen() {
           <View style={styles.totalContainer}>
             <Text style={styles.totalLabel}>Total:</Text>
             <View style={styles.totalRow}>
-              <Text style={styles.totalAmount}>{Math.floor(getTotalAmount())}</Text>
-              <Text style={styles.totalUnit}>Btcon</Text>
+              <Text style={styles.totalAmount}>{(getTotalAmount() / 100000000).toFixed(8)}</Text>
+              <Text style={styles.totalUnit}>BTC</Text>
             </View>
             <Text style={styles.conversionText}>
-              ≈ {(getTotalAmount() / 100000000).toFixed(8)} BTC
+              ≈ {btconToEuro(getTotalAmount())} €
             </Text>
           </View>
         )}
