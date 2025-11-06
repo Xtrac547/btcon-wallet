@@ -1,11 +1,11 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Share, Linking, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Share2, ExternalLink, Copy } from 'lucide-react-native';
 import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 export default function ReceiveScreen() {
@@ -121,6 +121,36 @@ export default function ReceiveScreen() {
   const padding = 32;
   const qrArtSize = Math.min(width - 100, 320);
 
+  const handleShare = async () => {
+    if (!address) return;
+    try {
+      await Share.share({
+        message: `Mon adresse Bitcoin: ${address}`,
+      });
+    } catch (error) {
+      console.error('Erreur partage:', error);
+    }
+  };
+
+  const handleExplorer = () => {
+    if (!address) return;
+    const url = `https://mempool.space/address/${address}`;
+    Linking.openURL(url).catch(err => {
+      console.error('Erreur ouverture explorateur:', err);
+      Alert.alert('Erreur', 'Impossible d\'ouvrir l\'explorateur');
+    });
+  };
+
+  const handleCopyAddress = async () => {
+    if (!address) return;
+    try {
+      // On web and React Native, we'll show an alert
+      Alert.alert('Adresse copiée', address);
+    } catch (error) {
+      console.error('Erreur copie:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
@@ -173,6 +203,38 @@ export default function ReceiveScreen() {
             </View>
           )}
         </View>
+
+        {address && (
+          <View style={styles.addressContainer}>
+            <TouchableOpacity onPress={handleCopyAddress} style={styles.addressBox}>
+              <Text style={styles.addressLabel}>Adresse Bitcoin</Text>
+              <View style={styles.addressRow}>
+                <Text style={styles.addressText} numberOfLines={1} ellipsizeMode="middle">
+                  {address}
+                </Text>
+                <Copy color={currentArt.accent} size={18} />
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                onPress={handleShare} 
+                style={[styles.actionButton, { borderColor: currentArt.accent }]}
+              >
+                <Share2 color={currentArt.accent} size={20} />
+                <Text style={[styles.actionButtonText, { color: currentArt.accent }]}>Partager</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={handleExplorer} 
+                style={[styles.actionButton, { borderColor: currentArt.accent }]}
+              >
+                <ExternalLink color={currentArt.accent} size={20} />
+                <Text style={[styles.actionButtonText, { color: currentArt.accent }]}>Explorateur</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -238,6 +300,58 @@ const styles = StyleSheet.create({
   },
   qrPlaceholderText: {
     fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  addressContainer: {
+    width: '100%',
+    marginTop: 32,
+    gap: 16,
+  },
+  addressBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  addressLabel: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 12,
+    fontWeight: '600' as const,
+    marginBottom: 8,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addressText: {
+    flex: 1,
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '500' as const,
+    fontFamily: 'monospace' as const,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  actionButtonText: {
+    fontSize: 15,
     fontWeight: '600' as const,
   },
 });
