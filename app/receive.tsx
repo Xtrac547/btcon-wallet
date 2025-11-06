@@ -118,8 +118,8 @@ export default function ReceiveScreen() {
     }
   }, [address]);
 
-  const padding = 20;
-  const qrArtSize = Math.min(width - 80, 340);
+  const padding = 32;
+  const qrArtSize = Math.min(width - 100, 320);
 
   return (
     <View style={styles.container}>
@@ -158,7 +158,7 @@ export default function ReceiveScreen() {
                           width={1}
                           height={1}
                           fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
-                          rx={0.18}
+                          rx={0.15}
                         />
                       );
                     }
@@ -214,25 +214,27 @@ const styles = StyleSheet.create({
   },
   qrCodeWrapper: {
     backgroundColor: '#000',
-    borderRadius: 32,
+    borderRadius: 28,
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.9,
-    shadowRadius: 40,
-    elevation: 20,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 140, 0, 0.4)',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.7,
+    shadowRadius: 32,
+    elevation: 16,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 32,
   },
   qrPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
-    borderRadius: 32,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 140, 0, 0.4)',
+    borderRadius: 28,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+    padding: 32,
   },
   qrPlaceholderText: {
     fontSize: 16,
