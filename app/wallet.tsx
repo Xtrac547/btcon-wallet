@@ -206,32 +206,6 @@ export default function WalletScreen() {
 
           <Text style={styles.mainEuroAmount}>≈ {euroValue} €</Text>
         </View>
-
-        <View style={styles.menuContainer}>
-          <TouchableOpacity
-            style={styles.menuCard}
-            onPress={() => setShowSelection('new')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuIconContainer}>
-              <ArrowUpRight color="#FF8C00" size={32} strokeWidth={2.5} />
-            </View>
-            <Text style={styles.menuTitle}>Nouveau</Text>
-            <Text style={styles.menuDescription}>Nouvelle transaction</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.menuCard}
-            onPress={() => setShowSelection('old')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuIconContainer}>
-              <ArrowDownLeft color="#FF8C00" size={32} strokeWidth={2.5} />
-            </View>
-            <Text style={styles.menuTitle}>Ancien</Text>
-            <Text style={styles.menuDescription}>Transaction récente</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
@@ -294,45 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700' as const,
   },
-  menuContainer: {
-    width: '100%',
-    maxWidth: 500,
-    gap: 20,
-  },
-  menuCard: {
-    backgroundColor: '#0f0f0f',
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    gap: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 140, 0, 0.2)',
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  menuIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 140, 0, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  menuTitle: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '800' as const,
-    letterSpacing: 0.5,
-  },
-  menuDescription: {
-    color: '#888888',
-    fontSize: 14,
-    fontWeight: '600' as const,
-  },
+
   balanceSection: {
     alignItems: 'center',
     marginBottom: 32,
