@@ -99,12 +99,13 @@ export default function ReceiveScreen() {
   const currentArt = getArtworkForAddress(address);
   const [showQR, setShowQR] = useState(false);
 
-  const generateQRMatrix = (text: string): number[][] => {
+  const generateQRMatrix = async (text: string): Promise<number[][]> => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const QRCode = require('qrcode');
-      const qr = QRCode.create(text, { errorCorrectionLevel: 'H' });
-      const modules = qr.modules;
+      
+      const qrData = await QRCode.create(text, { errorCorrectionLevel: 'H' });
+      const modules = qrData.modules;
       const size = modules.size;
       const matrix: number[][] = [];
       
@@ -123,13 +124,15 @@ export default function ReceiveScreen() {
 
   useEffect(() => {
     if (address) {
-      try {
-        const matrix = generateQRMatrix(address);
-        console.log('QR Code généré pour:', address, 'taille:', matrix.length);
-        setQrMatrix(matrix);
-      } catch (err) {
-        console.error('Erreur génération QR:', err);
-      }
+      (async () => {
+        try {
+          const matrix = await generateQRMatrix(address);
+          console.log('QR Code généré pour:', address, 'taille:', matrix.length);
+          setQrMatrix(matrix);
+        } catch (err) {
+          console.error('Erreur génération QR:', err);
+        }
+      })();
     }
   }, [address]);
 
