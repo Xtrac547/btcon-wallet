@@ -1,11 +1,12 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Share, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Share, Linking, Alert, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { ArrowLeft, Share2, ExternalLink, Copy } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 export default function ReceiveScreen() {
@@ -156,10 +157,15 @@ export default function ReceiveScreen() {
   const handleCopyAddress = async () => {
     if (!address) return;
     try {
-      // On web and React Native, we'll show an alert
-      Alert.alert('Adresse copiée', address);
+      await Clipboard.setStringAsync(address);
+      if (Platform.OS === 'web') {
+        Alert.alert('Copié', 'Adresse copiée dans le presse-papier');
+      } else {
+        Alert.alert('Copié', 'Adresse copiée dans le presse-papier');
+      }
     } catch (error) {
       console.error('Erreur copie:', error);
+      Alert.alert('Erreur', 'Impossible de copier l\'adresse');
     }
   };
 

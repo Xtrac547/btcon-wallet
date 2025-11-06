@@ -1,11 +1,12 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder, Modal, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, ArrowDownLeft } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, QrCode, Settings, X } from 'lucide-react-native';
 import { useState, useRef } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -21,6 +22,9 @@ export default function WalletScreen() {
 
   const translateY = useRef(new Animated.Value(0)).current;
   const panY = useRef(0);
+  
+  const [showScanner, setShowScanner] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
 
@@ -72,6 +76,58 @@ export default function WalletScreen() {
     });
   };
 
+  const handleOpenScanner = async () => {
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert('Permission refusée', 'Veuillez autoriser l\'accès à la caméra');
+        return;
+      }
+    }
+    setShowScanner(true);
+  };
+
+  const handleBarcodeScanned = (data: string) => {
+    setShowScanner(false);
+    console.log('QR Code scanné:', data);
+    
+    let address = data;
+    let amount = 0;
+    
+    if (address.toLowerCase().startsWith('bitcoin:')) {
+      const uri = address.substring(8);
+      const parts = uri.split('?');
+      address = parts[0];
+      
+      if (parts.length > 1) {
+        const params = new URLSearchParams(parts[1]);
+        const amountBtc = params.get('amount');
+        
+        if (amountBtc) {
+          amount = Math.floor(parseFloat(amountBtc) * 100000000);
+          console.log('Montant détecté dans le QR:', amount, 'Btcon');
+        }
+      }
+    }
+    
+    if (amount > 0) {
+      router.push({ 
+        pathname: '/send',
+        params: {
+          address,
+          preselectedAmount: amount.toString(),
+        }
+      });
+    } else {
+      router.push({ 
+        pathname: '/send',
+        params: {
+          address,
+        }
+      });
+    }
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !hasSelectedTokens,
@@ -105,6 +161,24 @@ export default function WalletScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.topButton}
+          onPress={handleOpenScanner}
+          testID="scan-qr-wallet-button"
+        >
+          <QrCode color="#FF8C00" size={24} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.topButton}
+          onPress={() => router.push('/settings')}
+          testID="settings-button"
+        >
+          <Settings color="#FF8C00" size={24} />
+        </TouchableOpacity>
+      </View>
+
       <Animated.View 
         {...panResponder.panHandlers}
         style={[
@@ -232,6 +306,42 @@ export default function WalletScreen() {
           </Pressable>
         </View>
       )}
+
+      <Modal
+        visible={showScanner}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.scannerHeader}>
+            <Text style={styles.scannerTitle}>Scanner QR Code</Text>
+            <TouchableOpacity
+              onPress={() => setShowScanner(false)}
+              style={styles.closeButton}
+              testID="close-scanner-wallet-button"
+            >
+              <X color="#FFF" size={28} />
+            </TouchableOpacity>
+          </View>
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            barcodeScannerSettings={{
+              barcodeTypes: ['qr'],
+            }}
+            onBarcodeScanned={(result) => {
+              if (result?.data) {
+                console.log('QR Code détecté:', result.data);
+                handleBarcodeScanned(result.data);
+              }
+            }}
+          >
+            <View style={styles.scannerOverlay}>
+              <View style={styles.scannerFrame} />
+            </View>
+          </CameraView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -546,5 +656,64 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700' as const,
   },
-
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  topButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#0f0f0f',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  scannerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: '#0a0a0a',
+  },
+  scannerTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700' as const,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  camera: {
+    flex: 1,
+  },
+  scannerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerFrame: {
+    width: 280,
+    height: 280,
+    borderWidth: 3,
+    borderColor: '#FF8C00',
+    borderRadius: 24,
+    backgroundColor: 'transparent',
+  },
 });

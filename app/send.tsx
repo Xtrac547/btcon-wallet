@@ -17,6 +17,7 @@ export default function SendScreen() {
     token1000?: string;
     token5000?: string;
     token50000?: string;
+    address?: string;
   }>();
   const { balance, signAndBroadcastTransaction, esploraService, address } = useWallet();
   const { username, getAddressForUsername } = useUsername();
@@ -32,7 +33,7 @@ export default function SendScreen() {
       router.replace('/set-username');
     }
   }, [username, router]);
-  const [toAddress, setToAddress] = useState('');
+  const [toAddress, setToAddress] = useState(params.address || '');
   const [tokenCounts] = useState<{ [key: number]: number }>({
     1000: params.token1000 ? parseInt(params.token1000) : 0,
     5000: params.token5000 ? parseInt(params.token5000) : 0,

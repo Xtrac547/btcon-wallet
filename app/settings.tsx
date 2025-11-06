@@ -326,6 +326,23 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
+        {isDeveloper(address || '') && (
+          <Pressable
+            style={styles.adminCard}
+            onPress={() => router.push('/developer')}
+          >
+            <View style={styles.adminCardHeader}>
+              <View style={styles.adminCardIcon}>
+                <Shield color="#FFD700" size={20} />
+              </View>
+              <Text style={styles.adminCardTitle}>Mode Admin</Text>
+            </View>
+            <Text style={styles.adminCardDescription}>
+              Gérer les utilisateurs et les paramètres système
+            </Text>
+          </Pressable>
+        )}
+
         <View style={styles.footer}>
           <Shield color="#333" size={16} />
           <Text style={styles.footerText}>Bitcoin Wallet • Sécurisé & Décentralisé</Text>
@@ -370,9 +387,9 @@ export default function SettingsScreen() {
                 ? '✨ Mode développeur : Modification gratuite' 
                 : (username 
                     ? (usernameChangesCount >= 2 
-                        ? 'Modifier votre pseudo coûte 500 Btcon à partir de la 3ème modification.' 
+                        ? 'Modifier votre pseudo coûte 1000 Btcon (500 Btcon + 500 Btcon de frais de réseau) à partir de la 3ème modification.' 
                         : (usernameChangesCount === 1 
-                            ? 'Dernière modification gratuite. La prochaine coûtera 500 Btcon.' 
+                            ? 'Dernière modification gratuite. La prochaine coûtera 1000 Btcon (500 + 500 frais).' 
                             : 'Choisissez un pseudo unique (min. 3 caractères)'))
                     : 'Choisissez un pseudo unique (min. 3 caractères)')}
             </Text>
@@ -406,18 +423,18 @@ export default function SettingsScreen() {
                 const isDevAccount = isDeveloper(address || '');
 
                 if (!isDevAccount && usernameChangesCount >= 2) {
-                  const CHANGE_COST = 500;
+                  const CHANGE_COST = 1000;
                   if (balance < CHANGE_COST) {
-                    Alert.alert('Fonds insuffisants', `Vous avez besoin de ${CHANGE_COST} Btcon pour modifier votre pseudo.`);
+                    Alert.alert('Fonds insuffisants', `Vous avez besoin de ${CHANGE_COST} Btcon (500 Btcon + 500 Btcon de frais de réseau) pour modifier votre pseudo.`);
                     return;
                   }
 
                   const confirmMessage = Platform.OS === 'web'
-                    ? window.confirm(`Modifier votre pseudo coûte ${CHANGE_COST} Btcon. Continuer ?`)
+                    ? window.confirm(`Modifier votre pseudo coûte ${CHANGE_COST} Btcon (500 Btcon + 500 Btcon de frais de réseau). Continuer ?`)
                     : await new Promise<boolean>((resolve) => {
                         Alert.alert(
                           'Confirmer le paiement',
-                          `Modifier votre pseudo coûte ${CHANGE_COST} Btcon. Continuer ?`,
+                          `Modifier votre pseudo coûte ${CHANGE_COST} Btcon (500 Btcon + 500 Btcon de frais de réseau). Continuer ?`,
                           [
                             { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
                             { text: 'Confirmer', onPress: () => resolve(true) },
@@ -455,7 +472,7 @@ export default function SettingsScreen() {
                       if (isDevAccount) {
                         Alert.alert('Succès', 'Pseudo modifié avec succès (gratuit pour développeurs)');
                       } else if (usernameChangesCount === 1) {
-                        Alert.alert('Information', 'À partir de la prochaine modification, cela coûtera 500 Btcon.');
+                        Alert.alert('Information', 'À partir de la prochaine modification, cela coûtera 1000 Btcon (500 Btcon + 500 Btcon de frais de réseau).');
                       }
                     } else {
                       Alert.alert('Erreur', 'Pseudo déjà pris');
@@ -1041,5 +1058,39 @@ const styles = StyleSheet.create({
     marginTop: -12,
     textAlign: 'center',
     fontWeight: '600' as const,
+  },
+  adminCard: {
+    backgroundColor: 'rgba(255, 215, 0, 0.05)',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  adminCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  adminCardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  adminCardTitle: {
+    color: '#FFD700',
+    fontSize: 17,
+    fontWeight: '700' as const,
+  },
+  adminCardDescription: {
+    color: 'rgba(255, 215, 0, 0.6)',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
