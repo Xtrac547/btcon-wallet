@@ -1,10 +1,10 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowUpRight, ArrowDownLeft } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 
 export default function WalletScreen() {
@@ -18,6 +18,9 @@ export default function WalletScreen() {
     5000: 0,
     50000: 0,
   });
+
+  const translateY = useRef(new Animated.Value(0)).current;
+  const panY = useRef(0);
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
 
@@ -69,13 +72,50 @@ export default function WalletScreen() {
     });
   };
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dy) > 10;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (!hasSelectedTokens && gestureState.dy > 0) {
+          panY.current = gestureState.dy;
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (!hasSelectedTokens && gestureState.dy > 150) {
+          router.push('/stories');
+          Animated.timing(translateY, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
+        } else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+        panY.current = 0;
+      },
+    })
+  ).current;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={[styles.scrollContent, hasSelectedTokens && styles.scrollContentSpaced]}
+      <Animated.View 
+        {...panResponder.panHandlers}
+        style={[
+          styles.animatedContainer,
+          {
+            transform: [{ translateY }],
+            justifyContent: hasSelectedTokens ? 'flex-end' : 'flex-start',
+          },
+        ]}
       >
-        <View style={[styles.selectionContent, hasSelectedTokens && styles.selectionContentSpaced]}>
+        <View style={styles.selectionContent}>
           <View style={styles.topSection}>
             {!hasSelectedTokens && (
               <View style={styles.balanceSection}>
@@ -162,37 +202,39 @@ export default function WalletScreen() {
             )}
           </View>
 
-          <View style={styles.actionsContainer}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.actionButton,
-                styles.receiveButton,
-                pressed && styles.actionButtonPressed,
-              ]}
-              onPress={handleReceive}
-            >
-              <View style={styles.iconContainer}>
-                <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
-              </View>
-              <Text style={styles.actionButtonText}>Recevoir</Text>
-            </Pressable>
+          {hasSelectedTokens && (
+            <View style={styles.actionsContainer}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  styles.receiveButton,
+                  pressed && styles.actionButtonPressed,
+                ]}
+                onPress={handleReceive}
+              >
+                <View style={styles.iconContainer}>
+                  <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
+                </View>
+                <Text style={styles.actionButtonText}>Recevoir</Text>
+              </Pressable>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.actionButton,
-                styles.sendButton,
-                pressed && styles.actionButtonPressed,
-              ]}
-              onPress={handleSend}
-            >
-              <View style={styles.iconContainer}>
-                <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
-              </View>
-              <Text style={styles.actionButtonText}>Envoyer</Text>
-            </Pressable>
-          </View>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  styles.sendButton,
+                  pressed && styles.actionButtonPressed,
+                ]}
+                onPress={handleSend}
+              >
+                <View style={styles.iconContainer}>
+                  <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
+                </View>
+                <Text style={styles.actionButtonText}>Envoyer</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
-      </ScrollView>
+      </Animated.View>
     </View>
   );
 }
@@ -202,25 +244,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-
-  scrollView: {
+  animatedContainer: {
     flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  scrollContentSpaced: {
-    justifyContent: 'space-between',
   },
   selectionContent: {
     width: '100%',
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 40,
-  },
-  selectionContentSpaced: {
-    flex: 1,
-    justifyContent: 'space-between',
+    gap: 24,
   },
   topSection: {
     width: '100%',
