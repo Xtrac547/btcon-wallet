@@ -14,7 +14,6 @@ export default function ReceiveScreen() {
   const { address } = useWallet();
   const { username } = useUsername();
   const { width } = useWindowDimensions();
-  const isWideScreen = width > 768;
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
 
   useEffect(() => {
@@ -119,13 +118,11 @@ export default function ReceiveScreen() {
     }
   }, [address]);
 
-  const contentPadding = isWideScreen ? 40 : 20;
-  
-  const qrArtSize = Math.min(width - (contentPadding * 2), 360);
+  const qrArtSize = Math.min(width - 100, 320);
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, isWideScreen && styles.headerWide, { paddingTop: insets.top + 16 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
@@ -160,7 +157,7 @@ export default function ReceiveScreen() {
                           width={1}
                           height={1}
                           fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
-                          rx={0.12}
+                          rx={0.18}
                         />
                       );
                     }
@@ -213,27 +210,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   qrCodeWrapper: {
-    backgroundColor: '#FFF',
-    padding: 16,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.6,
-    shadowRadius: 24,
-    elevation: 12,
+    backgroundColor: '#000',
+    padding: 24,
+    borderRadius: 32,
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.8,
+    shadowRadius: 32,
+    elevation: 16,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
   },
   qrPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 16,
-    borderRadius: 24,
+    backgroundColor: '#000',
+    padding: 24,
+    borderRadius: 32,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
   },
   qrPlaceholderText: {
     fontSize: 16,
     fontWeight: '600' as const,
-  },
-  headerWide: {
-    paddingHorizontal: 40,
   },
 });
