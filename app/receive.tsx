@@ -2,7 +2,7 @@ import '@/utils/shim';
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Share, Linking, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { ArrowLeft, Share2, ExternalLink, Copy } from 'lucide-react-native';
@@ -10,11 +10,14 @@ import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 export default function ReceiveScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ amount?: string }>();
   const insets = useSafeAreaInsets();
   const { address } = useWallet();
   const { username } = useUsername();
   const { width } = useWindowDimensions();
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
+  
+  const requestedAmount = params.amount ? parseInt(params.amount) : 0;
 
   useEffect(() => {
     if (!username) {
@@ -108,15 +111,21 @@ export default function ReceiveScreen() {
     if (address) {
       (async () => {
         try {
-          const matrix = await generateQRMatrix(address);
-          console.log('QR Code généré pour:', address, 'taille:', matrix.length);
+          let qrContent = address;
+          if (requestedAmount > 0) {
+            const btcAmount = requestedAmount / 100000000;
+            qrContent = `bitcoin:${address}?amount=${btcAmount}`;
+            console.log('Génération QR avec montant:', qrContent);
+          }
+          const matrix = await generateQRMatrix(qrContent);
+          console.log('QR Code généré pour:', qrContent, 'taille:', matrix.length);
           setQrMatrix(matrix);
         } catch (err) {
           console.error('Erreur génération QR:', err);
         }
       })();
     }
-  }, [address]);
+  }, [address, requestedAmount]);
 
   const padding = 32;
   const qrArtSize = Math.min(width - 100, 320);
@@ -124,9 +133,12 @@ export default function ReceiveScreen() {
   const handleShare = async () => {
     if (!address) return;
     try {
-      await Share.share({
-        message: `Mon adresse Bitcoin: ${address}`,
-      });
+      let message = `Mon adresse Bitcoin: ${address}`;
+      if (requestedAmount > 0) {
+        const btcAmount = requestedAmount / 100000000;
+        message = `Demande de paiement Bitcoin\n\nMontant: ${requestedAmount.toLocaleString()} Btcon (${btcAmount.toFixed(8)} BTC)\n\nAdresse: ${address}\n\nURI: bitcoin:${address}?amount=${btcAmount}`;
+      }
+      await Share.share({ message });
     } catch (error) {
       console.error('Erreur partage:', error);
     }
@@ -162,6 +174,17 @@ export default function ReceiveScreen() {
       </View>
 
       <View style={styles.content}>
+        {requestedAmount > 0 && (
+          <View style={styles.amountBanner}>
+            <Text style={styles.amountBannerLabel}>Montant demandé</Text>
+            <View style={styles.amountBannerRow}>
+              <Text style={styles.amountBannerValue}>{requestedAmount.toLocaleString()}</Text>
+              <Text style={styles.amountBannerUnit}>Btcon</Text>
+            </View>
+            <Text style={styles.amountBannerBtc}>{(requestedAmount / 100000000).toFixed(8)} BTC</Text>
+          </View>
+        )}
+
         <View style={styles.qrCodeContainer}>
           {qrMatrix.length > 0 ? (
             <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2 }]}>
@@ -353,5 +376,51 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 15,
     fontWeight: '600' as const,
+  },
+  amountBanner: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 140, 0, 0.15)',
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 24,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  amountBannerLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 13,
+    fontWeight: '600' as const,
+    marginBottom: 12,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1.5,
+  },
+  amountBannerRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 12,
+    marginBottom: 8,
+  },
+  amountBannerValue: {
+    color: '#FFFFFF',
+    fontSize: 48,
+    fontWeight: '900' as const,
+    letterSpacing: -2,
+  },
+  amountBannerUnit: {
+    color: '#FF8C00',
+    fontSize: 20,
+    fontWeight: '800' as const,
+  },
+  amountBannerBtc: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 14,
+    fontWeight: '600' as const,
+    fontFamily: 'monospace' as const,
   },
 });

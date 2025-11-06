@@ -182,10 +182,40 @@ export default function SendScreen() {
 
   const handleBarcodeScanned = (data: string) => {
     setShowScanner(false);
+    console.log('QR Code scanné:', data);
+    
     let address = data;
+    
     if (address.toLowerCase().startsWith('bitcoin:')) {
-      address = address.substring(8).split('?')[0];
+      const uri = address.substring(8);
+      const parts = uri.split('?');
+      address = parts[0];
+      
+      if (parts.length > 1) {
+        const params = new URLSearchParams(parts[1]);
+        const amountBtc = params.get('amount');
+        
+        if (amountBtc) {
+          const amountSats = Math.floor(parseFloat(amountBtc) * 100000000);
+          console.log('Montant détecté dans le QR:', amountSats, 'Btcon');
+          
+          Alert.alert(
+            'Demande de paiement détectée',
+            `Adresse: ${address.slice(0, 10)}...\n\nMontant demandé: ${amountSats.toLocaleString()} Btcon\n\nCe montant sera prérempli dans le formulaire.`,
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  setToAddress(address);
+                },
+              },
+            ]
+          );
+          return;
+        }
+      }
     }
+    
     setToAddress(address);
   };
 
