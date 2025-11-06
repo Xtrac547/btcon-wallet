@@ -58,7 +58,15 @@ export default function WalletScreen() {
 
   const handleSend = () => {
     const amount = getTotalAmount();
-    router.push({ pathname: '/send', params: { amount: amount.toString() } });
+    router.push({ 
+      pathname: '/send', 
+      params: { 
+        preselectedAmount: amount.toString(),
+        token1000: tokenCounts[1000].toString(),
+        token5000: tokenCounts[5000].toString(),
+        token50000: tokenCounts[50000].toString()
+      } 
+    });
   };
 
   return (

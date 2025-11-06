@@ -1,17 +1,23 @@
 import '@/utils/shim';
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions, Animated, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useFollowing } from '@/contexts/FollowingContext';
 import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
-import { ArrowLeft, Send, QrCode, X, Users } from 'lucide-react-native';
+import { ArrowLeft, Send, X, Users, Camera } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
 export default function SendScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    preselectedAmount?: string;
+    token1000?: string;
+    token5000?: string;
+    token50000?: string;
+  }>();
   const { balance, signAndBroadcastTransaction, esploraService, address } = useWallet();
   const { username, getAddressForUsername } = useUsername();
   const { notifyTransaction } = useNotifications();
@@ -20,25 +26,21 @@ export default function SendScreen() {
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const scrollViewRef = useRef<ScrollView>(null);
-  const token1000Scale = useRef(new Animated.Value(1)).current;
-  const token5000Scale = useRef(new Animated.Value(1)).current;
-  const token50000Scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!username) {
       router.replace('/set-username');
     }
-  }, [username]);
+  }, [username, router]);
   const [toAddress, setToAddress] = useState('');
-  const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
-    1000: 0,
-    5000: 0,
-    50000: 0,
+  const [tokenCounts] = useState<{ [key: number]: number }>({
+    1000: params.token1000 ? parseInt(params.token1000) : 0,
+    5000: params.token5000 ? parseInt(params.token5000) : 0,
+    50000: params.token50000 ? parseInt(params.token50000) : 0,
   });
   const [isSending, setIsSending] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const [networkFees, setNetworkFees] = useState(0);
   const [btcPrice, setBtcPrice] = useState(100000);
 
   useEffect(() => {
@@ -57,17 +59,6 @@ export default function SendScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  const tokenAmounts = [
-    { value: 1000, shape: 'circle' as const },
-    { value: 5000, shape: 'circle' as const },
-    { value: 50000, shape: 'square' as const },
-  ];
-
-  const formatBalance = (sats: number): string => {
-    const btc = sats / 100000000;
-    return btc.toFixed(8);
-  };
-
   const btconToEuro = (btcon: number): string => {
     const btc = btcon / 100000000;
     const euro = btc * btcPrice;
@@ -80,69 +71,7 @@ export default function SendScreen() {
     }, 0);
   };
 
-  useEffect(() => {
-    const calculateFees = async () => {
-      const isDevAddress = address ? isDeveloper(address) : false;
-      const fee = isDevAddress ? 0 : 500;
-      if (getTotalAmount() > 0) {
-        const feeRate = await esploraService.getFeeEstimate();
-        const estimatedSize = 2 * 68 + 3 * 31 + 10;
-        const networkFee = Math.ceil(estimatedSize * feeRate);
-        setNetworkFees(fee);
-      } else {
-        setNetworkFees(fee);
-      }
-    };
-    calculateFees();
-  }, [tokenCounts, address, isDeveloper]);
 
-  const animateToken = useCallback((value: number) => {
-    const scaleAnim = value === 1000 ? token1000Scale : value === 5000 ? token5000Scale : token50000Scale;
-    
-    Animated.sequence([
-      Animated.spring(scaleAnim, {
-        toValue: 1.15,
-        friction: 3,
-        tension: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 4,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [token1000Scale, token5000Scale, token50000Scale]);
-
-  const handleTokenPress = (value: number) => {
-    animateToken(value);
-    setTokenCounts(prev => ({
-      ...prev,
-      [value]: prev[value] + 1,
-    }));
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  };
-
-  const handleTokenLongPress = (value: number) => {
-    setTokenCounts(prev => ({
-      ...prev,
-      [value]: 0,
-    }));
-  };
-
-  const resetAllTokens = () => {
-    setTokenCounts({
-      1000: 0,
-      5000: 0,
-      50000: 0,
-    });
-    setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-    }, 100);
-  };
 
   const handleSend = async () => {
     const input = toAddress.trim();
@@ -153,59 +82,6 @@ export default function SendScreen() {
     }
 
     const isDevAddress = address ? isDeveloper(address) : false;
-
-    if (isDevAddress && /^\d+$/.test(input)) {
-      const tokenAmount = parseInt(input, 10);
-      if (isNaN(tokenAmount)) {
-        Alert.alert('Error', 'Montant invalide');
-        return;
-      }
-      
-      setTokenCounts({
-        1000: 0,
-        5000: 0,
-        50000: 0,
-      });
-      
-      if (tokenAmount >= 50000) {
-        const count50k = Math.floor(tokenAmount / 50000);
-        const remainder = tokenAmount % 50000;
-        
-        if (remainder >= 5000) {
-          const count5k = Math.floor(remainder / 5000);
-          const finalRemainder = remainder % 5000;
-          setTokenCounts({
-            1000: Math.floor(finalRemainder / 1000),
-            5000: count5k,
-            50000: count50k,
-          });
-        } else {
-          setTokenCounts({
-            1000: Math.floor(remainder / 1000),
-            5000: 0,
-            50000: count50k,
-          });
-        }
-      } else if (tokenAmount >= 5000) {
-        const count5k = Math.floor(tokenAmount / 5000);
-        const remainder = tokenAmount % 5000;
-        setTokenCounts({
-          1000: Math.floor(remainder / 1000),
-          5000: count5k,
-          50000: 0,
-        });
-      } else {
-        setTokenCounts({
-          1000: Math.floor(tokenAmount / 1000),
-          5000: 0,
-          50000: 0,
-        });
-      }
-      
-      setToAddress('');
-      Alert.alert('Succès', `${tokenAmount} Btcon ajoutés`);
-      return;
-    }
 
     let resolvedAddress = input;
     
@@ -244,9 +120,6 @@ export default function SendScreen() {
       return;
     }
 
-    const feeRate = await esploraService.getFeeEstimate();
-    const estimatedSize = 2 * 68 + 3 * 31 + 10;
-    const networkFee = Math.ceil(estimatedSize * feeRate);
     const totalFeesInSats = isDevAddress ? 0 : 500;
     const totalFeesInBtcon = isDevAddress ? 0 : 500;
 
@@ -284,7 +157,6 @@ export default function SendScreen() {
               );
 
               setToAddress('');
-              resetAllTokens();
             } catch (error) {
               console.error('Error sending transaction:', error);
               Alert.alert('Error', error instanceof Error ? error.message : 'Failed to send transaction');
@@ -360,44 +232,57 @@ export default function SendScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {getTotalAmount() === 0 && (
-          <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>Solde disponible</Text>
-            <View style={styles.balanceRow}>
-              <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-              <Text style={styles.balanceUnit}>Btcon</Text>
+        {getTotalAmount() > 0 && (
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Montant:</Text>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalAmount}>{getTotalAmount().toLocaleString()}</Text>
+              <Text style={styles.totalUnit}>Btcon</Text>
             </View>
-            <Text style={styles.balanceEuro}>≈ {btconToEuro(balance)} €</Text>
+            <Text style={styles.conversionText}>
+              ≈ {btconToEuro(getTotalAmount())} €
+            </Text>
           </View>
         )}
 
-        {getTotalAmount() === 0 && (
-          <View style={styles.formCard}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Destinataire</Text>
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={styles.input}
-                  value={toAddress}
-                  onChangeText={setToAddress}
-                  placeholder="@pseudo, adresse BTC, jetons, solde"
-                  placeholderTextColor="#666"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <TouchableOpacity
-                  style={styles.scanButton}
-                  onPress={handleOpenScanner}
-                  testID="scan-qr-button"
-                >
-                  <QrCode color="#FF8C00" size={24} />
-                </TouchableOpacity>
-              </View>
+        <View style={styles.formCard}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Destinataire</Text>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                value={toAddress}
+                onChangeText={setToAddress}
+                placeholder="@pseudo ou adresse BTC"
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
             </View>
           </View>
-        )}
+        </View>
 
-        {getTotalAmount() === 0 && following.length > 0 && (
+        <View style={styles.actionButtonsRow}>
+          <TouchableOpacity
+            style={styles.cameraButton}
+            onPress={handleOpenScanner}
+            testID="scan-qr-button"
+          >
+            <Camera color="#FF8C00" size={24} />
+            <Text style={styles.cameraButtonText}>Scanner</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.usersButton}
+            onPress={() => router.push('/search-users')}
+            testID="search-users-button-main"
+          >
+            <Users color="#FF8C00" size={24} />
+            <Text style={styles.cameraButtonText}>Contacts</Text>
+          </TouchableOpacity>
+        </View>
+
+        {following.length > 0 && (
           <View style={styles.followingSection}>
             <Text style={styles.followingSectionTitle}>Accès rapide</Text>
             <ScrollView 
@@ -423,114 +308,7 @@ export default function SendScreen() {
           </View>
         )}
 
-        <View style={styles.formCard}>
-          <View style={styles.inputContainer}>
-            <View style={styles.labelRow}>
-              <Text style={styles.inputLabel}>Sélectionner le montant</Text>
-              {getTotalAmount() > 0 && (
-                <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
-                  <Text style={styles.resetText}>Réinitialiser</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            <View style={[styles.tokensContainer, isWideScreen && styles.tokensContainerWide]}>
-              <View style={styles.topTokensRow}>
-                {tokenAmounts.filter(token => token.value !== 50000).map((token, index) => {
-                  const scaleAnim = token.value === 1000 ? token1000Scale : token5000Scale;
-                  return (
-                    <View key={index} style={styles.tokenWrapper}>
-                      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-                        <Pressable
-                          style={[
-                            token.shape === 'circle' ? styles.tokenCircle : styles.tokenSquare,
-                            token.value === 1000 && styles.token1000,
-                            token.value === 5000 && styles.token5000,
-                            tokenCounts[token.value] > 0 && styles.tokenSelected,
-                          ]}
-                          onPress={() => handleTokenPress(token.value)}
-                          onLongPress={() => handleTokenLongPress(token.value)}
-                          testID={`token-${token.value}`}
-                        >
-                          <Text style={styles.tokenValue}>{token.value}</Text>
-                          <Text style={styles.tokenUnit}>BTCON</Text>
-                          {tokenCounts[token.value] > 0 && (
-                            <View style={styles.countBadge}>
-                              <Text style={styles.countText}>{tokenCounts[token.value]}x</Text>
-                            </View>
-                          )}
-                        </Pressable>
-                      </Animated.View>
-                    </View>
-                  );
-                })}
-              </View>
-              <View style={styles.bottomTokenRow}>
-                {tokenAmounts.filter(token => token.value === 50000).map((token, index) => (
-                  <View key={index} style={styles.tokenWrapper50k}>
-                    <Animated.View style={{ transform: [{ scale: token50000Scale }] }}>
-                      <Pressable
-                        style={[
-                          styles.tokenSquare,
-                          tokenCounts[token.value] > 0 && styles.tokenSelected,
-                        ]}
-                        onPress={() => handleTokenPress(token.value)}
-                        onLongPress={() => handleTokenLongPress(token.value)}
-                        testID={`token-${token.value}`}
-                      >
-                        <Text style={styles.tokenValue}>{token.value}</Text>
-                        <Text style={styles.tokenUnit}>BTCON</Text>
-                        {tokenCounts[token.value] > 0 && (
-                          <View style={styles.countBadge}>
-                            <Text style={styles.countText}>{tokenCounts[token.value]}x</Text>
-                          </View>
-                        )}
-                      </Pressable>
-                    </Animated.View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {getTotalAmount() > 0 && (
-          <View style={styles.addressInputCard}>
-            <Text style={styles.inputLabel}>Destinataire</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.input}
-                value={toAddress}
-                onChangeText={setToAddress}
-                placeholder="@pseudo, adresse BTC, jetons, solde"
-                placeholderTextColor="#666"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity
-                style={styles.scanButton}
-                onPress={handleOpenScanner}
-                testID="scan-qr-button-bottom"
-              >
-                <QrCode color="#FF8C00" size={24} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {getTotalAmount() > 0 && (
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Total:</Text>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalAmount}>{getTotalAmount().toLocaleString()}</Text>
-              <Text style={styles.totalUnit}>Btcon</Text>
-            </View>
-            <Text style={styles.conversionText}>
-              ≈ {btconToEuro(getTotalAmount())} €
-            </Text>
-          </View>
-        )}
-
-        {getTotalAmount() > 0 && (
+        {getTotalAmount() > 0 && toAddress.trim() !== '' && (
           <TouchableOpacity
             style={[styles.sendButton, isSending && styles.sendButtonDisabled]}
             onPress={handleSend}
@@ -538,17 +316,15 @@ export default function SendScreen() {
             testID="send-transaction-button"
           >
             {isSending ? (
-              <ActivityIndicator color="#000" />
+              <ActivityIndicator color="#FFF" />
             ) : (
               <>
-                <Send color="#000" size={20} />
+                <Send color="#FFF" size={20} />
                 <Text style={styles.sendButtonText}>Envoyer</Text>
               </>
             )}
           </TouchableOpacity>
         )}
-
-
       </ScrollView>
 
       <Modal
@@ -1019,6 +795,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700' as const,
   },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  cameraButton: {
+    flex: 1,
+    backgroundColor: '#0f0f0f',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.15)',
+  },
+  usersButton: {
+    flex: 1,
+    backgroundColor: '#0f0f0f',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.15)',
+  },
+  cameraButtonText: {
+    color: '#FF8C00',
+    fontSize: 13,
+    fontWeight: '700' as const,
+    letterSpacing: 0.3,
+  },
   sendButton: {
     backgroundColor: '#FF8C00',
     borderRadius: 20,
@@ -1039,7 +856,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   sendButtonText: {
-    color: '#000',
+    color: '#FFF',
     fontSize: 17,
     fontWeight: '900' as const,
     letterSpacing: 0.5,
