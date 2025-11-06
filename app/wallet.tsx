@@ -111,97 +111,93 @@ export default function WalletScreen() {
           styles.animatedContainer,
           {
             transform: [{ translateY }],
-            justifyContent: hasSelectedTokens ? 'flex-end' : 'flex-start',
           },
         ]}
       >
-        <View style={styles.selectionContent}>
-          <View style={styles.topSection}>
-            {!hasSelectedTokens && (
-              <View style={styles.balanceSection}>
-                <Text style={styles.balanceLabel}>SOLDE</Text>
-                
-                <View style={styles.balanceRow}>
-                  <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-                  <Text style={styles.balanceUnit}>Btcon</Text>
-                </View>
-
-                <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
-              </View>
-            )}
-
-            <View style={styles.tokensSection}>
-              <View style={styles.labelRow}>
-                <Text style={styles.tokensLabel}>Jetons</Text>
-                {getTotalAmount() > 0 && (
-                  <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
-                    <Text style={styles.resetText}>Réinitialiser</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+        <View style={[styles.selectionContent, hasSelectedTokens && styles.contentAtBottom]}>
+          {!hasSelectedTokens && (
+            <View style={styles.balanceSection}>
+              <Text style={styles.balanceLabel}>SOLDE</Text>
               
-              <View style={styles.tokensContainer}>
-                <View style={styles.topTokensRow}>
-                  {[1000, 5000].map((value) => (
-                    <View key={value} style={styles.tokenWrapper}>
-                      <Pressable
-                        style={[
-                          styles.tokenCircle,
-                          value === 1000 && styles.token1000,
-                          value === 5000 && styles.token5000,
-                          tokenCounts[value] > 0 && styles.tokenSelected,
-                        ]}
-                        onPress={() => handleTokenPress(value)}
-                        onLongPress={() => handleTokenLongPress(value)}
-                      >
-                        <Text style={styles.tokenValue}>{value}</Text>
-                        <Text style={styles.tokenUnit}>BTCON</Text>
-                        {tokenCounts[value] > 0 && (
-                          <View style={styles.countBadge}>
-                            <Text style={styles.countText}>{tokenCounts[value]}x</Text>
-                          </View>
-                        )}
-                      </Pressable>
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.bottomTokenRow}>
-                  <View style={styles.tokenWrapper50k}>
+              <View style={styles.balanceRow}>
+                <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
+                <Text style={styles.balanceUnit}>Btcon</Text>
+              </View>
+
+              <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
+            </View>
+          )}
+
+          <View style={styles.tokensSection}>
+            <View style={styles.labelRow}>
+              <Text style={styles.tokensLabel}>Jetons</Text>
+              {getTotalAmount() > 0 && (
+                <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
+                  <Text style={styles.resetText}>Réinitialiser</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            <View style={styles.tokensContainer}>
+              <View style={styles.topTokensRow}>
+                {[1000, 5000].map((value) => (
+                  <View key={value} style={styles.tokenWrapper}>
                     <Pressable
                       style={[
-                        styles.tokenSquare,
-                        tokenCounts[50000] > 0 && styles.tokenSelected,
+                        styles.tokenCircle,
+                        value === 1000 && styles.token1000,
+                        value === 5000 && styles.token5000,
+                        tokenCounts[value] > 0 && styles.tokenSelected,
                       ]}
-                      onPress={() => handleTokenPress(50000)}
-                      onLongPress={() => handleTokenLongPress(50000)}
+                      onPress={() => handleTokenPress(value)}
+                      onLongPress={() => handleTokenLongPress(value)}
                     >
-                      <Text style={styles.tokenValue}>50000</Text>
+                      <Text style={styles.tokenValue}>{value}</Text>
                       <Text style={styles.tokenUnit}>BTCON</Text>
-                      {tokenCounts[50000] > 0 && (
+                      {tokenCounts[value] > 0 && (
                         <View style={styles.countBadge}>
-                          <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
+                          <Text style={styles.countText}>{tokenCounts[value]}x</Text>
                         </View>
                       )}
                     </Pressable>
                   </View>
+                ))}
+              </View>
+              <View style={styles.bottomTokenRow}>
+                <View style={styles.tokenWrapper50k}>
+                  <Pressable
+                    style={[
+                      styles.tokenSquare,
+                      tokenCounts[50000] > 0 && styles.tokenSelected,
+                    ]}
+                    onPress={() => handleTokenPress(50000)}
+                    onLongPress={() => handleTokenLongPress(50000)}
+                  >
+                    <Text style={styles.tokenValue}>50000</Text>
+                    <Text style={styles.tokenUnit}>BTCON</Text>
+                    {tokenCounts[50000] > 0 && (
+                      <View style={styles.countBadge}>
+                        <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
+                      </View>
+                    )}
+                  </Pressable>
                 </View>
               </View>
             </View>
-
-            {hasSelectedTokens && (
-              <View style={styles.balanceSection}>
-                <Text style={styles.balanceLabel}>SOLDE</Text>
-                
-                <View style={styles.balanceRow}>
-                  <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-                  <Text style={styles.balanceUnit}>Btcon</Text>
-                </View>
-
-                <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
-              </View>
-            )}
           </View>
 
+          {hasSelectedTokens && (
+            <View style={styles.balanceSection}>
+              <Text style={styles.balanceLabel}>SOLDE</Text>
+              
+              <View style={styles.balanceRow}>
+                <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
+                <Text style={styles.balanceUnit}>Btcon</Text>
+              </View>
+
+              <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
+            </View>
+          )}
         </View>
       </Animated.View>
 
@@ -247,16 +243,18 @@ const styles = StyleSheet.create({
   },
   animatedContainer: {
     flex: 1,
+    justifyContent: 'flex-start',
   },
   selectionContent: {
     width: '100%',
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 40,
-    gap: 24,
   },
-  topSection: {
-    width: '100%',
+  contentAtBottom: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingBottom: 160,
   },
   balanceSection: {
     alignItems: 'center',
