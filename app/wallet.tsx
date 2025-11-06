@@ -23,18 +23,29 @@ export default function WalletScreen() {
 
   useEffect(() => {
     if (address) {
-      QRCode.toDataURL(address, {
-        width: 300,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF',
-        },
-      }).then(url => {
-        setQrDataUrl(url);
-      }).catch(err => {
-        console.error('Error generating QR code:', err);
-      });
+      const generateQR = async () => {
+        try {
+          const options: any = {
+            width: 300,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF',
+            },
+          };
+
+          if (Platform.OS === 'web') {
+            options.type = 'image/png';
+          }
+
+          const url = await (QRCode.toDataURL as any)(address, options) as string;
+          setQrDataUrl(url);
+        } catch (err) {
+          console.error('Error generating QR code:', err);
+        }
+      };
+
+      generateQR();
     }
   }, [address]);
 
