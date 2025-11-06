@@ -1,47 +1,26 @@
-import { View, Text, StyleSheet, Dimensions, Animated, PanResponder, Image } from 'react-native';
+import '@/utils/shim';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, PanResponder, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState, useRef } from 'react';
-import { X } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, Clock } from 'lucide-react-native';
+import { useWallet } from '@/contexts/WalletContext';
+import { Transaction } from '@/services/esplora';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const STORIES = [
-  {
-    id: '1',
-    username: '@btcon_user1',
-    image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=800&fit=crop',
-    caption: 'Bitcoin to the moon! 🚀',
-    color: '#FF6B35',
-  },
-  {
-    id: '2',
-    username: '@crypto_fan',
-    image: 'https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=400&h=800&fit=crop',
-    caption: 'Just received my first Btcon! 🎉',
-    color: '#4ECDC4',
-  },
-  {
-    id: '3',
-    username: '@btcon_trader',
-    image: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400&h=800&fit=crop',
-    caption: 'Trading like a pro 💰',
-    color: '#FFE66D',
-  },
-  {
-    id: '4',
-    username: '@hodl_master',
-    image: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?w=400&h=800&fit=crop',
-    caption: 'HODL forever! 💎🙌',
-    color: '#95E1D3',
-  },
-];
-
-export default function StoriesScreen() {
+export default function TransactionHistoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const { address, transactions, refreshBalance } = useWallet();
   const translateY = useRef(new Animated.Value(0)).current;
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshBalance();
+    setRefreshing(false);
+  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -50,36 +29,12 @@ export default function StoriesScreen() {
         return Math.abs(gestureState.dy) > 10;
       },
       onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy < 0 && currentIndex < STORIES.length - 1) {
-          translateY.setValue(gestureState.dy);
-        } else if (gestureState.dy > 0 && currentIndex === 0) {
-          translateY.setValue(gestureState.dy);
-        } else if (gestureState.dy < 0 && currentIndex < STORIES.length - 1) {
-          translateY.setValue(gestureState.dy);
-        } else if (gestureState.dy > 0 && currentIndex > 0) {
+        if (gestureState.dy > 0) {
           translateY.setValue(gestureState.dy);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy < -100 && currentIndex < STORIES.length - 1) {
-          Animated.timing(translateY, {
-            toValue: -SCREEN_HEIGHT,
-            duration: 300,
-            useNativeDriver: true,
-          }).start(() => {
-            setCurrentIndex(currentIndex + 1);
-            translateY.setValue(0);
-          });
-        } else if (gestureState.dy > 100 && currentIndex > 0) {
-          Animated.timing(translateY, {
-            toValue: SCREEN_HEIGHT,
-            duration: 300,
-            useNativeDriver: true,
-          }).start(() => {
-            setCurrentIndex(currentIndex - 1);
-            translateY.setValue(0);
-          });
-        } else if (gestureState.dy > 100 && currentIndex === 0) {
+        if (gestureState.dy > 100) {
           Animated.timing(translateY, {
             toValue: SCREEN_HEIGHT,
             duration: 300,
@@ -97,14 +52,36 @@ export default function StoriesScreen() {
     })
   ).current;
 
-  const handleClose = () => {
-    Animated.timing(translateY, {
-      toValue: SCREEN_HEIGHT,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      router.back();
-    });
+  const formatDate = (timestamp: number | undefined): string => {
+    if (!timestamp) return 'En attente';
+    const date = new Date(timestamp * 1000);
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
+  const getTransactionType = (tx: Transaction): 'sent' | 'received' => {
+    const isSent = tx.vin.some(input => input.prevout?.scriptpubkey_address === address);
+    return isSent ? 'sent' : 'received';
+  };
+
+  const getTransactionAmount = (tx: Transaction): number => {
+    const type = getTransactionType(tx);
+    
+    if (type === 'received') {
+      return tx.vout
+        .filter(output => output.scriptpubkey_address === address)
+        .reduce((sum, output) => sum + output.value, 0);
+    } else {
+      const sent = tx.vout
+        .filter(output => output.scriptpubkey_address !== address)
+        .reduce((sum, output) => sum + output.value, 0);
+      return sent;
+    }
   };
 
   return (
@@ -112,83 +89,91 @@ export default function StoriesScreen() {
       <Animated.View
         {...panResponder.panHandlers}
         style={[
-          styles.storiesContainer,
+          styles.content,
           {
             transform: [{ translateY }],
           },
         ]}
       >
-        {STORIES.map((story, index) => {
-          const isVisible = index === currentIndex;
-          const isPrevious = index === currentIndex - 1;
-          const isNext = index === currentIndex + 1;
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+          <View style={styles.dragHandle} />
+          <Text style={styles.headerTitle}>Historique des transactions</Text>
+        </View>
 
-          if (!isVisible && !isPrevious && !isNext) return null;
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#FF8C00"
+              colors={['#FF8C00']}
+            />
+          }
+        >
+          {transactions.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Clock color="#666666" size={64} strokeWidth={1.5} />
+              <Text style={styles.emptyTitle}>Aucune transaction</Text>
+              <Text style={styles.emptyText}>Vos transactions apparaîtront ici</Text>
+            </View>
+          ) : (
+            transactions.map((tx) => {
+              const type = getTransactionType(tx);
+              const amount = getTransactionAmount(tx);
+              const isConfirmed = tx.status.confirmed;
+              
+              return (
+                <View key={tx.txid} style={styles.transactionCard}>
+                  <View style={[
+                    styles.iconContainer,
+                    type === 'received' ? styles.iconReceived : styles.iconSent
+                  ]}>
+                    {type === 'received' ? (
+                      <ArrowDownLeft color="#FFFFFF" size={24} strokeWidth={2.5} />
+                    ) : (
+                      <ArrowUpRight color="#FFFFFF" size={24} strokeWidth={2.5} />
+                    )}
+                  </View>
 
-          return (
-            <View
-              key={story.id}
-              style={[
-                styles.storySlide,
-                {
-                  opacity: isVisible ? 1 : 0.3,
-                  transform: [
-                    {
-                      translateY: isVisible
-                        ? 0
-                        : isPrevious
-                        ? -SCREEN_HEIGHT
-                        : SCREEN_HEIGHT,
-                    },
-                  ],
-                },
-              ]}
-            >
-              <Image
-                source={{ uri: story.image }}
-                style={styles.storyImage}
-                resizeMode="cover"
-              />
-              <View style={styles.gradient} />
+                  <View style={styles.transactionInfo}>
+                    <View style={styles.transactionRow}>
+                      <Text style={styles.transactionType}>
+                        {type === 'received' ? 'Reçu' : 'Envoyé'}
+                      </Text>
+                      <Text style={[
+                        styles.transactionAmount,
+                        type === 'received' ? styles.amountReceived : styles.amountSent
+                      ]}>
+                        {type === 'received' ? '+' : '-'}{amount.toLocaleString()} Btcon
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.transactionRow}>
+                      <Text style={styles.transactionDate}>
+                        {formatDate(tx.status.block_time)}
+                      </Text>
+                      <View style={[
+                        styles.statusBadge,
+                        isConfirmed ? styles.statusConfirmed : styles.statusPending
+                      ]}>
+                        <Text style={styles.statusText}>
+                          {isConfirmed ? 'Confirmé' : 'En attente'}
+                        </Text>
+                      </View>
+                    </View>
 
-              <View style={[styles.topBar, { paddingTop: insets.top + 16 }]}>
-                <View style={styles.progressBar}>
-                  {STORIES.map((_, idx) => (
-                    <View
-                      key={idx}
-                      style={[
-                        styles.progressSegment,
-                        idx <= currentIndex && styles.progressSegmentActive,
-                      ]}
-                    />
-                  ))}
-                </View>
-                <View style={styles.userInfo}>
-                  <View style={[styles.userAvatar, { backgroundColor: story.color }]}>
-                    <Text style={styles.userInitial}>
-                      {story.username[1].toUpperCase()}
+                    <Text style={styles.txid} numberOfLines={1}>
+                      {tx.txid}
                     </Text>
                   </View>
-                  <Text style={styles.username}>{story.username}</Text>
                 </View>
-              </View>
-
-              <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 24 }]}>
-                <Text style={styles.caption}>{story.caption}</Text>
-              </View>
-            </View>
-          );
-        })}
+              );
+            })
+          )}
+        </ScrollView>
       </Animated.View>
-
-      <View style={[styles.closeButton, { top: insets.top + 16 }]}>
-        <View
-          style={styles.closeButtonTouchable}
-          onTouchEnd={handleClose}
-        >
-          <X color="#FFFFFF" size={28} strokeWidth={2.5} />
-        </View>
-      </View>
     </View>
   );
 }
@@ -196,100 +181,127 @@ export default function StoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  storiesContainer: {
+  content: {
     flex: 1,
-  },
-  storySlide: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
     backgroundColor: '#000000',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
-  storyImage: {
-    width: '100%',
-    height: '100%',
-  },
-  gradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'transparent',
-  },
-  topBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    gap: 16,
-  },
-  progressBar: {
-    flexDirection: 'row',
-    gap: 4,
-    height: 3,
-  },
-  progressSegment: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 2,
-  },
-  progressSegmentActive: {
-    backgroundColor: '#FFFFFF',
-  },
-  userInfo: {
-    flexDirection: 'row',
+  header: {
     alignItems: 'center',
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  dragHandle: {
+    width: 48,
+    height: 4,
+    backgroundColor: '#333333',
+    borderRadius: 2,
+    marginBottom: 16,
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
     gap: 12,
   },
-  userAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  emptyState: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    paddingVertical: 80,
+    gap: 16,
   },
-  userInitial: {
+  emptyTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700' as const,
   },
-  username: {
-    color: '#FFFFFF',
+  emptyText: {
+    color: '#666666',
     fontSize: 16,
-    fontWeight: '600' as const,
+    textAlign: 'center',
   },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 24,
+  transactionCard: {
+    flexDirection: 'row',
+    backgroundColor: '#0f0f0f',
+    borderRadius: 16,
+    padding: 16,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
   },
-  caption: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600' as const,
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
-  },
-  closeButton: {
-    position: 'absolute',
-    right: 16,
-    zIndex: 1000,
-  },
-  closeButtonTouchable: {
+  iconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconReceived: {
+    backgroundColor: '#2ECC71',
+  },
+  iconSent: {
+    backgroundColor: '#FF8C00',
+  },
+  transactionInfo: {
+    flex: 1,
+    gap: 8,
+  },
+  transactionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  transactionType: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: '800' as const,
+  },
+  amountReceived: {
+    color: '#2ECC71',
+  },
+  amountSent: {
+    color: '#FF8C00',
+  },
+  transactionDate: {
+    color: '#888888',
+    fontSize: 13,
+    fontWeight: '500' as const,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusConfirmed: {
+    backgroundColor: 'rgba(46, 204, 113, 0.2)',
+  },
+  statusPending: {
+    backgroundColor: 'rgba(255, 140, 0, 0.2)',
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600' as const,
+  },
+  txid: {
+    color: '#555555',
+    fontSize: 11,
+    fontFamily: 'monospace',
   },
 });
