@@ -1,10 +1,9 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ScrollView, Modal, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ScrollView, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
-import { useUserImage } from '@/contexts/UserImageContext';
 import { Copy, Share2, ExternalLink, ArrowLeft, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
@@ -13,7 +12,6 @@ export default function ReceiveScreen() {
   const router = useRouter();
   const { address, esploraService } = useWallet();
   const { username } = useUsername();
-  const { getImageForUser } = useUserImage();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
@@ -206,13 +204,9 @@ export default function ReceiveScreen() {
               borderColor: currentArt.accent,
               width: qrArtSize,
               height: qrArtSize,
+              backgroundColor: currentArt.bg,
             }]}>
-              <View style={[styles.artworkBackground, { width: qrArtSize, height: qrArtSize }]}>
-                <Image
-                  source={{ uri: getImageForUser(address).qrImage }}
-                  style={styles.artworkImage}
-                  resizeMode="cover"
-                />
+              <View style={[styles.artworkBackground, { width: qrArtSize, height: qrArtSize, backgroundColor: currentArt.bg }]}>
                 <View style={styles.artOverlay} />
               </View>
             </View>
