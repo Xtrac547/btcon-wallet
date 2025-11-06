@@ -12,7 +12,7 @@ export default function WalletScreen() {
   const insets = useSafeAreaInsets();
   const { balance } = useWallet();
   const btcPrice = useBtcPrice();
-  const [showSelection, setShowSelection] = useState<'new' | 'old' | null>(null);
+
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
     5000: 0,
@@ -61,92 +61,81 @@ export default function WalletScreen() {
     router.push({ pathname: '/send', params: { amount: amount.toString() } });
   };
 
-  if (showSelection) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.selectionContent}>
-            <View style={styles.balanceSection}>
-              <Text style={styles.balanceLabel}>Solde</Text>
-              
-              <View style={styles.balanceRow}>
-                <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-                <Text style={styles.balanceUnit}>Btcon</Text>
-              </View>
-
-              <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
+  return (
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.selectionContent}>
+          <View style={styles.balanceSection}>
+            <Text style={styles.balanceLabel}>SOLDE</Text>
+            
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
+              <Text style={styles.balanceUnit}>Btcon</Text>
             </View>
 
-            <View style={styles.tokensSection}>
-              <View style={styles.labelRow}>
-                <Text style={styles.tokensLabel}>Jetons</Text>
-                {getTotalAmount() > 0 && (
-                  <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
-                    <Text style={styles.resetText}>Réinitialiser</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              
-              <View style={styles.tokensContainer}>
-                <View style={styles.topTokensRow}>
-                  {[1000, 5000].map((value) => (
-                    <View key={value} style={styles.tokenWrapper}>
-                      <Pressable
-                        style={[
-                          styles.tokenCircle,
-                          value === 1000 && styles.token1000,
-                          value === 5000 && styles.token5000,
-                          tokenCounts[value] > 0 && styles.tokenSelected,
-                        ]}
-                        onPress={() => handleTokenPress(value)}
-                        onLongPress={() => handleTokenLongPress(value)}
-                      >
-                        <Text style={styles.tokenValue}>{value}</Text>
-                        <Text style={styles.tokenUnit}>BTCON</Text>
-                        {tokenCounts[value] > 0 && (
-                          <View style={styles.countBadge}>
-                            <Text style={styles.countText}>{tokenCounts[value]}x</Text>
-                          </View>
-                        )}
-                      </Pressable>
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.bottomTokenRow}>
-                  <View style={styles.tokenWrapper50k}>
+            <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
+          </View>
+
+          <View style={styles.tokensSection}>
+            <View style={styles.labelRow}>
+              <Text style={styles.tokensLabel}>Jetons</Text>
+              {getTotalAmount() > 0 && (
+                <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
+                  <Text style={styles.resetText}>Réinitialiser</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            <View style={styles.tokensContainer}>
+              <View style={styles.topTokensRow}>
+                {[1000, 5000].map((value) => (
+                  <View key={value} style={styles.tokenWrapper}>
                     <Pressable
                       style={[
-                        styles.tokenSquare,
-                        tokenCounts[50000] > 0 && styles.tokenSelected,
+                        styles.tokenCircle,
+                        value === 1000 && styles.token1000,
+                        value === 5000 && styles.token5000,
+                        tokenCounts[value] > 0 && styles.tokenSelected,
                       ]}
-                      onPress={() => handleTokenPress(50000)}
-                      onLongPress={() => handleTokenLongPress(50000)}
+                      onPress={() => handleTokenPress(value)}
+                      onLongPress={() => handleTokenLongPress(value)}
                     >
-                      <Text style={styles.tokenValue}>50000</Text>
+                      <Text style={styles.tokenValue}>{value}</Text>
                       <Text style={styles.tokenUnit}>BTCON</Text>
-                      {tokenCounts[50000] > 0 && (
+                      {tokenCounts[value] > 0 && (
                         <View style={styles.countBadge}>
-                          <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
+                          <Text style={styles.countText}>{tokenCounts[value]}x</Text>
                         </View>
                       )}
                     </Pressable>
                   </View>
+                ))}
+              </View>
+              <View style={styles.bottomTokenRow}>
+                <View style={styles.tokenWrapper50k}>
+                  <Pressable
+                    style={[
+                      styles.tokenSquare,
+                      tokenCounts[50000] > 0 && styles.tokenSelected,
+                    ]}
+                    onPress={() => handleTokenPress(50000)}
+                    onLongPress={() => handleTokenLongPress(50000)}
+                  >
+                    <Text style={styles.tokenValue}>50000</Text>
+                    <Text style={styles.tokenUnit}>BTCON</Text>
+                    {tokenCounts[50000] > 0 && (
+                      <View style={styles.countBadge}>
+                        <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
+                      </View>
+                    )}
+                  </Pressable>
                 </View>
               </View>
             </View>
+          </View>
 
-            {hasSelectedTokens && (
-              <>
-                <View style={styles.totalContainer}>
-                  <Text style={styles.totalLabel}>Total sélectionné:</Text>
-                  <View style={styles.totalRow}>
-                    <Text style={styles.totalAmount}>{getTotalAmount().toLocaleString()}</Text>
-                    <Text style={styles.totalUnit}>Btcon</Text>
-                  </View>
-                  <Text style={styles.totalEuro}>≈ {btconToEuro(getTotalAmount(), btcPrice)} €</Text>
-                </View>
-
-                <View style={styles.actionsContainer}>
+          {hasSelectedTokens && (
+            <View style={styles.actionsContainer}>
               <Pressable
                 style={({ pressed }) => [
                   styles.actionButton,
@@ -174,39 +163,10 @@ export default function WalletScreen() {
                 </View>
                 <Text style={styles.actionButtonText}>Envoyer</Text>
               </Pressable>
-                </View>
-              </>
-            )}
-
-            <TouchableOpacity
-              style={styles.backToMainButton}
-              onPress={() => {
-                setShowSelection(null);
-                resetAllTokens();
-              }}
-            >
-              <Text style={styles.backToMainText}>Retour</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-    );
-  }
-
-  return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <View style={styles.content}>
-        <View style={styles.mainBalanceSection}>
-          <Text style={styles.mainBalanceLabel}>Solde Total</Text>
-          
-          <View style={styles.mainBalanceRow}>
-            <Text style={styles.mainBalanceAmount}>{balance.toLocaleString()}</Text>
-            <Text style={styles.mainBalanceUnit}>Btcon</Text>
-          </View>
-
-          <Text style={styles.mainEuroAmount}>≈ {euroValue} €</Text>
+            </View>
+          )}
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -216,12 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
+
   scrollView: {
     flex: 1,
   },
@@ -234,41 +189,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
   },
-  mainBalanceSection: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  mainBalanceLabel: {
-    color: '#888888',
-    fontSize: 14,
-    fontWeight: '600' as const,
-    marginBottom: 12,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 2,
-  },
-  mainBalanceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 12,
-    marginBottom: 8,
-  },
-  mainBalanceAmount: {
-    color: '#FFFFFF',
-    fontSize: 48,
-    fontWeight: '900' as const,
-    letterSpacing: -1,
-  },
-  mainBalanceUnit: {
-    color: '#FF8C00',
-    fontSize: 20,
-    fontWeight: '800' as const,
-  },
-  mainEuroAmount: {
-    color: '#FF8C00',
-    fontSize: 18,
-    fontWeight: '700' as const,
-  },
-
   balanceSection: {
     alignItems: 'center',
     marginBottom: 32,
@@ -555,53 +475,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700' as const,
   },
-  totalContainer: {
-    marginBottom: 24,
-    padding: 24,
-    backgroundColor: 'rgba(61, 40, 25, 0.8)',
-    borderRadius: 20,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 140, 0, 0.4)',
-  },
-  totalLabel: {
-    color: '#FFF',
-    fontSize: 14,
-    marginBottom: 8,
-    fontWeight: '600' as const,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-  },
-  totalAmount: {
-    color: '#FFF',
-    fontSize: 32,
-    fontWeight: '900' as const,
-  },
-  totalUnit: {
-    color: '#FF8C00',
-    fontSize: 14,
-    fontWeight: '900' as const,
-  },
-  totalEuro: {
-    color: '#FF8C00',
-    fontSize: 14,
-    marginTop: 4,
-    fontWeight: '700' as const,
-  },
-  backToMainButton: {
-    backgroundColor: '#2a2a2a',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  backToMainText: {
-    color: '#FF8C00',
-    fontSize: 16,
-    fontWeight: '700' as const,
-  },
+
 });
