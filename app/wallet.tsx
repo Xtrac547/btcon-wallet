@@ -71,8 +71,11 @@ export default function WalletScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={[styles.scrollContent, !hasSelectedTokens && styles.scrollContentTop]}>
-        <View style={[styles.selectionContent, !hasSelectedTokens && styles.selectionContentTop, hasSelectedTokens && styles.selectionContentBottom]}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={[styles.scrollContent, hasSelectedTokens && styles.scrollContentSpaced]}
+      >
+        <View style={[styles.selectionContent, hasSelectedTokens && styles.selectionContentSpaced]}>
           <View style={styles.topSection}>
             <View style={styles.balanceSection}>
               <Text style={styles.balanceLabel}>SOLDE</Text>
@@ -193,19 +196,17 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  scrollContentTop: {
-    justifyContent: 'flex-start',
+  scrollContentSpaced: {
+    justifyContent: 'space-between',
   },
   selectionContent: {
-    flex: 1,
+    width: '100%',
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 40,
   },
-  selectionContentTop: {
-    justifyContent: 'flex-start',
-  },
-  selectionContentBottom: {
+  selectionContentSpaced: {
+    flex: 1,
     justifyContent: 'space-between',
   },
   topSection: {

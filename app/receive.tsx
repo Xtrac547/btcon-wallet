@@ -118,7 +118,7 @@ export default function ReceiveScreen() {
     }
   }, [address]);
 
-  const qrArtSize = Math.min(width - 100, 320);
+  const qrArtSize = Math.min(width - 80, 340);
 
   return (
     <View style={styles.container}>
@@ -204,6 +204,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   qrCodeContainer: {
     alignItems: 'center',
@@ -211,24 +212,24 @@ const styles = StyleSheet.create({
   },
   qrCodeWrapper: {
     backgroundColor: '#000',
-    padding: 24,
-    borderRadius: 32,
+    padding: 32,
+    borderRadius: 24,
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.8,
-    shadowRadius: 32,
-    elevation: 16,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 140, 0, 0.4)',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.9,
+    shadowRadius: 40,
+    elevation: 20,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 140, 0, 0.6)',
   },
   qrPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
-    padding: 24,
-    borderRadius: 32,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 140, 0, 0.4)',
+    padding: 32,
+    borderRadius: 24,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 140, 0, 0.6)',
   },
   qrPlaceholderText: {
     fontSize: 16,
