@@ -1,405 +1,135 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated, useWindowDimensions, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { useUsername } from '@/contexts/UsernameContext';
-import { useNotifications } from '@/contexts/NotificationContext';
-import { useUserImage } from '@/contexts/UserImageContext';
-import { ArrowUpRight, ArrowDownLeft, Settings, RefreshCw, TrendingUp, TrendingDown, Clock, Plus } from 'lucide-react-native';
-import { useState, useEffect, useRef } from 'react';
+import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
+import { ArrowUpRight, ArrowDownLeft } from 'lucide-react-native';
+import { useState, useEffect } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
+import QRCode from 'qrcode';
 
 export default function WalletScreen() {
   const router = useRouter();
-  const { balance, address, refreshBalance, transactions } = useWallet();
-  const { username, getUsernameForAddress, isLoading: usernameLoading } = useUsername();
-  const { setDeveloperStatus, isDeveloper } = useNotifications();
-  const { getImageForUser } = useUserImage();
-  const { width } = useWindowDimensions();
-  const isWideScreen = width > 768;
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
-  const cardAnim = useRef(new Animated.Value(0)).current;
-  const [addressUsernameMap, setAddressUsernameMap] = useState<Record<string, string>>({});
+  const insets = useSafeAreaInsets();
+  const { balance, address } = useWallet();
+  const { isDeveloper } = useDeveloperHierarchy();
   const btcPrice = useBtcPrice();
-  const [pressedAction, setPressedAction] = useState<'send' | 'receive' | null>(null);
+  const [showQR, setShowQR] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
-
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refreshBalance();
-    setIsRefreshing(false);
-  };
-
-  const formatBalance = (sats: number): string => {
-    const btc = sats / 100000000;
-    return btc.toFixed(8);
-  };
-
-  const formatAddress = (addr: string | null): string => {
-    if (!addr) return '';
-    return `${addr.slice(0, 8)}...${addr.slice(-8)}`;
-  };
-
-  const formatDate = (timestamp: number): string => {
-    const date = new Date(timestamp * 1000);
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    if (diff < 60) return 'À l\'instant';
-    if (diff < 3600) return `Il y a ${Math.floor(diff / 60)}m`;
-    if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)}h`;
-    if (diff < 604800) return `Il y a ${Math.floor(diff / 86400)}j`;
-    
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-  };
-
-  const getTransactionType = (tx: any): 'sent' | 'received' | 'pending' => {
-    if (!tx.status.confirmed) return 'pending';
-    
-    const isSent = tx.vin.some((vin: any) => vin.prevout?.scriptpubkey_address === address);
-    const isReceived = tx.vout.some((vout: any) => vout.scriptpubkey_address === address);
-    
-    if (isSent) return 'sent';
-    if (isReceived) return 'received';
-    return 'received';
-  };
-
-  const getTransactionAmount = (tx: any): number => {
-    const type = getTransactionType(tx);
-    
-    if (type === 'sent') {
-      const sentAmount = tx.vout
-        .filter((vout: any) => vout.scriptpubkey_address !== address)
-        .reduce((sum: number, vout: any) => sum + vout.value, 0);
-      return -sentAmount;
-    }
-    
-    const receivedAmount = tx.vout
-      .filter((vout: any) => vout.scriptpubkey_address === address)
-      .reduce((sum: number, vout: any) => sum + vout.value, 0);
-    return receivedAmount;
-  };
-
-  const getTransactionAddress = (tx: any): string | null => {
-    const type = getTransactionType(tx);
-    
-    if (type === 'sent') {
-      const outputAddr = tx.vout.find((vout: any) => vout.scriptpubkey_address !== address);
-      return outputAddr?.scriptpubkey_address || null;
-    }
-    
-    if (type === 'received') {
-      const inputAddr = tx.vin.find((vin: any) => vin.prevout?.scriptpubkey_address !== address);
-      return inputAddr?.prevout?.scriptpubkey_address || null;
-    }
-    
-    return null;
-  };
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 7,
-        tension: 35,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    setTimeout(() => {
-      Animated.spring(cardAnim, {
-        toValue: 1,
-        friction: 8,
-        tension: 40,
-        useNativeDriver: true,
-      }).start();
-    }, 200);
-  }, []);
-
-  useEffect(() => {
-    if (!usernameLoading && !username) {
-      router.replace('/set-username');
-    }
-  }, [username, usernameLoading]);
+  const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
+  const isDevUser = address ? isDeveloper(address) : false;
 
   useEffect(() => {
     if (address) {
-      setDeveloperStatus(address);
+      QRCode.toDataURL(address, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      }).then(url => {
+        setQrDataUrl(url);
+      }).catch(err => {
+        console.error('Error generating QR code:', err);
+      });
     }
-  }, [address, setDeveloperStatus]);
+  }, [address]);
 
-  useEffect(() => {
-    const loadUsernames = async () => {
-      const addressMap: Record<string, string> = {};
-      
-      for (const tx of transactions) {
-        const txAddress = getTransactionAddress(tx);
-        if (txAddress && !addressMap[txAddress]) {
-          const username = await getUsernameForAddress(txAddress);
-          if (username) {
-            addressMap[txAddress] = username;
-          }
-        }
-      }
-      
-      setAddressUsernameMap(addressMap);
-    };
-    
-    if (transactions.length > 0) {
-      loadUsernames();
-    }
-  }, [transactions, getUsernameForAddress]);
-
-  const getCustomImageForAddress = (addr: string | null): string | null => {
-    if (!addr) return null;
-    const imageData = getImageForUser(addr);
-    return imageData.profileImage;
+  const handleReceive = () => {
+    setShowQR(true);
   };
 
-  const contentMaxWidth = isWideScreen ? 800 : width;
-  const contentPadding = isWideScreen ? 40 : 24;
+  const handleSend = () => {
+    router.push('/send');
+  };
+
+  if (showQR && qrDataUrl) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={styles.qrContainer}>
+          <Text style={styles.qrTitle}>Recevoir des Btcon</Text>
+          
+          <View style={styles.qrCodeWrapper}>
+            <Image
+              source={{ uri: qrDataUrl }}
+              style={styles.qrCode}
+              resizeMode="contain"
+            />
+          </View>
+
+          <View style={styles.addressBox}>
+            <Text style={styles.addressLabel}>Votre adresse</Text>
+            <Text style={styles.addressText}>{address}</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => setShowQR(false)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.backgroundPattern}>
-        {[...Array(25)].map((_, i) => (
-          <View
-            key={`pattern-${i}`}
-            style={[
-              i % 2 === 0 ? styles.patternDot : styles.patternRing,
-              {
-                left: (i * 60 + 30) % width,
-                top: Math.floor(i / 6) * 160 + 80,
-                opacity: 0.4 + (i % 3) * 0.2,
-              },
-            ]}
-          />
-        ))}
-        <View style={[styles.patternLine, { width: 120, top: 180, left: 40, transform: [{ rotate: '45deg' }] }]} />
-        <View style={[styles.patternLine, { width: 100, top: 450, right: 50, transform: [{ rotate: '-35deg' }] }]} />
-        <View style={[styles.patternLine, { width: 90, top: 300, left: width * 0.3, transform: [{ rotate: '15deg' }] }]} />
-      </View>
-      <View style={[styles.header, isWideScreen && styles.headerWide]}>
-        <View style={styles.logoHeaderContainer}>
-          <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/fycv5rxyn7iqfp2lwp4zb' }}
-            style={styles.logoHeaderImage1}
-            resizeMode="contain"
-          />
-          <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ig8yh1pui959enuvw0p3d' }}
-            style={styles.logoHeaderImage2}
-            resizeMode="contain"
-          />
-        </View>
-        <View style={styles.headerActions}>
-          {isDeveloper && (
-            <>
-              <TouchableOpacity 
-                onPress={() => {
-                  console.log('Developer button pressed');
-                  router.push('/developer');
-                }} 
-                style={styles.settingsButton}
-                activeOpacity={0.7}
-                testID="developer-button"
-              >
-                <View style={styles.developerBadge}>
-                  <Text style={styles.developerBadgeText}>DEV</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={() => {
-                  console.log('Settings button pressed');
-                  router.push('/settings');
-                }} 
-                style={styles.settingsButton}
-                activeOpacity={0.7}
-                testID="settings-button"
-              >
-                <Settings color="#FFF" size={24} />
-              </TouchableOpacity>
-            </>
-          )}
-          {!isDeveloper && (
-            <TouchableOpacity 
-              onPress={() => {
-                console.log('Settings button pressed');
-                router.push('/settings');
-              }} 
-              style={styles.settingsButton}
-              activeOpacity={0.7}
-              testID="settings-button"
-            >
-              <Settings color="#FFF" size={24} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor="#FF8C00"
-          />
-        }
-      >
-        <Animated.View style={[
-          styles.balanceCard,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}>
-          {getCustomImageForAddress(address) && (
-            <Image
-              source={{ uri: getCustomImageForAddress(address)! }}
-              style={styles.customAddressImage}
-              resizeMode="cover"
-            />
-          )}
-          <Text style={styles.balanceLabel}>Solde Total</Text>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={styles.content}>
+        <View style={styles.balanceSection}>
+          <Text style={styles.balanceLabel}>Solde</Text>
+          
           <View style={styles.balanceRow}>
             <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
             <Text style={styles.balanceUnit}>Btcon</Text>
           </View>
-          <Text style={styles.balanceEuro}>≈ {btconToEuro(balance, btcPrice)} €</Text>
 
-          {address && (
+          <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
+
+          {isDevUser && address && (
             <View style={styles.addressContainer}>
-              <Text style={styles.addressLabel}>Adresse</Text>
-              <Text style={styles.addressText}>{formatAddress(address)}</Text>
+              <Text style={styles.addressLabelSmall}>Adresse</Text>
+              <Text style={styles.addressTextSmall}>
+                {address.slice(0, 12)}...{address.slice(-12)}
+              </Text>
             </View>
           )}
-        </Animated.View>
-
-        <Animated.View style={[
-          styles.actionsContainer,
-          {
-            opacity: cardAnim,
-            transform: [
-              {
-                translateY: cardAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [20, 0],
-                }),
-              },
-            ],
-          },
-        ]}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.actionButtonPressed,
-            ]}
-            onPress={() => {
-              console.log('Receive button pressed');
-              router.push('/receive');
-            }}
-            testID="receive-button"
-          >
-            <View style={styles.actionIconContainer}>
-              <ArrowDownLeft color="#FF8C00" size={24} strokeWidth={2.5} />
-            </View>
-            <Text style={styles.actionText}>Recevoir</Text>
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.actionButtonPressed,
-            ]}
-            onPress={() => {
-              console.log('Send button pressed');
-              router.push('/send');
-            }}
-            testID="send-button"
-          >
-            <View style={styles.actionIconContainer}>
-              <ArrowUpRight color="#FF8C00" size={24} strokeWidth={2.5} />
-            </View>
-            <Text style={styles.actionText}>Envoyer</Text>
-          </Pressable>
-        </Animated.View>
-
-        {transactions.length > 0 && (
-          <View style={styles.historyContainer}>
-            <Text style={styles.historyTitle}>Historique</Text>
-            {transactions.slice(0, 20).map((tx) => {
-              const type = getTransactionType(tx);
-              const amount = getTransactionAmount(tx);
-              const isPositive = amount > 0;
-              
-              return (
-                <View key={tx.txid} style={styles.transactionItem}>
-                  <View style={[
-                    styles.transactionIcon,
-                    type === 'sent' && styles.transactionIconSent,
-                    type === 'received' && styles.transactionIconReceived,
-                    type === 'pending' && styles.transactionIconPending,
-                  ]}>
-                    {type === 'sent' && <TrendingDown color="#FF4444" size={20} />}
-                    {type === 'received' && <TrendingUp color="#00CC66" size={20} />}
-                    {type === 'pending' && <Clock color="#FF8C00" size={20} />}
-                  </View>
-                  
-                  <View style={styles.transactionDetails}>
-                    <Text style={styles.transactionType}>
-                      {(() => {
-                        const txAddress = getTransactionAddress(tx);
-                        const username = txAddress ? addressUsernameMap[txAddress] : null;
-                        
-                        if (type === 'sent') {
-                          return username ? `@${username}` : 'Envoyé';
-                        } else if (type === 'received') {
-                          return username ? `@${username}` : 'Reçu';
-                        }
-                        return 'En cours';
-                      })()}
-                    </Text>
-                    <Text style={styles.transactionDate}>
-                      {tx.status.block_time ? formatDate(tx.status.block_time) : 'Non confirmé'}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.transactionAmountContainer}>
-                    <Text style={[
-                      styles.transactionAmount,
-                      type === 'sent' && styles.transactionAmountSent,
-                      type === 'received' && styles.transactionAmountReceived,
-                      type === 'pending' && styles.transactionAmountPending,
-                    ]}>
-                      {isPositive ? '+' : ''}{Math.abs(amount).toLocaleString()} Btcon
-                    </Text>
-                    <Text style={styles.transactionAmountBtc}>
-                      ≈ {btconToEuro(Math.abs(amount), btcPrice)} €
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <RefreshCw color="#666" size={20} />
-            <Text style={styles.infoText}>Tirez pour actualiser</Text>
-          </View>
         </View>
-      </ScrollView>
+
+        <View style={styles.actionsContainer}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              styles.receiveButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={handleReceive}
+          >
+            <View style={styles.iconContainer}>
+              <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.actionButtonText}>Recevoir</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              styles.sendButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={handleSend}
+          >
+            <View style={styles.iconContainer}>
+              <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.actionButtonText}>Envoyer</Text>
+          </Pressable>
+        </View>
+      </View>
     </View>
   );
 }
@@ -408,332 +138,167 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-    position: 'relative' as const,
-  },
-  backgroundPattern: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.04,
-  },
-  patternDot: {
-    position: 'absolute' as const,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#FF8C00',
-  },
-  patternRing: {
-    position: 'absolute' as const,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-  },
-  patternLine: {
-    position: 'absolute' as const,
-    height: 3,
-    backgroundColor: '#FF8C00',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logo: {
-    fontSize: 28,
-    color: '#FF8C00',
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: '#FFF',
-  },
-  logoHeaderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  logoHeaderImage1: {
-    width: 60,
-    height: 60,
-  },
-  logoHeaderImage2: {
-    width: 240,
-    height: 70,
-  },
-  headerActions: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 12,
-  },
-  developerBadge: {
-    backgroundColor: '#FF8C00',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  developerBadgeText: {
-    color: '#000',
-    fontSize: 10,
-    fontWeight: '900' as const,
-    letterSpacing: 1,
-  },
-  btconText: {
-    fontSize: 52,
-    fontWeight: '900' as const,
-    color: '#FF8C00',
-    letterSpacing: 4,
-    marginLeft: 8,
-    textShadowColor: 'rgba(255, 140, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 12,
-  },
-  bitcoinSymbol: {
-    fontSize: 52,
-    fontWeight: '900' as const,
-    color: '#FFD700',
-    letterSpacing: 0,
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 12,
-  },
-  settingsButton: {
-    padding: 8,
-    zIndex: 10,
-  },
-  scrollView: {
-    flex: 1,
   },
   content: {
-    padding: 24,
-    paddingTop: 8,
-  },
-  balanceCard: {
-    backgroundColor: '#0f0f0f',
-    borderRadius: 32,
-    padding: 40,
-    marginBottom: 28,
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.1)',
+    paddingHorizontal: 32,
   },
-  customAddressImage: {
-    width: 180,
-    height: 180,
-    borderRadius: 24,
-    marginBottom: 28,
-    borderWidth: 4,
-    borderColor: '#FF8C00',
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
+  balanceSection: {
+    alignItems: 'center',
+    marginBottom: 64,
   },
   balanceLabel: {
-    color: '#888',
-    fontSize: 13,
-    marginBottom: 12,
-    fontWeight: '500' as const,
-    letterSpacing: 1.5,
+    color: '#888888',
+    fontSize: 16,
+    fontWeight: '600' as const,
+    marginBottom: 16,
     textTransform: 'uppercase' as const,
+    letterSpacing: 2,
   },
   balanceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 8,
+    gap: 12,
+    marginBottom: 12,
   },
   balanceAmount: {
     color: '#FFFFFF',
-    fontSize: 48,
+    fontSize: 56,
     fontWeight: '900' as const,
-    letterSpacing: -3,
+    letterSpacing: -2,
   },
   balanceUnit: {
     color: '#FF8C00',
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '800' as const,
-    textTransform: 'lowercase' as const,
   },
-  balanceSats: {
-    color: '#666',
-    fontSize: 13,
-    marginTop: 4,
-  },
-  balanceEuro: {
+  euroAmount: {
     color: '#FF8C00',
-    fontSize: 15,
-    marginTop: 6,
+    fontSize: 20,
     fontWeight: '700' as const,
   },
   addressContainer: {
     marginTop: 24,
     alignItems: 'center',
   },
-  addressLabel: {
-    color: '#666',
+  addressLabelSmall: {
+    color: '#666666',
     fontSize: 12,
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  addressText: {
-    color: '#999',
-    fontSize: 14,
-    fontFamily: 'monospace',
+  addressTextSmall: {
+    color: '#999999',
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' || Platform.OS === 'android' ? 'Courier' : 'monospace',
   },
   actionsContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 32,
+    gap: 20,
+    width: '100%',
+    maxWidth: 500,
   },
   actionButton: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
-    borderRadius: 24,
-    padding: 28,
     alignItems: 'center',
-    gap: 14,
+    justifyContent: 'center',
+    paddingVertical: 32,
+    borderRadius: 24,
+    gap: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-    zIndex: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.15)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  receiveButton: {
+    backgroundColor: '#FF8C00',
+  },
+  sendButton: {
+    backgroundColor: '#FF8C00',
   },
   actionButtonPressed: {
     transform: [{ scale: 0.96 }],
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
+    opacity: 0.9,
   },
-  actionIconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
+  },
+  qrContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  qrTitle: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '800' as const,
+    marginBottom: 48,
+    letterSpacing: 0.5,
+  },
+  qrCodeWrapper: {
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 24,
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    borderWidth: 2,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 12,
+    marginBottom: 32,
+  },
+  qrCode: {
+    width: 300,
+    height: 300,
+  },
+  addressBox: {
+    backgroundColor: '#0f0f0f',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 48,
+    borderWidth: 1,
     borderColor: 'rgba(255, 140, 0, 0.2)',
   },
-  actionText: {
+  addressLabel: {
+    color: '#888888',
+    fontSize: 12,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  addressText: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700' as const,
-    letterSpacing: 0.5,
-  },
-  infoCard: {
-    backgroundColor: 'rgba(255, 140, 0, 0.05)',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.1)',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  infoText: {
-    color: '#666',
     fontSize: 14,
+    fontFamily: Platform.OS === 'ios' || Platform.OS === 'android' ? 'Courier' : 'monospace',
+    textAlign: 'center',
   },
-  headerWide: {
-    paddingHorizontal: 40,
+  backButton: {
+    backgroundColor: '#FF8C00',
+    paddingHorizontal: 48,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  historyContainer: {
-    marginBottom: 28,
-  },
-  historyTitle: {
+  backButtonText: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '800' as const,
-    marginBottom: 20,
-    paddingLeft: 4,
     letterSpacing: 0.5,
-  },
-  transactionItem: {
-    backgroundColor: '#0f0f0f',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  transactionIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  transactionIconSent: {
-    backgroundColor: 'rgba(255, 68, 68, 0.15)',
-  },
-  transactionIconReceived: {
-    backgroundColor: 'rgba(0, 204, 102, 0.15)',
-  },
-  transactionIconPending: {
-    backgroundColor: 'rgba(255, 140, 0, 0.15)',
-  },
-  transactionDetails: {
-    flex: 1,
-  },
-  transactionType: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700' as const,
-    marginBottom: 4,
-    letterSpacing: 0.3,
-  },
-  transactionDate: {
-    color: '#666',
-    fontSize: 11,
-  },
-  transactionAmountContainer: {
-    alignItems: 'flex-end',
-  },
-  transactionAmount: {
-    fontSize: 15,
-    fontWeight: '800' as const,
-    marginBottom: 2,
-    letterSpacing: 0.3,
-  },
-  transactionAmountSent: {
-    color: '#FF4444',
-  },
-  transactionAmountReceived: {
-    color: '#00CC66',
-  },
-  transactionAmountPending: {
-    color: '#FF8C00',
-  },
-  transactionAmountBtc: {
-    color: '#666',
-    fontSize: 10,
   },
 });
