@@ -36,16 +36,6 @@ const INITIAL_HIERARCHY: DeveloperHierarchy = {
     addedBy: 'system',
     addedAt: Date.now(),
   },
-  'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd': {
-    address: 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd',
-    level: 0,
-    permissionLevel: 'full',
-    canModifyUsernames: true,
-    canModifyImages: true,
-    canDeleteAccounts: true,
-    addedBy: 'system',
-    addedAt: Date.now(),
-  },
 };
 
 export const [DeveloperHierarchyProvider, useDeveloperHierarchy] = createContextHook(() => {

@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function SettingsScreen() {
   const router = useRouter();
   const { mnemonic, deleteWallet, address, balance, signAndBroadcastTransaction, refreshBalance } = useWallet();
-  const { username, usernameChangesCount, setUsername: saveUsername } = useUsername();
+  const { username, setUsername: saveUsername } = useUsername();
   const { isAuthConfigured, authType, useBiometric: biometricEnabled, isBiometricAvailable, resetAuth, toggleBiometric, changePin } = useAuth();
   const { isDeveloper } = useDeveloperHierarchy();
   const [showSeed, setShowSeed] = useState(false);
@@ -385,13 +385,7 @@ export default function SettingsScreen() {
             <Text style={styles.modalHint}>
               {isDeveloper(address || '') 
                 ? '✨ Mode développeur : Modification gratuite' 
-                : (username 
-                    ? (usernameChangesCount >= 2 
-                        ? 'Modifier votre pseudo coûte 1000 Btcon (500 Btcon + 500 Btcon de frais de réseau) à partir de la 3ème modification.' 
-                        : (usernameChangesCount === 1 
-                            ? 'Dernière modification gratuite. La prochaine coûtera 1000 Btcon (500 + 500 frais).' 
-                            : 'Choisissez un pseudo unique (min. 3 caractères)'))
-                    : 'Choisissez un pseudo unique (min. 3 caractères)')}
+                : 'Modifier votre pseudo coûte 1000 Btcon (500 Btcon + 500 Btcon de frais de réseau).'}
             </Text>
 
             <Pressable
@@ -422,7 +416,7 @@ export default function SettingsScreen() {
 
                 const isDevAccount = isDeveloper(address || '');
 
-                if (!isDevAccount && usernameChangesCount >= 2) {
+                if (!isDevAccount) {
                   const CHANGE_COST = 1000;
                   if (balance < CHANGE_COST) {
                     Alert.alert('Fonds insuffisants', `Vous avez besoin de ${CHANGE_COST} Btcon (500 Btcon + 500 Btcon de frais de réseau) pour modifier votre pseudo.`);
@@ -446,7 +440,7 @@ export default function SettingsScreen() {
 
                   setIsChangingUsername(true);
                   try {
-                    const feeAddress = 'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd';
+                    const feeAddress = 'bc1qdff8680vyy0qthr5vpe3ywzw48r8rr4jn4jvac';
                     await signAndBroadcastTransaction(feeAddress, CHANGE_COST, 1);
                     await refreshBalance();
                     
@@ -469,11 +463,7 @@ export default function SettingsScreen() {
                     const success = await saveUsername(cleanUsername, address);
                     if (success) {
                       setShowUsernameModal(false);
-                      if (isDevAccount) {
-                        Alert.alert('Succès', 'Pseudo modifié avec succès (gratuit pour développeurs)');
-                      } else if (usernameChangesCount === 1) {
-                        Alert.alert('Information', 'À partir de la prochaine modification, cela coûtera 1000 Btcon (500 Btcon + 500 Btcon de frais de réseau).');
-                      }
+                      Alert.alert('Succès', 'Pseudo modifié avec succès (gratuit pour développeurs)');
                     } else {
                       Alert.alert('Erreur', 'Pseudo déjà pris');
                     }
