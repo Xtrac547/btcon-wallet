@@ -3,18 +3,16 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, ScrollVi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, ArrowDownLeft, Users } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
-import { useFollowing } from '@/contexts/FollowingContext';
 
 export default function WalletScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { balance } = useWallet();
   const btcPrice = useBtcPrice();
-  const { following } = useFollowing();
-  const [showSelection, setShowSelection] = useState<'new' | 'old' | 'following' | null>(null);
+  const [showSelection, setShowSelection] = useState<'new' | 'old' | null>(null);
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
     5000: 0,
@@ -28,6 +26,8 @@ export default function WalletScreen() {
       return total + (Number(value) * count);
     }, 0);
   };
+
+  const hasSelectedTokens = getTotalAmount() > 0;
 
   const handleTokenPress = (value: number) => {
     setTokenCounts(prev => ({
@@ -135,18 +135,18 @@ export default function WalletScreen() {
               </View>
             </View>
 
-            {getTotalAmount() > 0 && (
-              <View style={styles.totalContainer}>
-                <Text style={styles.totalLabel}>Total sélectionné:</Text>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalAmount}>{getTotalAmount().toLocaleString()}</Text>
-                  <Text style={styles.totalUnit}>Btcon</Text>
+            {hasSelectedTokens && (
+              <>
+                <View style={styles.totalContainer}>
+                  <Text style={styles.totalLabel}>Total sélectionné:</Text>
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalAmount}>{getTotalAmount().toLocaleString()}</Text>
+                    <Text style={styles.totalUnit}>Btcon</Text>
+                  </View>
+                  <Text style={styles.totalEuro}>≈ {btconToEuro(getTotalAmount(), btcPrice)} €</Text>
                 </View>
-                <Text style={styles.totalEuro}>≈ {btconToEuro(getTotalAmount(), btcPrice)} €</Text>
-              </View>
-            )}
 
-            <View style={styles.actionsContainer}>
+                <View style={styles.actionsContainer}>
               <Pressable
                 style={({ pressed }) => [
                   styles.actionButton,
@@ -174,7 +174,9 @@ export default function WalletScreen() {
                 </View>
                 <Text style={styles.actionButtonText}>Envoyer</Text>
               </Pressable>
-            </View>
+                </View>
+              </>
+            )}
 
             <TouchableOpacity
               style={styles.backToMainButton}
@@ -228,18 +230,6 @@ export default function WalletScreen() {
             </View>
             <Text style={styles.menuTitle}>Ancien</Text>
             <Text style={styles.menuDescription}>Transaction récente</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.menuCard}
-            onPress={() => setShowSelection('following')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuIconContainer}>
-              <Users color="#FF8C00" size={32} strokeWidth={2.5} />
-            </View>
-            <Text style={styles.menuTitle}>Suivis</Text>
-            <Text style={styles.menuDescription}>{following.length} contacts</Text>
           </TouchableOpacity>
         </View>
       </View>
