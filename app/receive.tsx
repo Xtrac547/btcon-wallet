@@ -24,79 +24,64 @@ export default function ReceiveScreen() {
     }
   }, [username]);
 
-  const artworks = [
-    {
-      id: 1,
-      name: 'Paysage Doré',
-      bg: '#3d2f1f',
-      fg: ['#d4a373', '#f4e4c1'],
-      accent: '#d4a373',
-      borderGlow: 'rgba(212, 163, 115, 0.6)',
-      imageUrl: 'https://picsum.photos/seed/artwork1/600/600',
-    },
-    {
-      id: 2,
-      name: 'Ciel Nocturne',
-      bg: '#1a2d4a',
-      fg: ['#4a90e2', '#ffd93d'],
-      accent: '#4a90e2',
-      borderGlow: 'rgba(74, 144, 226, 0.6)',
-      imageUrl: 'https://picsum.photos/seed/artwork2/600/600',
-    },
-    {
-      id: 3,
-      name: 'Art Renaissance',
-      bg: '#4a392a',
-      fg: ['#e8c4a0', '#d4af7a'],
-      accent: '#e8c4a0',
-      borderGlow: 'rgba(232, 196, 160, 0.6)',
-      imageUrl: 'https://picsum.photos/seed/artwork3/600/600',
-    },
-    {
-      id: 4,
-      name: 'Portrait Mystique',
-      bg: '#1f2a32',
-      fg: ['#4a9fd8', '#e8d5a0'],
-      accent: '#4a9fd8',
-      borderGlow: 'rgba(74, 159, 216, 0.6)',
-      imageUrl: 'https://picsum.photos/seed/artwork4/600/600',
-    },
-    {
-      id: 5,
-      name: 'Expression Moderne',
-      bg: '#4a2720',
-      fg: ['#ff6b35', '#ffb347'],
-      accent: '#ff6b35',
-      borderGlow: 'rgba(255, 107, 53, 0.6)',
-      imageUrl: 'https://picsum.photos/seed/artwork5/600/600',
-    },
-    {
-      id: 6,
-      name: 'Lumière Dorée',
-      bg: '#3a3020',
-      fg: ['#ffd700', '#ff8c42'],
-      accent: '#ffd700',
-      borderGlow: 'rgba(255, 215, 0, 0.6)',
-      imageUrl: 'https://picsum.photos/seed/artwork6/600/600',
-    },
-    {
-      id: 7,
-      name: 'Abstraction Noire',
-      bg: '#2a2a2a',
-      fg: ['#e0e0e0', '#a0a0a0'],
-      accent: '#e0e0e0',
-      borderGlow: 'rgba(224, 224, 224, 0.6)',
-      imageUrl: 'https://picsum.photos/seed/artwork7/600/600',
-    },
-  ];
+  const generateColorFromAddress = (addr: string | null) => {
+    if (!addr) {
+      return {
+        id: 0,
+        name: 'Identité Unique',
+        bg: '#2a2a2a',
+        fg: ['#FF8C00', '#FFB347'],
+        accent: '#FF8C00',
+        borderGlow: 'rgba(255, 140, 0, 0.6)',
+      };
+    }
 
-  const getArtworkForAddress = (addr: string | null): typeof artworks[0] => {
-    if (!addr) return artworks[0];
-    const hash = addr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return artworks[hash % artworks.length];
+    let hash = 0;
+    for (let i = 0; i < addr.length; i++) {
+      hash = ((hash << 5) - hash) + addr.charCodeAt(i);
+      hash = hash & hash;
+    }
+
+    const hue1 = Math.abs(hash % 360);
+    const hue2 = (hue1 + 60 + (hash % 120)) % 360;
+    const saturation = 60 + (Math.abs(hash >> 8) % 30);
+    const lightness1 = 45 + (Math.abs(hash >> 16) % 20);
+    const lightness2 = 55 + (Math.abs(hash >> 24) % 20);
+
+    const hslToHex = (h: number, s: number, l: number): string => {
+      l /= 100;
+      const a = s * Math.min(l, 1 - l) / 100;
+      const f = (n: number) => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+      };
+      return `#${f(0)}${f(8)}${f(4)}`;
+    };
+
+    const color1 = hslToHex(hue1, saturation, lightness1);
+    const color2 = hslToHex(hue2, saturation, lightness2);
+    const accentColor = hslToHex(hue1, saturation + 10, lightness1 + 10);
+
+    const bgLightness = 15 + (Math.abs(hash >> 4) % 15);
+    const bgColor = hslToHex(hue1, saturation - 20, bgLightness);
+
+    const r = parseInt(accentColor.slice(1, 3), 16);
+    const g = parseInt(accentColor.slice(3, 5), 16);
+    const b = parseInt(accentColor.slice(5, 7), 16);
+    const borderGlow = `rgba(${r}, ${g}, ${b}, 0.6)`;
+
+    return {
+      id: Math.abs(hash),
+      name: 'Identité Unique',
+      bg: bgColor,
+      fg: [color1, color2],
+      accent: accentColor,
+      borderGlow,
+    };
   };
 
-  const currentArt = getArtworkForAddress(address);
+  const currentArt = generateColorFromAddress(address);
   const [showQR, setShowQR] = useState(false);
 
   const generateQRMatrix = async (text: string): Promise<number[][]> => {
