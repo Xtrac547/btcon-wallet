@@ -74,9 +74,9 @@ export default function WalletScreen() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => !hasSelectedTokens,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 10;
+        return !hasSelectedTokens && Math.abs(gestureState.dy) > 10;
       },
       onPanResponderMove: (_, gestureState) => {
         if (!hasSelectedTokens && gestureState.dy > 0) {
@@ -104,7 +104,7 @@ export default function WalletScreen() {
   ).current;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Animated.View 
         {...panResponder.panHandlers}
         style={[
@@ -202,39 +202,40 @@ export default function WalletScreen() {
             )}
           </View>
 
-          {hasSelectedTokens && (
-            <View style={styles.actionsContainer}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.actionButton,
-                  styles.receiveButton,
-                  pressed && styles.actionButtonPressed,
-                ]}
-                onPress={handleReceive}
-              >
-                <View style={styles.iconContainer}>
-                  <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
-                </View>
-                <Text style={styles.actionButtonText}>Recevoir</Text>
-              </Pressable>
-
-              <Pressable
-                style={({ pressed }) => [
-                  styles.actionButton,
-                  styles.sendButton,
-                  pressed && styles.actionButtonPressed,
-                ]}
-                onPress={handleSend}
-              >
-                <View style={styles.iconContainer}>
-                  <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
-                </View>
-                <Text style={styles.actionButtonText}>Envoyer</Text>
-              </Pressable>
-            </View>
-          )}
         </View>
       </Animated.View>
+
+      {hasSelectedTokens && (
+        <View style={[styles.actionsContainer, { paddingBottom: insets.bottom + 24 }]}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              styles.receiveButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={handleReceive}
+          >
+            <View style={styles.iconContainer}>
+              <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.actionButtonText}>Recevoir</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              styles.sendButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={handleSend}
+          >
+            <View style={styles.iconContainer}>
+              <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.actionButtonText}>Envoyer</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -311,10 +312,14 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' || Platform.OS === 'android' ? 'Courier' : 'monospace',
   },
   actionsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     gap: 20,
-    width: '100%',
-    maxWidth: 500,
+    paddingHorizontal: 24,
+    backgroundColor: '#000',
   },
   actionButton: {
     flex: 1,
