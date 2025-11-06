@@ -118,6 +118,7 @@ export default function ReceiveScreen() {
     }
   }, [address]);
 
+  const padding = 20;
   const qrArtSize = Math.min(width - 80, 340);
 
   return (
@@ -133,7 +134,7 @@ export default function ReceiveScreen() {
       <View style={styles.content}>
         <View style={styles.qrCodeContainer}>
           {qrMatrix.length > 0 ? (
-            <View style={[styles.qrCodeWrapper, { width: qrArtSize, height: qrArtSize }]}>
+            <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2 }]}>
               <Svg width={qrArtSize} height={qrArtSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
                 <Defs>
                   <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
@@ -167,7 +168,7 @@ export default function ReceiveScreen() {
               </Svg>
             </View>
           ) : (
-            <View style={[styles.qrPlaceholder, { width: qrArtSize, height: qrArtSize }]}>
+            <View style={[styles.qrPlaceholder, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2 }]}>
               <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
             </View>
           )}
@@ -207,29 +208,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   qrCodeContainer: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrCodeWrapper: {
     backgroundColor: '#000',
-    padding: 32,
-    borderRadius: 24,
+    borderRadius: 32,
     shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.9,
     shadowRadius: 40,
     elevation: 20,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 140, 0, 0.6)',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   qrPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
-    padding: 32,
-    borderRadius: 24,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 140, 0, 0.6)',
+    borderRadius: 32,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
   },
   qrPlaceholderText: {
     fontSize: 16,
