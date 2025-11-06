@@ -1,16 +1,17 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, useWindowDimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
-import { Copy, Share2, ExternalLink, ArrowLeft } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
-import Svg, { Rect, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
+import { ArrowLeft } from 'lucide-react-native';
+import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 export default function ReceiveScreen() {
   const router = useRouter();
-  const { address, esploraService } = useWallet();
+  const insets = useSafeAreaInsets();
+  const { address } = useWallet();
   const { username } = useUsername();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
@@ -118,49 +119,13 @@ export default function ReceiveScreen() {
     }
   }, [address]);
 
-
-
-  const handleCopy = async () => {
-    if (address) {
-      await Clipboard.setStringAsync(address);
-      Alert.alert('Copié', 'Adresse copiée dans le presse-papiers');
-    }
-  };
-
-  const handleShare = async () => {
-    if (address) {
-      try {
-        await Share.share({
-          message: address,
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
-      }
-    }
-  };
-
-  const handleOpenExplorer = () => {
-    if (address) {
-      const url = esploraService.getAddressExplorerUrl(address);
-      Alert.alert('Explorateur', `Ouvrir ${url} dans le navigateur ?`);
-    }
-  };
-
-  const contentMaxWidth = isWideScreen ? 600 : width;
   const contentPadding = isWideScreen ? 40 : 20;
   
   const qrArtSize = Math.min(width - (contentPadding * 2), 360);
 
   return (
     <View style={styles.container}>
-      <View style={styles.backgroundPattern}>
-        <View style={[styles.patternCircle, { width: 300, height: 300, top: -100, right: -100 }]} />
-        <View style={[styles.patternCircle, { width: 200, height: 200, bottom: 100, left: -50 }]} />
-        <View style={[styles.patternCircle, { width: 150, height: 150, top: 200, left: 50 }]} />
-        <View style={[styles.patternRing, { width: 120, height: 120, top: 350, right: 60 }]} />
-        <View style={[styles.patternRing, { width: 80, height: 80, top: 150, left: 100 }]} />
-      </View>
-      <View style={[styles.header, isWideScreen && styles.headerWide]}>
+      <View style={[styles.header, isWideScreen && styles.headerWide, { paddingTop: insets.top + 16 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
@@ -168,11 +133,7 @@ export default function ReceiveScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.content}>
         <View style={styles.qrCodeContainer}>
           {qrMatrix.length > 0 ? (
             <View style={[styles.qrCodeWrapper, { width: qrArtSize, height: qrArtSize }]}>
@@ -206,12 +167,6 @@ export default function ReceiveScreen() {
                     return null;
                   })
                 )}
-                <Circle 
-                  cx={qrMatrix.length / 2} 
-                  cy={qrMatrix.length / 2} 
-                  r="4" 
-                  fill={currentArt.accent}
-                />
               </Svg>
             </View>
           ) : (
@@ -220,41 +175,7 @@ export default function ReceiveScreen() {
             </View>
           )}
         </View>
-
-
-
-        <View style={styles.addressCard}>
-          <Text style={styles.addressLabel}>Votre Adresse</Text>
-          <Text style={styles.addressText} numberOfLines={2}>
-            {address}
-          </Text>
-        </View>
-
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleCopy} testID="copy-button">
-            <Copy color="#FF8C00" size={20} />
-            <Text style={styles.actionButtonText}>Copier</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton} onPress={handleShare} testID="share-button">
-            <Share2 color="#FF8C00" size={20} />
-            <Text style={styles.actionButtonText}>Partager</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton} onPress={handleOpenExplorer} testID="explorer-button">
-            <ExternalLink color="#FF8C00" size={20} />
-            <Text style={styles.actionButtonText}>Explorateur</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Comment recevoir Bitcoin:</Text>
-          <Text style={styles.infoText}>1. Partagez votre adresse ou code QR</Text>
-          <Text style={styles.infoText}>2. L&apos;expéditeur envoie Bitcoin à cette adresse</Text>
-          <Text style={styles.infoText}>3. Attendez les confirmations du réseau</Text>
-          <Text style={styles.infoText}>4. Les fonds apparaîtront dans votre portefeuille</Text>
-        </View>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -263,35 +184,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-    position: 'relative' as const,
-  },
-  backgroundPattern: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.05,
-  },
-  patternCircle: {
-    position: 'absolute' as const,
-    borderRadius: 1000,
-    borderWidth: 3,
-    borderColor: '#FF8C00',
-  },
-  patternRing: {
-    position: 'absolute' as const,
-    borderRadius: 1000,
-    borderWidth: 4,
-    borderColor: '#FFD700',
-    opacity: 0.3,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 60,
     paddingBottom: 16,
   },
   backButton: {
@@ -305,18 +203,14 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  scrollView: {
-    flex: 1,
-  },
   content: {
-    padding: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   qrCodeContainer: {
-    marginBottom: 28,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   qrCodeWrapper: {
     backgroundColor: '#FFF',
@@ -338,80 +232,6 @@ const styles = StyleSheet.create({
   qrPlaceholderText: {
     fontSize: 16,
     fontWeight: '600' as const,
-  },
-  addressCard: {
-    backgroundColor: '#0f0f0f',
-    borderRadius: 24,
-    padding: 24,
-    width: '100%',
-    marginBottom: 24,
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.1)',
-  },
-  addressLabel: {
-    color: '#999',
-    fontSize: 12,
-    marginBottom: 8,
-    fontWeight: '600' as const,
-  },
-  addressText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontFamily: 'monospace',
-    lineHeight: 20,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-    marginBottom: 20,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#0f0f0f',
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.15)',
-  },
-  actionButtonText: {
-    color: '#FF8C00',
-    fontSize: 13,
-    fontWeight: '700' as const,
-    letterSpacing: 0.3,
-  },
-  infoCard: {
-    backgroundColor: 'rgba(255, 140, 0, 0.05)',
-    borderRadius: 24,
-    padding: 24,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.1)',
-  },
-  infoTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800' as const,
-    marginBottom: 14,
-    letterSpacing: 0.3,
-  },
-  infoText: {
-    color: '#999',
-    fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 4,
   },
   headerWide: {
     paddingHorizontal: 40,
