@@ -272,8 +272,8 @@ export default function WalletScreen() {
           )}
           <Text style={styles.balanceLabel}>Solde Total</Text>
           <View style={styles.balanceRow}>
-            <Text style={styles.balanceAmount}>{formatBalance(balance)}</Text>
-            <Text style={styles.balanceUnit}>BTC</Text>
+            <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
+            <Text style={styles.balanceUnit}>Btcon</Text>
           </View>
           <Text style={styles.balanceEuro}>≈ {btconToEuro(balance, btcPrice)} €</Text>
 
@@ -381,7 +381,7 @@ export default function WalletScreen() {
                       type === 'received' && styles.transactionAmountReceived,
                       type === 'pending' && styles.transactionAmountPending,
                     ]}>
-                      {isPositive ? '+' : ''}{(amount / 100000000).toFixed(8)} BTC
+                      {isPositive ? '+' : ''}{Math.abs(amount).toLocaleString()} Btcon
                     </Text>
                     <Text style={styles.transactionAmountBtc}>
                       ≈ {btconToEuro(Math.abs(amount), btcPrice)} €

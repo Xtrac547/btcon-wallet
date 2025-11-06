@@ -252,11 +252,11 @@ export default function SendScreen() {
 
     const feeMessage = isDevAddress 
       ? '\n\n✨ Mode développeur : Frais gratuits !' 
-      : `\n\nFrais de réseau: ${totalFeesInSats} sats (${Math.floor(totalFeesInBtcon)} Btcon / ${btconToEuro(totalFeesInBtcon)} €)`;
+      : `\n\nFrais de réseau: ${Math.floor(totalFeesInBtcon).toLocaleString()} Btcon (${btconToEuro(totalFeesInBtcon)} €)`;
     
     Alert.alert(
       'Confirmer la transaction',
-      `Montant: ${Math.floor(btconAmount)} Btcon (${(satsAmount / 100000000).toFixed(8)} BTC)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}${feeMessage}\n\nTotal à déduire: ${satsAmount + totalFeesInSats} sats`,
+      `Montant: ${Math.floor(btconAmount).toLocaleString()} Btcon\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}${feeMessage}\n\nTotal à déduire: ${(satsAmount + totalFeesInSats).toLocaleString()} Btcon`,
       [
         {
           text: 'Annuler',
@@ -364,8 +364,8 @@ export default function SendScreen() {
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Solde disponible</Text>
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceAmount}>{formatBalance(balance)}</Text>
-              <Text style={styles.balanceUnit}>BTC</Text>
+              <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
+              <Text style={styles.balanceUnit}>Btcon</Text>
             </View>
             <Text style={styles.balanceEuro}>≈ {btconToEuro(balance)} €</Text>
           </View>
@@ -521,8 +521,8 @@ export default function SendScreen() {
           <View style={styles.totalContainer}>
             <Text style={styles.totalLabel}>Total:</Text>
             <View style={styles.totalRow}>
-              <Text style={styles.totalAmount}>{(getTotalAmount() / 100000000).toFixed(8)}</Text>
-              <Text style={styles.totalUnit}>BTC</Text>
+              <Text style={styles.totalAmount}>{getTotalAmount().toLocaleString()}</Text>
+              <Text style={styles.totalUnit}>Btcon</Text>
             </View>
             <Text style={styles.conversionText}>
               ≈ {btconToEuro(getTotalAmount())} €
