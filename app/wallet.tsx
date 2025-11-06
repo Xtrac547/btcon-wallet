@@ -73,28 +73,30 @@ export default function WalletScreen() {
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.selectionContent}>
-          <View style={styles.balanceSection}>
-            <Text style={styles.balanceLabel}>SOLDE</Text>
-            
-            <View style={styles.balanceRow}>
-              <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-              <Text style={styles.balanceUnit}>Btcon</Text>
+          <View>
+            <View style={styles.balanceSection}>
+              <Text style={styles.balanceLabel}>SOLDE</Text>
+              
+              <View style={styles.balanceRow}>
+                <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
+                <Text style={styles.balanceUnit}>Btcon</Text>
+              </View>
+
+              <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
             </View>
 
-            <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
-          </View>
-
-          <View style={styles.tokensSection}>
-            <View style={styles.labelRow}>
-              <Text style={styles.tokensLabel}>Jetons</Text>
-              {getTotalAmount() > 0 && (
-                <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
-                  <Text style={styles.resetText}>Réinitialiser</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            
-            <View style={styles.tokensContainer}>
+            {!hasSelectedTokens && (
+              <View style={styles.tokensSection}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.tokensLabel}>Jetons</Text>
+                  {getTotalAmount() > 0 && (
+                    <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
+                      <Text style={styles.resetText}>Réinitialiser</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                
+                <View style={styles.tokensContainer}>
               <View style={styles.topTokensRow}>
                 {[1000, 5000].map((value) => (
                   <View key={value} style={styles.tokenWrapper}>
@@ -140,10 +142,71 @@ export default function WalletScreen() {
                 </View>
               </View>
             </View>
+              </View>
+            )}
           </View>
 
           {hasSelectedTokens && (
-            <View style={styles.actionsContainer}>
+            <View>
+              <View style={styles.tokensSection}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.tokensLabel}>Jetons</Text>
+                  {getTotalAmount() > 0 && (
+                    <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
+                      <Text style={styles.resetText}>Réinitialiser</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                
+                <View style={styles.tokensContainer}>
+                  <View style={styles.topTokensRow}>
+                    {[1000, 5000].map((value) => (
+                      <View key={value} style={styles.tokenWrapper}>
+                        <Pressable
+                          style={[
+                            styles.tokenCircle,
+                            value === 1000 && styles.token1000,
+                            value === 5000 && styles.token5000,
+                            tokenCounts[value] > 0 && styles.tokenSelected,
+                          ]}
+                          onPress={() => handleTokenPress(value)}
+                          onLongPress={() => handleTokenLongPress(value)}
+                        >
+                          <Text style={styles.tokenValue}>{value}</Text>
+                          <Text style={styles.tokenUnit}>BTCON</Text>
+                          {tokenCounts[value] > 0 && (
+                            <View style={styles.countBadge}>
+                              <Text style={styles.countText}>{tokenCounts[value]}x</Text>
+                            </View>
+                          )}
+                        </Pressable>
+                      </View>
+                    ))}
+                  </View>
+                  <View style={styles.bottomTokenRow}>
+                    <View style={styles.tokenWrapper50k}>
+                      <Pressable
+                        style={[
+                          styles.tokenSquare,
+                          tokenCounts[50000] > 0 && styles.tokenSelected,
+                        ]}
+                        onPress={() => handleTokenPress(50000)}
+                        onLongPress={() => handleTokenLongPress(50000)}
+                      >
+                        <Text style={styles.tokenValue}>50000</Text>
+                        <Text style={styles.tokenUnit}>BTCON</Text>
+                        {tokenCounts[50000] > 0 && (
+                          <View style={styles.countBadge}>
+                            <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.actionsContainer}>
               <Pressable
                 style={({ pressed }) => [
                   styles.actionButton,
@@ -171,6 +234,7 @@ export default function WalletScreen() {
                 </View>
                 <Text style={styles.actionButtonText}>Envoyer</Text>
               </Pressable>
+              </View>
             </View>
           )}
         </View>
@@ -196,6 +260,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 40,
+    justifyContent: 'space-between',
   },
   balanceSection: {
     alignItems: 'center',
