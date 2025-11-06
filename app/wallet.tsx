@@ -1,89 +1,192 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
-import { ArrowUpRight, ArrowDownLeft } from 'lucide-react-native';
-import { useState, useEffect } from 'react';
+import { ArrowUpRight, ArrowDownLeft, Users } from 'lucide-react-native';
+import { useState } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
-import QRCode from 'qrcode';
+import { useFollowing } from '@/contexts/FollowingContext';
 
 export default function WalletScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { balance, address } = useWallet();
-  const { isDeveloper } = useDeveloperHierarchy();
+  const { balance } = useWallet();
   const btcPrice = useBtcPrice();
-  const [showQR, setShowQR] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const { following } = useFollowing();
+  const [showSelection, setShowSelection] = useState<'new' | 'old' | 'following' | null>(null);
+  const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
+    1000: 0,
+    5000: 0,
+    50000: 0,
+  });
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
-  const isDevUser = address ? isDeveloper(address) : false;
 
-  useEffect(() => {
-    if (address) {
-      const generateQR = async () => {
-        try {
-          const options: any = {
-            width: 300,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF',
-            },
-          };
+  const getTotalAmount = (): number => {
+    return Object.entries(tokenCounts).reduce((total, [value, count]) => {
+      return total + (Number(value) * count);
+    }, 0);
+  };
 
-          if (Platform.OS === 'web') {
-            options.type = 'image/png';
-          }
+  const handleTokenPress = (value: number) => {
+    setTokenCounts(prev => ({
+      ...prev,
+      [value]: prev[value] + 1,
+    }));
+  };
 
-          const url = await (QRCode.toDataURL as any)(address, options) as string;
-          setQrDataUrl(url);
-        } catch (err) {
-          console.error('Error generating QR code:', err);
-        }
-      };
+  const handleTokenLongPress = (value: number) => {
+    setTokenCounts(prev => ({
+      ...prev,
+      [value]: 0,
+    }));
+  };
 
-      generateQR();
-    }
-  }, [address]);
+  const resetAllTokens = () => {
+    setTokenCounts({
+      1000: 0,
+      5000: 0,
+      50000: 0,
+    });
+  };
 
   const handleReceive = () => {
-    setShowQR(true);
+    const amount = getTotalAmount();
+    router.push({ pathname: '/receive', params: { amount: amount.toString() } });
   };
 
   const handleSend = () => {
-    router.push('/send');
+    const amount = getTotalAmount();
+    router.push({ pathname: '/send', params: { amount: amount.toString() } });
   };
 
-  if (showQR && qrDataUrl) {
+  if (showSelection) {
     return (
       <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <View style={styles.qrContainer}>
-          <Text style={styles.qrTitle}>Recevoir des Btcon</Text>
-          
-          <View style={styles.qrCodeWrapper}>
-            <Image
-              source={{ uri: qrDataUrl }}
-              style={styles.qrCode}
-              resizeMode="contain"
-            />
-          </View>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.selectionContent}>
+            <View style={styles.balanceSection}>
+              <Text style={styles.balanceLabel}>Solde</Text>
+              
+              <View style={styles.balanceRow}>
+                <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
+                <Text style={styles.balanceUnit}>Btcon</Text>
+              </View>
 
-          <View style={styles.addressBox}>
-            <Text style={styles.addressLabel}>Votre adresse</Text>
-            <Text style={styles.addressText}>{address}</Text>
-          </View>
+              <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
+            </View>
 
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => setShowQR(false)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.backButtonText}>Retour</Text>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.tokensSection}>
+              <View style={styles.labelRow}>
+                <Text style={styles.tokensLabel}>Jetons</Text>
+                {getTotalAmount() > 0 && (
+                  <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
+                    <Text style={styles.resetText}>Réinitialiser</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              
+              <View style={styles.tokensContainer}>
+                <View style={styles.topTokensRow}>
+                  {[1000, 5000].map((value) => (
+                    <View key={value} style={styles.tokenWrapper}>
+                      <Pressable
+                        style={[
+                          styles.tokenCircle,
+                          value === 1000 && styles.token1000,
+                          value === 5000 && styles.token5000,
+                          tokenCounts[value] > 0 && styles.tokenSelected,
+                        ]}
+                        onPress={() => handleTokenPress(value)}
+                        onLongPress={() => handleTokenLongPress(value)}
+                      >
+                        <Text style={styles.tokenValue}>{value}</Text>
+                        <Text style={styles.tokenUnit}>BTCON</Text>
+                        {tokenCounts[value] > 0 && (
+                          <View style={styles.countBadge}>
+                            <Text style={styles.countText}>{tokenCounts[value]}x</Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.bottomTokenRow}>
+                  <View style={styles.tokenWrapper50k}>
+                    <Pressable
+                      style={[
+                        styles.tokenSquare,
+                        tokenCounts[50000] > 0 && styles.tokenSelected,
+                      ]}
+                      onPress={() => handleTokenPress(50000)}
+                      onLongPress={() => handleTokenLongPress(50000)}
+                    >
+                      <Text style={styles.tokenValue}>50000</Text>
+                      <Text style={styles.tokenUnit}>BTCON</Text>
+                      {tokenCounts[50000] > 0 && (
+                        <View style={styles.countBadge}>
+                          <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {getTotalAmount() > 0 && (
+              <View style={styles.totalContainer}>
+                <Text style={styles.totalLabel}>Total sélectionné:</Text>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalAmount}>{getTotalAmount().toLocaleString()}</Text>
+                  <Text style={styles.totalUnit}>Btcon</Text>
+                </View>
+                <Text style={styles.totalEuro}>≈ {btconToEuro(getTotalAmount(), btcPrice)} €</Text>
+              </View>
+            )}
+
+            <View style={styles.actionsContainer}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  styles.receiveButton,
+                  pressed && styles.actionButtonPressed,
+                ]}
+                onPress={handleReceive}
+              >
+                <View style={styles.iconContainer}>
+                  <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
+                </View>
+                <Text style={styles.actionButtonText}>Recevoir</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  styles.sendButton,
+                  pressed && styles.actionButtonPressed,
+                ]}
+                onPress={handleSend}
+              >
+                <View style={styles.iconContainer}>
+                  <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
+                </View>
+                <Text style={styles.actionButtonText}>Envoyer</Text>
+              </Pressable>
+            </View>
+
+            <TouchableOpacity
+              style={styles.backToMainButton}
+              onPress={() => {
+                setShowSelection(null);
+                resetAllTokens();
+              }}
+            >
+              <Text style={styles.backToMainText}>Retour</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -91,54 +194,53 @@ export default function WalletScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.content}>
-        <View style={styles.balanceSection}>
-          <Text style={styles.balanceLabel}>Solde</Text>
+        <View style={styles.mainBalanceSection}>
+          <Text style={styles.mainBalanceLabel}>Solde Total</Text>
           
-          <View style={styles.balanceRow}>
-            <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-            <Text style={styles.balanceUnit}>Btcon</Text>
+          <View style={styles.mainBalanceRow}>
+            <Text style={styles.mainBalanceAmount}>{balance.toLocaleString()}</Text>
+            <Text style={styles.mainBalanceUnit}>Btcon</Text>
           </View>
 
-          <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
-
-          {isDevUser && address && (
-            <View style={styles.addressContainer}>
-              <Text style={styles.addressLabelSmall}>Adresse</Text>
-              <Text style={styles.addressTextSmall}>
-                {address.slice(0, 12)}...{address.slice(-12)}
-              </Text>
-            </View>
-          )}
+          <Text style={styles.mainEuroAmount}>≈ {euroValue} €</Text>
         </View>
 
-        <View style={styles.actionsContainer}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              styles.receiveButton,
-              pressed && styles.actionButtonPressed,
-            ]}
-            onPress={handleReceive}
+        <View style={styles.menuContainer}>
+          <TouchableOpacity
+            style={styles.menuCard}
+            onPress={() => setShowSelection('new')}
+            activeOpacity={0.7}
           >
-            <View style={styles.iconContainer}>
-              <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
+            <View style={styles.menuIconContainer}>
+              <ArrowUpRight color="#FF8C00" size={32} strokeWidth={2.5} />
             </View>
-            <Text style={styles.actionButtonText}>Recevoir</Text>
-          </Pressable>
+            <Text style={styles.menuTitle}>Nouveau</Text>
+            <Text style={styles.menuDescription}>Nouvelle transaction</Text>
+          </TouchableOpacity>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              styles.sendButton,
-              pressed && styles.actionButtonPressed,
-            ]}
-            onPress={handleSend}
+          <TouchableOpacity
+            style={styles.menuCard}
+            onPress={() => setShowSelection('old')}
+            activeOpacity={0.7}
           >
-            <View style={styles.iconContainer}>
-              <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
+            <View style={styles.menuIconContainer}>
+              <ArrowDownLeft color="#FF8C00" size={32} strokeWidth={2.5} />
             </View>
-            <Text style={styles.actionButtonText}>Envoyer</Text>
-          </Pressable>
+            <Text style={styles.menuTitle}>Ancien</Text>
+            <Text style={styles.menuDescription}>Transaction récente</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuCard}
+            onPress={() => setShowSelection('following')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.menuIconContainer}>
+              <Users color="#FF8C00" size={32} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.menuTitle}>Suivis</Text>
+            <Text style={styles.menuDescription}>{following.length} contacts</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -156,9 +258,99 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  selectionContent: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+  mainBalanceSection: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  mainBalanceLabel: {
+    color: '#888888',
+    fontSize: 14,
+    fontWeight: '600' as const,
+    marginBottom: 12,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 2,
+  },
+  mainBalanceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 12,
+    marginBottom: 8,
+  },
+  mainBalanceAmount: {
+    color: '#FFFFFF',
+    fontSize: 48,
+    fontWeight: '900' as const,
+    letterSpacing: -1,
+  },
+  mainBalanceUnit: {
+    color: '#FF8C00',
+    fontSize: 20,
+    fontWeight: '800' as const,
+  },
+  mainEuroAmount: {
+    color: '#FF8C00',
+    fontSize: 18,
+    fontWeight: '700' as const,
+  },
+  menuContainer: {
+    width: '100%',
+    maxWidth: 500,
+    gap: 20,
+  },
+  menuCard: {
+    backgroundColor: '#0f0f0f',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  menuIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 140, 0, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  menuTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
+  },
+  menuDescription: {
+    color: '#888888',
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
   balanceSection: {
     alignItems: 'center',
-    marginBottom: 64,
+    marginBottom: 32,
+    backgroundColor: '#0f0f0f',
+    padding: 24,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
   },
   balanceLabel: {
     color: '#888888',
@@ -311,5 +503,179 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800' as const,
     letterSpacing: 0.5,
+  },
+  tokensSection: {
+    marginBottom: 24,
+  },
+  tokensLabel: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700' as const,
+    marginBottom: 16,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  resetButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+  },
+  resetText: {
+    color: '#FF8C00',
+    fontSize: 12,
+    fontWeight: '600' as const,
+  },
+  tokensContainer: {
+    gap: 16,
+  },
+  topTokensRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  bottomTokenRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  tokenWrapper: {
+    width: '35%',
+    alignItems: 'center',
+  },
+  tokenWrapper50k: {
+    width: '72%',
+    alignItems: 'center',
+  },
+  tokenCircle: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 6,
+    borderColor: '#3a3a3a',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  token1000: {
+    backgroundColor: '#5B9BD5',
+    borderColor: '#75ADE0',
+  },
+  token5000: {
+    backgroundColor: '#FF9F47',
+    borderColor: '#FFB366',
+  },
+  tokenSquare: {
+    width: '100%',
+    aspectRatio: 1.3,
+    backgroundColor: '#E8451A',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 6,
+    borderColor: '#F5693F',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  tokenSelected: {
+    backgroundColor: '#FF8C00',
+    borderColor: '#FFB347',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  tokenValue: {
+    color: '#FFF',
+    fontSize: 28,
+    fontWeight: '900' as const,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  tokenUnit: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '700' as const,
+    marginTop: 4,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase' as const,
+  },
+  countBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#000',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 28,
+    alignItems: 'center',
+  },
+  countText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700' as const,
+  },
+  totalContainer: {
+    marginBottom: 24,
+    padding: 24,
+    backgroundColor: 'rgba(61, 40, 25, 0.8)',
+    borderRadius: 20,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
+  },
+  totalLabel: {
+    color: '#FFF',
+    fontSize: 14,
+    marginBottom: 8,
+    fontWeight: '600' as const,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+  },
+  totalAmount: {
+    color: '#FFF',
+    fontSize: 32,
+    fontWeight: '900' as const,
+  },
+  totalUnit: {
+    color: '#FF8C00',
+    fontSize: 14,
+    fontWeight: '900' as const,
+  },
+  totalEuro: {
+    color: '#FF8C00',
+    fontSize: 14,
+    marginTop: 4,
+    fontWeight: '700' as const,
+  },
+  backToMainButton: {
+    backgroundColor: '#2a2a2a',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  backToMainText: {
+    color: '#FF8C00',
+    fontSize: 16,
+    fontWeight: '700' as const,
   },
 });
