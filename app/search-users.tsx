@@ -26,6 +26,7 @@ export default function SearchUsersScreen() {
     try {
       const users = await getAllUsers();
       const filtered = users.filter(u => u.username !== currentUsername);
+      console.log('Loaded users:', filtered.length, 'users found');
       setAllUsers(filtered);
     } catch (error) {
       console.error('Error loading users:', error);
