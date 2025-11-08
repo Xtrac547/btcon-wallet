@@ -2,57 +2,47 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STORAGE_KEY = 'btcon_qr_colors';
+const STORAGE_KEY = 'btcon_qr_style';
 
-interface QRColors {
-  background: string;
-  qr: string;
-}
+export type QRStyle = 'classic' | 'rounded' | 'dots' | 'minimal';
 
-const DEFAULT_COLORS: QRColors = {
-  background: '#000000',
-  qr: '#FF8C00',
-};
+const DEFAULT_STYLE: QRStyle = 'classic';
 
 export const [QRColorProvider, useQRColor] = createContextHook(() => {
-  const [colors, setColors] = useState<QRColors>(DEFAULT_COLORS);
+  const [qrStyle, setQRStyle] = useState<QRStyle>(DEFAULT_STYLE);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadColors = async () => {
+  const loadStyle = async () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setColors(JSON.parse(stored));
+        setQRStyle(stored as QRStyle);
       }
     } catch (error) {
-      console.error('Error loading QR colors:', error);
+      console.error('Error loading QR style:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const saveColors = useCallback(async (newColors: QRColors): Promise<{ success: boolean; error?: string }> => {
+  const saveStyle = useCallback(async (newStyle: QRStyle): Promise<{ success: boolean; error?: string }> => {
     try {
-      if (newColors.background.toLowerCase() === newColors.qr.toLowerCase()) {
-        return { success: false, error: 'Les couleurs de fond et QR ne peuvent pas être identiques' };
-      }
-
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newColors));
-      setColors(newColors);
+      await AsyncStorage.setItem(STORAGE_KEY, newStyle);
+      setQRStyle(newStyle);
       return { success: true };
     } catch (error) {
-      console.error('Error saving QR colors:', error);
+      console.error('Error saving QR style:', error);
       return { success: false, error: 'Erreur lors de la sauvegarde' };
     }
   }, []);
 
   useEffect(() => {
-    loadColors();
+    loadStyle();
   }, []);
 
   return useMemo(() => ({
-    colors,
+    qrStyle,
     isLoading,
-    saveColors,
-  }), [colors, isLoading, saveColors]);
+    saveStyle,
+  }), [qrStyle, isLoading, saveStyle]);
 });

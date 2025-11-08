@@ -116,10 +116,10 @@ export default function SettingsScreen() {
             <View style={styles.imageCardIcon}>
               <Palette color="#FF8C00" size={20} />
             </View>
-            <Text style={styles.imageCardTitle}>Couleurs QR Code</Text>
+            <Text style={styles.imageCardTitle}>Style QR Code</Text>
           </View>
           <Text style={styles.imageCardDescription}>
-            Personnaliser les couleurs du fond et du QR code
+            Personnaliser le design de votre QR code
           </Text>
         </Pressable>
 
