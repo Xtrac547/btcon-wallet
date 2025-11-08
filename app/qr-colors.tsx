@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFF',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     letterSpacing: 0.5,
   },
   placeholder: {
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: '#FFF',
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     marginBottom: 16,
   },
   colorGrid: {
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#FFF',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     letterSpacing: 0.5,
   },
 });
