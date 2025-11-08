@@ -42,6 +42,7 @@ export default function SendScreen() {
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [btcPrice, setBtcPrice] = useState(100000);
+  const [hasScanned, setHasScanned] = useState(false);
 
   useEffect(() => {
     const fetchBtcPrice = async () => {
@@ -192,10 +193,13 @@ export default function SendScreen() {
         return;
       }
     }
+    setHasScanned(false);
     setShowScanner(true);
   };
 
   const handleBarcodeScanned = (data: string) => {
+    if (hasScanned) return;
+    setHasScanned(true);
     setShowScanner(false);
     
     let address = data;
