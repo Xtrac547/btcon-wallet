@@ -331,7 +331,7 @@ export default function SendScreen() {
                       <Text style={styles.countText}>{tokenCounts[1000]}</Text>
                     </View>
                   )}
-                  <Text style={styles.tokenValue}>1K</Text>
+                  <Text style={styles.tokenValue}>1000</Text>
                   <Text style={styles.tokenUnit}>Btcon</Text>
                 </TouchableOpacity>
               </View>
@@ -347,7 +347,7 @@ export default function SendScreen() {
                       <Text style={styles.countText}>{tokenCounts[5000]}</Text>
                     </View>
                   )}
-                  <Text style={[styles.tokenValue, styles.tokenValueWhite]}>5K</Text>
+                  <Text style={[styles.tokenValue, styles.tokenValueWhite]}>5000</Text>
                   <Text style={[styles.tokenUnit, styles.tokenUnitWhite]}>Btcon</Text>
                 </TouchableOpacity>
               </View>
@@ -365,7 +365,7 @@ export default function SendScreen() {
                       <Text style={styles.countText}>{tokenCounts[50000]}</Text>
                     </View>
                   )}
-                  <Text style={styles.tokenValue}>50K</Text>
+                  <Text style={styles.tokenValue}>50,000</Text>
                   <Text style={styles.tokenUnit}>Btcon</Text>
                 </TouchableOpacity>
               </View>
@@ -680,7 +680,7 @@ const styles = StyleSheet.create({
   },
   topTokensRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     gap: 16,
   },
   bottomTokenRow: {
@@ -688,12 +688,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tokenWrapper: {
-    width: '35%',
+    width: '48%',
     alignItems: 'center',
     gap: 8,
   },
   tokenWrapper50k: {
-    width: '72%',
+    width: '100%',
     alignItems: 'center',
     gap: 8,
   },
@@ -732,9 +732,9 @@ const styles = StyleSheet.create({
   },
   tokenSquare: {
     width: '100%',
-    aspectRatio: 1.3,
+    height: 180,
     backgroundColor: '#E8451A',
-    borderRadius: 16,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 6,
