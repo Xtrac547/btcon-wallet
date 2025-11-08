@@ -24,9 +24,9 @@ const AVAILABLE_COLORS = [
 export default function QRColorsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, saveColors } = useQRColor();
   const { width } = useWindowDimensions();
   const isWideScreen = width > 768;
+  const { colors, saveColors } = useQRColor();
 
   const [selectedBackground, setSelectedBackground] = useState(colors.background);
   const [selectedQR, setSelectedQR] = useState(colors.qr);
