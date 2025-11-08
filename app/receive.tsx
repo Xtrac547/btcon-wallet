@@ -1,15 +1,16 @@
 import '@/utils/shim';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Share, Linking, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Share, Linking, Alert, Platform, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
-import { ArrowLeft, Share2, ExternalLink, Copy, Send } from 'lucide-react-native';
+import { ArrowLeft, Share2, ExternalLink, Copy, Send, Camera, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -20,6 +21,9 @@ export default function ReceiveScreen() {
   const { getQRColors } = useQRColor();
   const { width } = useWindowDimensions();
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
+  const [showScanner, setShowScanner] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [hasScanned, setHasScanned] = useState(false);
   
   const requestedAmount = params.amount ? parseInt(params.amount) : 0;
 
@@ -115,6 +119,63 @@ export default function ReceiveScreen() {
     } catch (error) {
       console.error('Erreur copie:', error);
       Alert.alert('Erreur', 'Impossible de copier l\'adresse');
+    }
+  };
+
+  const handleOpenScanner = async () => {
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert('Permission refusée', 'Veuillez autoriser l\'accès à la caméra');
+        return;
+      }
+    }
+    setHasScanned(false);
+    setShowScanner(true);
+  };
+
+  const handleBarcodeScanned = (data: string) => {
+    if (hasScanned) return;
+    setHasScanned(true);
+    setShowScanner(false);
+    
+    let scannedAddress = data;
+    let amount = 0;
+    
+    if (scannedAddress.toLowerCase().startsWith('bitcoin:')) {
+      const uri = scannedAddress.substring(8);
+      const parts = uri.split('?');
+      scannedAddress = parts[0];
+      
+      if (parts.length > 1) {
+        const params = new URLSearchParams(parts[1]);
+        const amountBtc = params.get('amount');
+        
+        if (amountBtc) {
+          amount = Math.floor(parseFloat(amountBtc) * 100000000);
+        }
+      }
+    }
+    
+    if (amount > 0) {
+      const tokens1000 = Math.floor(amount / 1000);
+      
+      router.push({
+        pathname: '/send',
+        params: {
+          address: scannedAddress,
+          token1000: tokens1000.toString(),
+          token5000: '0',
+          token50000: '0',
+        }
+      });
+    } else {
+      router.push({
+        pathname: '/send',
+        params: {
+          address: scannedAddress,
+        }
+      });
     }
   };
 
@@ -217,9 +278,51 @@ export default function ReceiveScreen() {
                 <Text style={[styles.actionButtonText, { color: currentArt.accent }]}>Explorateur</Text>
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity 
+              onPress={handleOpenScanner}
+              style={[styles.scannerButton, { borderColor: currentArt.accent, backgroundColor: `${currentArt.accent}15` }]}
+            >
+              <Camera color={currentArt.accent} size={20} />
+              <Text style={[styles.scannerButtonText, { color: currentArt.accent }]}>Scanner un QR Code</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
+
+      <Modal
+        visible={showScanner}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.scannerHeader}>
+            <Text style={styles.scannerTitle}>Scanner QR Code</Text>
+            <TouchableOpacity
+              onPress={() => setShowScanner(false)}
+              style={styles.closeButton}
+            >
+              <X color="#FFF" size={28} />
+            </TouchableOpacity>
+          </View>
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            barcodeScannerSettings={{
+              barcodeTypes: ['qr'],
+            }}
+            onBarcodeScanned={(result) => {
+              if (result?.data) {
+                handleBarcodeScanned(result.data);
+              }
+            }}
+          >
+            <View style={styles.scannerOverlay}>
+              <View style={styles.scannerFrame} />
+            </View>
+          </CameraView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -403,5 +506,72 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800' as const,
     letterSpacing: 0.5,
+  },
+  scannerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    marginTop: 12,
+  },
+  scannerButtonText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  scannerHeader: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    zIndex: 10,
+  },
+  scannerTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700' as const,
+  },
+  closeButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255, 140, 0, 0.2)',
+    borderRadius: 12,
+  },
+  camera: {
+    flex: 1,
+  },
+  scannerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerFrame: {
+    width: '80%',
+    aspectRatio: 1,
+    maxWidth: 340,
+    maxHeight: 340,
+    borderWidth: 4,
+    borderColor: '#FF8C00',
+    borderRadius: 32,
+    backgroundColor: 'transparent',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 10,
   },
 });
