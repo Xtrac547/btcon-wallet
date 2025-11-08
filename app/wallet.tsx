@@ -1,21 +1,20 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder, Modal, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder, Modal, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowUpRight, ArrowDownLeft, QrCode, Settings, X } from 'lucide-react-native';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { useUsername } from '@/contexts/UsernameContext';
+
 
 export default function WalletScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { balance } = useWallet();
   const btcPrice = useBtcPrice();
-  const { getAllUsers } = useUsername();
 
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
@@ -23,7 +22,7 @@ export default function WalletScreen() {
     50000: 0,
   });
   
-  const [allUsers, setAllUsers] = useState<{ username: string; address: string }[]>([]);
+
 
   const translateY = useRef(new Animated.Value(0)).current;
   const panY = useRef(0);
@@ -33,13 +32,7 @@ export default function WalletScreen() {
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
   
-  useEffect(() => {
-    const loadUsers = async () => {
-      const users = await getAllUsers();
-      setAllUsers(users);
-    };
-    loadUsers();
-  }, [getAllUsers]);
+
 
   const getTotalAmount = (): number => {
     return Object.entries(tokenCounts).reduce((total, [value, count]) => {
@@ -223,26 +216,7 @@ export default function WalletScreen() {
               {getTotalAmount().toLocaleString()} Btcon sélectionné = {getTotalAmount() > 0 ? btconToEuro(getTotalAmount(), btcPrice) : '0.00'} €
             </Text>
           </View>
-          
-          {allUsers.length > 0 && (
-            <View style={styles.usersSection}>
-              <Text style={styles.usersLabel}>Utilisateurs enregistrés</Text>
-              <ScrollView 
-                style={styles.usersScrollView}
-                contentContainerStyle={styles.usersScrollContent}
-                showsVerticalScrollIndicator={false}
-              >
-                {allUsers.map((user) => (
-                  <View key={user.address} style={styles.userItem}>
-                    <Text style={styles.username}>@{user.username}</Text>
-                    <Text style={styles.userAddress} numberOfLines={1} ellipsizeMode="middle">
-                      {user.address}
-                    </Text>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+
 
           <View style={styles.tokensSection}>
             <View style={styles.labelRow}>
@@ -427,45 +401,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     letterSpacing: 0.3,
   },
-  usersSection: {
-    marginBottom: 24,
-    backgroundColor: '#0f0f0f',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.2)',
-    maxHeight: 200,
-  },
-  usersLabel: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700' as const,
-    marginBottom: 12,
-  },
-  usersScrollView: {
-    maxHeight: 140,
-  },
-  usersScrollContent: {
-    gap: 10,
-  },
-  userItem: {
-    backgroundColor: '#1a1a1a',
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.15)',
-  },
-  username: {
-    color: '#FF8C00',
-    fontSize: 15,
-    fontWeight: '700' as const,
-    marginBottom: 4,
-  },
-  userAddress: {
-    color: '#888888',
-    fontSize: 11,
-    fontFamily: Platform.OS === 'ios' || Platform.OS === 'android' ? 'Courier' : 'monospace',
-  },
+
   addressContainer: {
     marginTop: 24,
     alignItems: 'center',
