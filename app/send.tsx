@@ -34,7 +34,7 @@ export default function SendScreen() {
     }
   }, [username, router]);
   const [toAddress, setToAddress] = useState(params.address || '');
-  const [tokenCounts] = useState<{ [key: number]: number }>({
+  const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: params.token1000 ? parseInt(params.token1000) : 0,
     5000: params.token5000 ? parseInt(params.token5000) : 0,
     50000: params.token50000 ? parseInt(params.token50000) : 0,
@@ -70,6 +70,21 @@ export default function SendScreen() {
     return Object.entries(tokenCounts).reduce((total, [value, count]) => {
       return total + (Number(value) * count);
     }, 0);
+  };
+
+  const handleTokenPress = (value: number) => {
+    setTokenCounts(prev => ({
+      ...prev,
+      [value]: prev[value] + 1
+    }));
+  };
+
+  const handleResetTokens = () => {
+    setTokenCounts({
+      1000: 0,
+      5000: 0,
+      50000: 0,
+    });
   };
 
 
@@ -206,6 +221,15 @@ export default function SendScreen() {
                 text: 'OK',
                 onPress: () => {
                   setToAddress(address);
+                  
+                  const tokens1000 = Math.floor(amountSats / 1000);
+                  const remaining = amountSats % 1000;
+                  
+                  setTokenCounts({
+                    1000: tokens1000,
+                    5000: 0,
+                    50000: 0,
+                  });
                 },
               },
             ]
@@ -287,6 +311,71 @@ export default function SendScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
               />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.formCard}>
+          <View style={styles.labelWithReset}>
+            <Text style={styles.inputLabel}>Sélectionner le montant</Text>
+            {getTotalAmount() > 0 && (
+              <TouchableOpacity onPress={handleResetTokens} style={styles.resetButton}>
+                <Text style={styles.resetText}>Réinitialiser</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          <View style={styles.tokensContainer}>
+            <View style={styles.topTokensRow}>
+              <View style={styles.tokenWrapper}>
+                <TouchableOpacity
+                  style={styles.tokenCircle}
+                  onPress={() => handleTokenPress(1000)}
+                  activeOpacity={0.7}
+                >
+                  {tokenCounts[1000] > 0 && (
+                    <View style={styles.countBadge}>
+                      <Text style={styles.countText}>{tokenCounts[1000]}</Text>
+                    </View>
+                  )}
+                  <Text style={styles.tokenValue}>1K</Text>
+                  <Text style={styles.tokenUnit}>Btcon</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.tokenWrapper}>
+                <TouchableOpacity
+                  style={[styles.tokenCircle, styles.token5000White]}
+                  onPress={() => handleTokenPress(5000)}
+                  activeOpacity={0.7}
+                >
+                  {tokenCounts[5000] > 0 && (
+                    <View style={styles.countBadge}>
+                      <Text style={styles.countText}>{tokenCounts[5000]}</Text>
+                    </View>
+                  )}
+                  <Text style={[styles.tokenValue, styles.tokenValueWhite]}>5K</Text>
+                  <Text style={[styles.tokenUnit, styles.tokenUnitWhite]}>Btcon</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            <View style={styles.bottomTokenRow}>
+              <View style={styles.tokenWrapper50k}>
+                <TouchableOpacity
+                  style={styles.tokenSquare}
+                  onPress={() => handleTokenPress(50000)}
+                  activeOpacity={0.7}
+                >
+                  {tokenCounts[50000] > 0 && (
+                    <View style={styles.countBadge}>
+                      <Text style={styles.countText}>{tokenCounts[50000]}</Text>
+                    </View>
+                  )}
+                  <Text style={styles.tokenValue}>50K</Text>
+                  <Text style={styles.tokenUnit}>Btcon</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -637,6 +726,16 @@ const styles = StyleSheet.create({
   token5000: {
     backgroundColor: '#FF9F47',
     borderColor: '#FFB366',
+  },
+  token5000White: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
+  },
+  tokenValueWhite: {
+    color: '#000000',
+  },
+  tokenUnitWhite: {
+    color: '#000000',
   },
   tokenSquare: {
     width: '100%',
