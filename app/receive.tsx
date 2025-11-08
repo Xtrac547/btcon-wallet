@@ -17,7 +17,7 @@ export default function ReceiveScreen() {
   const insets = useSafeAreaInsets();
   const { address } = useWallet();
   const { username } = useUsername();
-  const { colors: qrColors } = useQRColor();
+  const { getQRColors } = useQRColor();
   const { width } = useWindowDimensions();
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
   
@@ -29,6 +29,7 @@ export default function ReceiveScreen() {
     }
   }, [username, router]);
 
+  const qrColors = getQRColors(address);
   const currentArt = {
     bg: qrColors.background,
     fg: qrColors.qr,

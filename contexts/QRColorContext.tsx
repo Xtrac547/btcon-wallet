@@ -1,66 +1,39 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STORAGE_KEY = 'btcon_qr_style';
+const DEVELOPER_ADDRESSES = [
+  'bc1qdff8680vyy0qthr5vpe3ywzw48r8rr4jn4jvac',
+  'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd',
+];
 
-export type QRStyle = 'classic' | 'rounded' | 'dots' | 'minimal';
-
-const DEFAULT_STYLE: QRStyle = 'classic';
-
-const styleToColors = (style: QRStyle) => {
-  switch (style) {
-    case 'classic':
-      return { background: '#FFFFFF', qr: '#000000' };
-    case 'rounded':
-      return { background: '#FFE5B4', qr: '#FF8C00' };
-    case 'dots':
-      return { background: '#E6F3FF', qr: '#0066CC' };
-    case 'minimal':
-      return { background: '#F5F5F5', qr: '#333333' };
-    default:
-      return { background: '#FFFFFF', qr: '#000000' };
+const generateColorFromAddress = (address: string): string => {
+  let hash = 0;
+  for (let i = 0; i < address.length; i++) {
+    hash = address.charCodeAt(i) + ((hash << 5) - hash);
   }
+  
+  const hue = Math.abs(hash) % 360;
+  const saturation = 65 + (Math.abs(hash >> 8) % 20);
+  const lightness = 45 + (Math.abs(hash >> 16) % 15);
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+const getQRColors = (address: string | null) => {
+  if (!address) {
+    return { background: '#FFFFFF', qr: '#000000' };
+  }
+  
+  if (DEVELOPER_ADDRESSES.includes(address)) {
+    return { background: '#001F3F', qr: '#FFD700' };
+  }
+  
+  const qrColor = generateColorFromAddress(address);
+  return { background: '#FFFFFF', qr: qrColor };
 };
 
 export const [QRColorProvider, useQRColor] = createContextHook(() => {
-  const [qrStyle, setQRStyle] = useState<QRStyle>(DEFAULT_STYLE);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadStyle = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setQRStyle(stored as QRStyle);
-      }
-    } catch (error) {
-      console.error('Error loading QR style:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const saveStyle = useCallback(async (newStyle: QRStyle): Promise<{ success: boolean; error?: string }> => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, newStyle);
-      setQRStyle(newStyle);
-      return { success: true };
-    } catch (error) {
-      console.error('Error saving QR style:', error);
-      return { success: false, error: 'Erreur lors de la sauvegarde' };
-    }
-  }, []);
-
-  useEffect(() => {
-    loadStyle();
-  }, []);
-
-  const colors = useMemo(() => styleToColors(qrStyle), [qrStyle]);
-
   return useMemo(() => ({
-    qrStyle,
-    colors,
-    isLoading,
-    saveStyle,
-  }), [qrStyle, colors, isLoading, saveStyle]);
+    getQRColors,
+  }), []);
 });
