@@ -5,9 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
+import { useQRColor } from '@/contexts/QRColorContext';
 import { ArrowLeft, Share2, ExternalLink, Copy } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
-import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 
 export default function ReceiveScreen() {
@@ -16,6 +17,7 @@ export default function ReceiveScreen() {
   const insets = useSafeAreaInsets();
   const { address } = useWallet();
   const { username } = useUsername();
+  const { colors: qrColors } = useQRColor();
   const { width } = useWindowDimensions();
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
   
@@ -27,64 +29,12 @@ export default function ReceiveScreen() {
     }
   }, [username, router]);
 
-  const generateColorFromAddress = (addr: string | null) => {
-    if (!addr) {
-      return {
-        id: 0,
-        name: 'Identité Unique',
-        bg: '#2a2a2a',
-        fg: ['#FF8C00', '#FFB347'],
-        accent: '#FF8C00',
-        borderGlow: 'rgba(255, 140, 0, 0.6)',
-      };
-    }
-
-    let hash = 0;
-    for (let i = 0; i < addr.length; i++) {
-      hash = ((hash << 5) - hash) + addr.charCodeAt(i);
-      hash = hash & hash;
-    }
-
-    const hue1 = Math.abs(hash % 360);
-    const hue2 = (hue1 + 60 + (hash % 120)) % 360;
-    const saturation = 60 + (Math.abs(hash >> 8) % 30);
-    const lightness1 = 45 + (Math.abs(hash >> 16) % 20);
-    const lightness2 = 55 + (Math.abs(hash >> 24) % 20);
-
-    const hslToHex = (h: number, s: number, l: number): string => {
-      l /= 100;
-      const a = s * Math.min(l, 1 - l) / 100;
-      const f = (n: number) => {
-        const k = (n + h / 30) % 12;
-        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-        return Math.round(255 * color).toString(16).padStart(2, '0');
-      };
-      return `#${f(0)}${f(8)}${f(4)}`;
-    };
-
-    const color1 = hslToHex(hue1, saturation, lightness1);
-    const color2 = hslToHex(hue2, saturation, lightness2);
-    const accentColor = hslToHex(hue1, saturation + 10, lightness1 + 10);
-
-    const bgLightness = 15 + (Math.abs(hash >> 4) % 15);
-    const bgColor = hslToHex(hue1, saturation - 20, bgLightness);
-
-    const r = parseInt(accentColor.slice(1, 3), 16);
-    const g = parseInt(accentColor.slice(3, 5), 16);
-    const b = parseInt(accentColor.slice(5, 7), 16);
-    const borderGlow = `rgba(${r}, ${g}, ${b}, 0.6)`;
-
-    return {
-      id: Math.abs(hash),
-      name: 'Identité Unique',
-      bg: bgColor,
-      fg: [color1, color2],
-      accent: accentColor,
-      borderGlow,
-    };
+  const currentArt = {
+    bg: qrColors.background,
+    fg: qrColors.qr,
+    accent: qrColors.qr,
+    borderGlow: qrColors.qr,
   };
-
-  const currentArt = generateColorFromAddress(address);
 
   const generateQRMatrix = async (text: string): Promise<number[][]> => {
     try {
@@ -191,22 +141,11 @@ export default function ReceiveScreen() {
 
         <View style={styles.qrCodeContainer}>
           {qrMatrix.length > 0 ? (
-            <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2 }]}>
+            <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
               <Svg width={qrArtSize} height={qrArtSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
-                <Defs>
-                  <LinearGradient id={`qrGradient-${currentArt.id}`} x1="0" y1="0" x2="1" y2="1">
-                    <Stop offset="0" stopColor={currentArt.fg[0]} stopOpacity="1" />
-                    <Stop offset="1" stopColor={currentArt.fg[1]} stopOpacity="1" />
-                  </LinearGradient>
-                </Defs>
                 {qrMatrix.map((row, y) => 
                   row.map((cell, x) => {
                     if (cell === 1) {
-                      const isCorner = 
-                        (y < 8 && x < 8) ||
-                        (y < 8 && x >= qrMatrix.length - 8) ||
-                        (y >= qrMatrix.length - 8 && x < 8);
-                      
                       return (
                         <Rect
                           key={`${y}-${x}`}
@@ -214,7 +153,7 @@ export default function ReceiveScreen() {
                           y={y}
                           width={1}
                           height={1}
-                          fill={isCorner ? currentArt.accent : `url(#qrGradient-${currentArt.id})`}
+                          fill={currentArt.fg}
                           rx={0.15}
                         />
                       );
@@ -225,7 +164,7 @@ export default function ReceiveScreen() {
               </Svg>
             </View>
           ) : (
-            <View style={[styles.qrPlaceholder, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2 }]}>
+            <View style={[styles.qrPlaceholder, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
               <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
             </View>
           )}
@@ -302,7 +241,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   qrCodeWrapper: {
-    backgroundColor: '#000',
     borderRadius: 28,
     shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 16 },
@@ -319,7 +257,6 @@ const styles = StyleSheet.create({
   qrPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
     borderRadius: 28,
     borderWidth: 4,
     borderColor: 'rgba(255, 140, 0, 0.3)',

@@ -11,6 +11,7 @@ import { FollowingProvider } from "@/contexts/FollowingContext";
 import { UserImageProvider } from "@/contexts/UserImageContext";
 import { DeveloperHierarchyProvider } from "@/contexts/DeveloperHierarchyContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { QRColorProvider } from "@/contexts/QRColorContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Platform } from 'react-native';
 
@@ -34,6 +35,7 @@ function RootLayoutNav() {
       <Stack.Screen name="developer-hierarchy" options={{ headerShown: false }} />
       <Stack.Screen name="search-users" options={{ headerShown: false }} />
       <Stack.Screen name="profile-image" options={{ headerShown: false }} />
+      <Stack.Screen name="qr-colors" options={{ headerShown: false }} />
       <Stack.Screen name="buy-btc" options={{ headerShown: false }} />
       <Stack.Screen name="setup-auth" options={{ headerShown: false }} />
       <Stack.Screen name="verify-auth" options={{ headerShown: false }} />
@@ -66,9 +68,11 @@ export default function RootLayout() {
                 <NotificationProvider>
                   <DeveloperHierarchyProvider>
                     <UserImageProvider>
-                      <GestureHandlerRootView style={{ flex: 1 }}>
-                        <RootLayoutNav />
-                      </GestureHandlerRootView>
+                      <QRColorProvider>
+                        <GestureHandlerRootView style={{ flex: 1 }}>
+                          <RootLayoutNav />
+                        </GestureHandlerRootView>
+                      </QRColorProvider>
                     </UserImageProvider>
                   </DeveloperHierarchyProvider>
                 </NotificationProvider>

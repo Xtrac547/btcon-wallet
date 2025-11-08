@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, ArrowDownLeft, QrCode, Settings, X } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, QrCode, Settings, X, Eye } from 'lucide-react-native';
 import { useState, useRef } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -178,13 +178,23 @@ export default function WalletScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.topButton}
-          onPress={handleOpenScanner}
-          testID="scan-qr-wallet-button"
-        >
-          <QrCode color="#FF8C00" size={24} />
-        </TouchableOpacity>
+        <View style={styles.leftButtons}>
+          <TouchableOpacity
+            style={styles.topButton}
+            onPress={handleOpenScanner}
+            testID="scan-qr-wallet-button"
+          >
+            <QrCode color="#FF8C00" size={24} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.topButton}
+            onPress={() => router.push('/receive')}
+            testID="show-address-qr-button"
+          >
+            <Eye color="#FF8C00" size={24} />
+          </TouchableOpacity>
+        </View>
         
         <TouchableOpacity
           style={styles.topButton}
@@ -659,6 +669,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingVertical: 12,
+  },
+  leftButtons: {
+    flexDirection: 'row',
+    gap: 12,
   },
   topButton: {
     width: 48,

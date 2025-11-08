@@ -6,7 +6,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
-import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X, Image as ImageIcon, Key, Fingerprint } from 'lucide-react-native';
+import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X, Palette, Key, Fingerprint } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -110,16 +110,16 @@ export default function SettingsScreen() {
         
         <Pressable
           style={styles.imageCard}
-          onPress={() => router.push('/profile-image')}
+          onPress={() => router.push('/qr-colors')}
         >
           <View style={styles.imageCardHeader}>
             <View style={styles.imageCardIcon}>
-              <ImageIcon color="#FF8C00" size={20} />
+              <Palette color="#FF8C00" size={20} />
             </View>
-            <Text style={styles.imageCardTitle}>Images du Profil</Text>
+            <Text style={styles.imageCardTitle}>Couleurs QR Code</Text>
           </View>
           <Text style={styles.imageCardDescription}>
-            Modifier les images de profil et QR code
+            Personnaliser les couleurs du fond et du QR code
           </Text>
         </Pressable>
 
