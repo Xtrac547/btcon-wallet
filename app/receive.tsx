@@ -6,7 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
-import { ArrowLeft, Share2, ExternalLink, Copy } from 'lucide-react-native';
+import { ArrowLeft, Share2, ExternalLink, Copy, Send } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
@@ -137,6 +137,23 @@ export default function ReceiveScreen() {
               <Text style={styles.amountBannerUnit}>Btcon</Text>
             </View>
             <Text style={styles.amountBannerBtc}>{(requestedAmount / 100000000).toFixed(8)} BTC</Text>
+            <TouchableOpacity 
+              style={styles.sendPaymentButton}
+              onPress={() => {
+                const token1000 = Math.floor(requestedAmount / 1000);
+                router.push({
+                  pathname: '/send',
+                  params: {
+                    token1000: token1000.toString(),
+                    token5000: '0',
+                    token50000: '0',
+                  }
+                });
+              }}
+            >
+              <Send color="#FFF" size={20} />
+              <Text style={styles.sendPaymentButtonText}>Envoyer ce montant</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -364,5 +381,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as const,
     fontFamily: 'monospace' as const,
+  },
+  sendPaymentButton: {
+    marginTop: 16,
+    backgroundColor: '#FF8C00',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  sendPaymentButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
 });
