@@ -183,7 +183,6 @@ export default function SendScreen() {
 
   const handleBarcodeScanned = (data: string) => {
     setShowScanner(false);
-    console.log('QR Code scanné:', data);
     
     let address = data;
     
@@ -198,7 +197,6 @@ export default function SendScreen() {
         
         if (amountBtc) {
           const amountSats = Math.floor(parseFloat(amountBtc) * 100000000);
-          console.log('Montant détecté dans le QR:', amountSats, 'Btcon');
           
           Alert.alert(
             'Demande de paiement détectée',
@@ -382,7 +380,6 @@ export default function SendScreen() {
             }}
             onBarcodeScanned={(result) => {
               if (result?.data) {
-                console.log('QR Code détecté:', result.data);
                 handleBarcodeScanned(result.data);
               }
             }}

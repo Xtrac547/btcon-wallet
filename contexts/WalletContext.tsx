@@ -108,7 +108,6 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
   };
 
   const createWallet = async (): Promise<string> => {
-    console.log('Creating new wallet...');
     const mnemonic = bip39.generateMnemonic(128);
     const address = deriveAddressFromMnemonic(mnemonic, state.isTestnet);
 
@@ -122,12 +121,10 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
       hasWallet: true,
     }));
 
-    console.log('Wallet created:', { address });
     return mnemonic;
   };
 
   const restoreWallet = async (mnemonic: string): Promise<void> => {
-    console.log('Restoring wallet...');
     if (!bip39.validateMnemonic(mnemonic)) {
       throw new Error('Invalid mnemonic phrase');
     }
@@ -144,12 +141,10 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
       hasWallet: true,
     }));
 
-    console.log('Wallet restored:', { address });
     await refreshBalance();
   };
 
   const deleteWallet = async (): Promise<void> => {
-    console.log('Deleting wallet...');
     await deleteSecurely(STORAGE_KEYS.MNEMONIC);
     await AsyncStorage.removeItem(STORAGE_KEYS.HAS_WALLET);
 
@@ -166,7 +161,6 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
   const refreshBalance = useCallback(async () => {
     if (!state.address) return;
 
-    console.log('Refreshing balance for:', state.address);
     try {
       const utxos = await esploraService.getAddressUTXOs(state.address);
       const confirmedUtxos = utxos.filter(utxo => utxo.status.confirmed);
@@ -180,16 +174,12 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
         utxos,
         transactions,
       }));
-
-      console.log('Balance updated:', { balance, utxoCount: utxos.length, txCount: transactions.length });
     } catch (error) {
       console.error('Error refreshing balance:', error);
     }
   }, [state.address]);
 
   const switchNetwork = async (isTestnet: boolean) => {
-    console.log('Switching network to:', isTestnet ? 'testnet' : 'mainnet');
-    
     esploraService.setNetwork(isTestnet);
     await AsyncStorage.setItem(STORAGE_KEYS.IS_TESTNET, isTestnet ? 'true' : 'false');
 
@@ -218,8 +208,6 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
       throw new Error('Wallet not initialized');
     }
 
-    console.log('Creating transaction:', { toAddress, amountSats, feeRate });
-
     const utxos = await esploraService.getAddressUTXOs(state.address);
     if (utxos.length === 0) {
       throw new Error('No UTXOs available');
@@ -235,7 +223,6 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
 
     const feeRateFromApi = await esploraService.getFeeEstimate();
     const actualFeeRate = feeRate || feeRateFromApi;
-    console.log('Using fee rate:', actualFeeRate, 'sat/vB');
 
     const isDeveloper = DEVELOPER_ADDRESSES.includes(state.address || '');
     const additionalFee = isDeveloper ? 0 : 500;
@@ -272,14 +259,6 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
     const numOutputs = 3;
     const estimatedSize = numInputs * 68 + numOutputs * 31 + 10;
     const calculatedFee = Math.ceil(estimatedSize * actualFeeRate);
-    console.log('Transaction details:', {
-      inputs: numInputs,
-      outputs: numOutputs,
-      estimatedSize: estimatedSize + ' vBytes',
-      feeRate: actualFeeRate + ' sat/vB',
-      calculatedFee: calculatedFee + ' sats',
-      additionalFee: additionalFee + ' sats',
-    });
 
     const change = inputSum - amountSats - additionalFee - calculatedFee;
 
@@ -313,10 +292,8 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
     psbt.finalizeAllInputs();
 
     const txHex = psbt.extractTransaction().toHex();
-    console.log('Transaction signed:', { txHex });
 
     const txid = await esploraService.broadcastTransaction(txHex);
-    console.log('Transaction broadcast:', { txid });
 
     setTimeout(() => refreshBalance(), 2000);
 
@@ -324,14 +301,10 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
   };
 
   const loadWallet = async () => {
-    console.log('Loading wallet from storage...');
-    console.log('Platform:', Platform.OS);
     try {
       const hasWallet = await AsyncStorage.getItem(STORAGE_KEYS.HAS_WALLET);
       const isTestnetStr = await AsyncStorage.getItem(STORAGE_KEYS.IS_TESTNET);
       const isTestnet = isTestnetStr === 'true';
-
-      console.log('Wallet storage check:', { hasWallet, isTestnet });
 
       esploraService.setNetwork(isTestnet);
 
@@ -339,9 +312,7 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
         const mnemonic = await getSecurely(STORAGE_KEYS.MNEMONIC);
         
         if (mnemonic) {
-          console.log('Mnemonic loaded, deriving address...');
           const address = deriveAddressFromMnemonic(mnemonic, isTestnet);
-          console.log('Address derived:', address);
 
           setState(prev => ({
             ...prev,
@@ -351,17 +322,13 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
             hasWallet: true,
             isLoading: false,
           }));
-
-          console.log('Wallet loaded:', { address, isTestnet });
           
           setTimeout(async () => {
             try {
-              console.log('Fetching UTXOs for address:', address);
               const utxos = await esploraService.getAddressUTXOs(address);
               const confirmedUtxos = utxos.filter(utxo => utxo.status.confirmed);
               const balance = confirmedUtxos.reduce((sum, utxo) => sum + utxo.value, 0);
               const transactions = await esploraService.getAddressTransactions(address);
-              console.log('Balance fetched:', { balance, utxoCount: utxos.length });
               setState(prev => ({ ...prev, balance, utxos, transactions }));
             } catch (balanceError) {
               console.error('Error fetching balance:', balanceError);
@@ -369,8 +336,6 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
           }, 100);
 
           return;
-        } else {
-          console.log('No mnemonic found in secure storage');
         }
       }
 
@@ -379,14 +344,8 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
         isTestnet,
         isLoading: false,
       }));
-
-      console.log('No wallet found');
     } catch (error) {
       console.error('Error loading wallet:', error);
-      if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-      }
       setState(prev => ({
         ...prev,
         isLoading: false,

@@ -8,6 +8,7 @@ import { useUsername } from '@/contexts/UsernameContext';
 import { ArrowLeft, Share2, ExternalLink, Copy } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -116,10 +117,8 @@ export default function ReceiveScreen() {
           if (requestedAmount > 0) {
             const btcAmount = requestedAmount / 100000000;
             qrContent = `bitcoin:${address}?amount=${btcAmount}`;
-            console.log('Génération QR avec montant:', qrContent);
           }
           const matrix = await generateQRMatrix(qrContent);
-          console.log('QR Code généré pour:', qrContent, 'taille:', matrix.length);
           setQrMatrix(matrix);
         } catch (err) {
           console.error('Erreur génération QR:', err);
@@ -158,11 +157,10 @@ export default function ReceiveScreen() {
     if (!address) return;
     try {
       await Clipboard.setStringAsync(address);
-      if (Platform.OS === 'web') {
-        Alert.alert('Copié', 'Adresse copiée dans le presse-papier');
-      } else {
-        Alert.alert('Copié', 'Adresse copiée dans le presse-papier');
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
+      Alert.alert('Copié', 'Adresse copiée dans le presse-papier');
     } catch (error) {
       console.error('Erreur copie:', error);
       Alert.alert('Erreur', 'Impossible de copier l\'adresse');

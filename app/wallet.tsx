@@ -7,6 +7,7 @@ import { ArrowUpRight, ArrowDownLeft, QrCode, Settings, X } from 'lucide-react-n
 import { useState, useRef } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -37,6 +38,9 @@ export default function WalletScreen() {
   const hasSelectedTokens = getTotalAmount() > 0;
 
   const handleTokenPress = (value: number) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     setTokenCounts(prev => ({
       ...prev,
       [value]: prev[value] + 1,
@@ -44,6 +48,9 @@ export default function WalletScreen() {
   };
 
   const handleTokenLongPress = (value: number) => {
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
     setTokenCounts(prev => ({
       ...prev,
       [value]: 0,
@@ -59,11 +66,17 @@ export default function WalletScreen() {
   };
 
   const handleReceive = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     const amount = getTotalAmount();
     router.push({ pathname: '/receive', params: { amount: amount.toString() } });
   };
 
   const handleSend = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     const amount = getTotalAmount();
     router.push({ 
       pathname: '/send', 
@@ -89,7 +102,6 @@ export default function WalletScreen() {
 
   const handleBarcodeScanned = (data: string) => {
     setShowScanner(false);
-    console.log('QR Code scanné:', data);
     
     let address = data;
     let amount = 0;
@@ -105,7 +117,6 @@ export default function WalletScreen() {
         
         if (amountBtc) {
           amount = Math.floor(parseFloat(amountBtc) * 100000000);
-          console.log('Montant détecté dans le QR:', amount, 'Btcon');
         }
       }
     }
