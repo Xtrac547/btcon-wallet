@@ -200,18 +200,11 @@ export default function WalletScreen() {
         ]}
       >
         <View style={[styles.selectionContent, hasSelectedTokens && styles.contentAtBottom]}>
-          {!hasSelectedTokens && (
-            <View style={styles.balanceSection}>
-              <Text style={styles.balanceLabel}>SOLDE</Text>
-              
-              <View style={styles.balanceRow}>
-                <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-                <Text style={styles.balanceUnit}>Btcon</Text>
-              </View>
-
-              <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
-            </View>
-          )}
+          <View style={styles.balanceCompact}>
+            <Text style={styles.balanceCompactText}>
+              {balance.toLocaleString()} Btcon = {euroValue} €
+            </Text>
+          </View>
 
           <View style={styles.tokensSection}>
             <View style={styles.labelRow}>
@@ -270,19 +263,6 @@ export default function WalletScreen() {
               </View>
             </View>
           </View>
-
-          {hasSelectedTokens && (
-            <View style={styles.balanceSection}>
-              <Text style={styles.balanceLabel}>SOLDE</Text>
-              
-              <View style={styles.balanceRow}>
-                <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-                <Text style={styles.balanceUnit}>Btcon</Text>
-              </View>
-
-              <Text style={styles.euroAmount}>≈ {euroValue} €</Text>
-            </View>
-          )}
         </View>
       </Animated.View>
 
@@ -377,44 +357,21 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: 160,
   },
-  balanceSection: {
+  balanceCompact: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     backgroundColor: '#0f0f0f',
-    padding: 24,
-    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: 'rgba(255, 140, 0, 0.2)',
   },
-  balanceLabel: {
-    color: '#888888',
-    fontSize: 16,
-    fontWeight: '600' as const,
-    marginBottom: 16,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 2,
-  },
-  balanceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 12,
-    marginBottom: 12,
-  },
-  balanceAmount: {
+  balanceCompactText: {
     color: '#FFFFFF',
-    fontSize: 56,
-    fontWeight: '900' as const,
-    letterSpacing: -2,
-  },
-  balanceUnit: {
-    color: '#FF8C00',
-    fontSize: 24,
-    fontWeight: '800' as const,
-  },
-  euroAmount: {
-    color: '#FF8C00',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700' as const,
+    letterSpacing: 0.5,
   },
   addressContainer: {
     marginTop: 24,
