@@ -604,8 +604,8 @@ const styles = StyleSheet.create({
     borderColor: '#75ADE0',
   },
   token5000: {
-    backgroundColor: '#FF9F47',
-    borderColor: '#FFB366',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
   },
   tokenSquare: {
     width: '100%',
