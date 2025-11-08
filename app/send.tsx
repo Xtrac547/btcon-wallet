@@ -25,7 +25,6 @@ export default function SendScreen() {
   const { following } = useFollowing();
   const { isDeveloper } = useDeveloperHierarchy();
   const { width } = useWindowDimensions();
-  const isWideScreen = width > 768;
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -213,27 +212,20 @@ export default function SendScreen() {
         if (amountBtc) {
           const amountSats = Math.floor(parseFloat(amountBtc) * 100000000);
           
-          Alert.alert(
-            'Demande de paiement détectée',
-            `Adresse: ${address.slice(0, 10)}...\n\nMontant demandé: ${amountSats.toLocaleString()} Btcon\n\nCe montant sera prérempli dans le formulaire.`,
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  setToAddress(address);
-                  
-                  const tokens1000 = Math.floor(amountSats / 1000);
-                  const remaining = amountSats % 1000;
-                  
-                  setTokenCounts({
-                    1000: tokens1000,
-                    5000: 0,
-                    50000: 0,
-                  });
-                },
-              },
-            ]
-          );
+          setToAddress(address);
+          
+          const tokens1000 = Math.floor(amountSats / 1000);
+          
+          setTokenCounts({
+            1000: tokens1000,
+            5000: 0,
+            50000: 0,
+          });
+          
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 300);
+          
           return;
         }
       }
@@ -241,9 +233,6 @@ export default function SendScreen() {
     
     setToAddress(address);
   };
-
-  const contentMaxWidth = isWideScreen ? 800 : width;
-  const contentPadding = isWideScreen ? 40 : 24;
 
   return (
     <View style={styles.container}>
@@ -264,7 +253,7 @@ export default function SendScreen() {
           />
         ))}
       </View>
-      <View style={[styles.header, isWideScreen && styles.headerWide]}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
@@ -281,7 +270,7 @@ export default function SendScreen() {
       <ScrollView 
         ref={scrollViewRef}
         style={styles.scrollView} 
-        contentContainerStyle={[styles.content, { paddingHorizontal: contentPadding, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -1037,13 +1026,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   scannerHeader: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    zIndex: 10,
   },
   scannerTitle: {
     color: '#FFF',
@@ -1052,23 +1046,32 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 8,
+    backgroundColor: 'rgba(255, 140, 0, 0.2)',
+    borderRadius: 12,
   },
   camera: {
     flex: 1,
   },
   scannerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   scannerFrame: {
-    width: 280,
-    height: 280,
-    borderWidth: 3,
+    width: '80%',
+    aspectRatio: 1,
+    maxWidth: 340,
+    maxHeight: 340,
+    borderWidth: 4,
     borderColor: '#FF8C00',
-    borderRadius: 24,
+    borderRadius: 32,
     backgroundColor: 'transparent',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 10,
   },
   headerWide: {
     paddingHorizontal: 40,
