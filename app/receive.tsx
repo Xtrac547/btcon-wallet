@@ -95,16 +95,13 @@ export default function ReceiveScreen() {
   const handleShare = useCallback(async () => {
     if (!address) return;
     try {
-      let message = `Mon adresse Bitcoin: ${address}`;
-      if (requestedAmount > 0) {
-        const btcAmount = requestedAmount / 100000000;
-        message = `Demande de paiement Bitcoin\n\nMontant: ${requestedAmount.toLocaleString()} Btcon (${btcAmount.toFixed(8)} BTC)\n\nAdresse: ${address}\n\nURI: bitcoin:${address}?amount=${btcAmount}`;
-      }
+      const btcAmount = 1000 / 100000000;
+      const message = `Montant: 1000 Btcon\nAdresse BTC: ${address}`;
       await Share.share({ message });
     } catch (error) {
       console.error('Erreur partage:', error);
     }
-  }, [address, requestedAmount]);
+  }, [address]);
 
   const handleExplorer = useCallback(() => {
     if (!address) return;
