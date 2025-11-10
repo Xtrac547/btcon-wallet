@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 
 const DEVELOPER_ADDRESSES = [
@@ -19,21 +19,23 @@ const generateColorFromAddress = (address: string): string => {
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 };
 
-const getQRColors = (address: string | null) => {
-  if (!address) {
-    return { background: '#FFFFFF', qr: '#000000' };
-  }
-  
-  if (DEVELOPER_ADDRESSES.includes(address)) {
-    return { background: '#001F3F', qr: '#FFD700' };
-  }
-  
-  const qrColor = generateColorFromAddress(address);
-  return { background: '#FFFFFF', qr: qrColor };
-};
+
 
 export const [QRColorProvider, useQRColor] = createContextHook(() => {
+  const getQRColors = useCallback((address: string | null) => {
+    if (!address) {
+      return { background: '#FFFFFF', qr: '#000000' };
+    }
+    
+    if (DEVELOPER_ADDRESSES.includes(address)) {
+      return { background: '#001F3F', qr: '#FFD700' };
+    }
+    
+    const qrColor = generateColorFromAddress(address);
+    return { background: '#FFFFFF', qr: qrColor };
+  }, []);
+
   return useMemo(() => ({
     getQRColors,
-  }), []);
+  }), [getQRColors]);
 });

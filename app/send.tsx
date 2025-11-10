@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
@@ -9,6 +9,7 @@ import { useFollowing } from '@/contexts/FollowingContext';
 import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
 import { ArrowLeft, Send, X, Users, Camera } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useResponsive } from '@/utils/responsive';
 
 export default function SendScreen() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function SendScreen() {
   const { following } = useFollowing();
   const { isDeveloper } = useDeveloperHierarchy();
   const { width } = useWindowDimensions();
+  const responsive = useResponsive();
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -66,26 +68,29 @@ export default function SendScreen() {
     return euro.toFixed(2);
   };
 
-  const getTotalAmount = (): number => {
+  const getTotalAmount = useCallback((): number => {
     return Object.entries(tokenCounts).reduce((total, [value, count]) => {
       return total + (Number(value) * count);
     }, 0);
-  };
+  }, [tokenCounts]);
 
-  const handleTokenPress = (value: number) => {
+  const totalAmount = useMemo(() => getTotalAmount(), [getTotalAmount]);
+  const euroValue = useMemo(() => btconToEuro(totalAmount), [totalAmount, btcPrice]);
+
+  const handleTokenPress = useCallback((value: number) => {
     setTokenCounts(prev => ({
       ...prev,
       [value]: prev[value] + 1
     }));
-  };
+  }, []);
 
-  const handleResetTokens = () => {
+  const handleResetTokens = useCallback(() => {
     setTokenCounts({
       1000: 0,
       5000: 0,
       50000: 0,
     });
-  };
+  }, []);
 
 
 
@@ -197,7 +202,7 @@ export default function SendScreen() {
     setShowScanner(true);
   };
 
-  const handleBarcodeScanned = (data: string) => {
+  const handleBarcodeScanned = useCallback((data: string) => {
     if (hasScanned) return;
     setHasScanned(true);
     setShowScanner(false);
@@ -236,7 +241,7 @@ export default function SendScreen() {
     }
     
     setToAddress(address);
-  };
+  }, [hasScanned, router, scrollViewRef]);
 
   return (
     <View style={styles.container}>
@@ -278,15 +283,15 @@ export default function SendScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {getTotalAmount() > 0 && (
+        {totalAmount > 0 && (
           <View style={styles.totalContainer}>
             <Text style={styles.totalLabel}>Montant:</Text>
             <View style={styles.totalRow}>
-              <Text style={styles.totalAmount}>{getTotalAmount().toLocaleString()}</Text>
-              <Text style={styles.totalUnit}>Btcon</Text>
+              <Text style={[styles.totalAmount, { fontSize: responsive.scale(32) }]}>{totalAmount.toLocaleString()}</Text>
+              <Text style={[styles.totalUnit, { fontSize: responsive.scale(14) }]}>Btcon</Text>
             </View>
             <Text style={styles.conversionText}>
-              ≈ {btconToEuro(getTotalAmount())} €
+              ≈ {euroValue} €
             </Text>
           </View>
         )}
@@ -311,7 +316,7 @@ export default function SendScreen() {
         <View style={styles.formCard}>
           <View style={styles.labelWithReset}>
             <Text style={styles.inputLabel}>Sélectionner le montant</Text>
-            {getTotalAmount() > 0 && (
+            {totalAmount > 0 && (
               <TouchableOpacity onPress={handleResetTokens} style={styles.resetButton}>
                 <Text style={styles.resetText}>Réinitialiser</Text>
               </TouchableOpacity>
@@ -419,7 +424,7 @@ export default function SendScreen() {
           </View>
         )}
 
-        {getTotalAmount() > 0 && toAddress.trim() !== '' && (
+        {totalAmount > 0 && toAddress.trim() !== '' && (
           <TouchableOpacity
             style={[styles.sendButton, isSending && styles.sendButtonDisabled]}
             onPress={handleSend}

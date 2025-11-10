@@ -177,7 +177,7 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
     } catch (error) {
       console.error('Error refreshing balance:', error);
     }
-  }, [state.address]);
+  }, [state.address, esploraService]);
 
   const switchNetwork = async (isTestnet: boolean) => {
     esploraService.setNetwork(isTestnet);

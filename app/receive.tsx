@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Share, Linking, Alert, Platform, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -11,6 +11,7 @@ import * as Clipboard from 'expo-clipboard';
 import Svg, { Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useResponsive } from '@/utils/responsive';
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -20,12 +21,13 @@ export default function ReceiveScreen() {
   const { username } = useUsername();
   const { getQRColors } = useQRColor();
   const { width } = useWindowDimensions();
+  const responsive = useResponsive();
   const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [hasScanned, setHasScanned] = useState(false);
   
-  const requestedAmount = params.amount ? parseInt(params.amount) : 0;
+  const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
 
   useEffect(() => {
     if (!username) {
@@ -33,13 +35,15 @@ export default function ReceiveScreen() {
     }
   }, [username, router]);
 
-  const qrColors = getQRColors(address);
-  const currentArt = {
-    bg: qrColors.background,
-    fg: qrColors.qr,
-    accent: qrColors.qr,
-    borderGlow: qrColors.qr,
-  };
+  const currentArt = useMemo(() => {
+    const qrColors = getQRColors(address);
+    return {
+      bg: qrColors.background,
+      fg: qrColors.qr,
+      accent: qrColors.qr,
+      borderGlow: qrColors.qr,
+    };
+  }, [address, getQRColors]);
 
   const generateQRMatrix = async (text: string): Promise<number[][]> => {
     try {
@@ -82,10 +86,13 @@ export default function ReceiveScreen() {
     }
   }, [address, requestedAmount]);
 
-  const padding = 32;
-  const qrArtSize = Math.min(width - 100, 320);
+  const padding = responsive.scale(32);
+  const qrArtSize = useMemo(() => {
+    const maxSize = responsive.isTablet ? 400 : 320;
+    return Math.min(width - 100, maxSize);
+  }, [width, responsive.isTablet]);
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     if (!address) return;
     try {
       let message = `Mon adresse Bitcoin: ${address}`;
@@ -97,18 +104,18 @@ export default function ReceiveScreen() {
     } catch (error) {
       console.error('Erreur partage:', error);
     }
-  };
+  }, [address, requestedAmount]);
 
-  const handleExplorer = () => {
+  const handleExplorer = useCallback(() => {
     if (!address) return;
     const url = `https://mempool.space/address/${address}`;
     Linking.openURL(url).catch(err => {
       console.error('Erreur ouverture explorateur:', err);
       Alert.alert('Erreur', 'Impossible d\'ouvrir l\'explorateur');
     });
-  };
+  }, [address]);
 
-  const handleCopyAddress = async () => {
+  const handleCopyAddress = useCallback(async () => {
     if (!address) return;
     try {
       await Clipboard.setStringAsync(address);
@@ -120,7 +127,7 @@ export default function ReceiveScreen() {
       console.error('Erreur copie:', error);
       Alert.alert('Erreur', 'Impossible de copier l\'adresse');
     }
-  };
+  }, [address]);
 
   const handleOpenScanner = async () => {
     if (!permission?.granted) {
@@ -134,7 +141,7 @@ export default function ReceiveScreen() {
     setShowScanner(true);
   };
 
-  const handleBarcodeScanned = (data: string) => {
+  const handleBarcodeScanned = useCallback((data: string) => {
     if (hasScanned) return;
     setHasScanned(true);
     setShowScanner(false);
@@ -177,7 +184,7 @@ export default function ReceiveScreen() {
         }
       });
     }
-  };
+  }, [hasScanned, router]);
 
   return (
     <View style={styles.container}>

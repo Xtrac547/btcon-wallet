@@ -4,10 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowUpRight, ArrowDownLeft, QrCode, Settings, X, Eye } from 'lucide-react-native';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
+import { useResponsive } from '@/utils/responsive';
 
 
 export default function WalletScreen() {
@@ -15,6 +16,7 @@ export default function WalletScreen() {
   const insets = useSafeAreaInsets();
   const { balance } = useWallet();
   const btcPrice = useBtcPrice();
+  const responsive = useResponsive();
 
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
@@ -34,15 +36,17 @@ export default function WalletScreen() {
   
 
 
-  const getTotalAmount = (): number => {
+  const getTotalAmount = useCallback((): number => {
     return Object.entries(tokenCounts).reduce((total, [value, count]) => {
       return total + (Number(value) * count);
     }, 0);
-  };
+  }, [tokenCounts]);
 
-  const hasSelectedTokens = getTotalAmount() > 0;
+  const totalAmount = useMemo(() => getTotalAmount(), [getTotalAmount]);
+  const hasSelectedTokens = totalAmount > 0;
+  const euroValueSelected = useMemo(() => totalAmount > 0 ? btconToEuro(totalAmount, btcPrice) : '0.00', [totalAmount, btcPrice]);
 
-  const handleTokenPress = (value: number) => {
+  const handleTokenPress = useCallback((value: number) => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -50,9 +54,9 @@ export default function WalletScreen() {
       ...prev,
       [value]: prev[value] + 1,
     }));
-  };
+  }, []);
 
-  const handleTokenLongPress = (value: number) => {
+  const handleTokenLongPress = useCallback((value: number) => {
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
@@ -60,39 +64,37 @@ export default function WalletScreen() {
       ...prev,
       [value]: 0,
     }));
-  };
+  }, []);
 
-  const resetAllTokens = () => {
+  const resetAllTokens = useCallback(() => {
     setTokenCounts({
       1000: 0,
       5000: 0,
       50000: 0,
     });
-  };
+  }, []);
 
-  const handleReceive = () => {
+  const handleReceive = useCallback(() => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    const amount = getTotalAmount();
-    router.push({ pathname: '/receive', params: { amount: amount.toString() } });
-  };
+    router.push({ pathname: '/receive', params: { amount: totalAmount.toString() } });
+  }, [totalAmount, router]);
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    const amount = getTotalAmount();
     router.push({ 
       pathname: '/send', 
       params: { 
-        preselectedAmount: amount.toString(),
+        preselectedAmount: totalAmount.toString(),
         token1000: tokenCounts[1000].toString(),
         token5000: tokenCounts[5000].toString(),
         token50000: tokenCounts[50000].toString()
       } 
     });
-  };
+  }, [totalAmount, tokenCounts, router]);
 
   const handleOpenScanner = async () => {
     if (!permission?.granted) {
@@ -105,7 +107,7 @@ export default function WalletScreen() {
     setShowScanner(true);
   };
 
-  const handleBarcodeScanned = (data: string) => {
+  const handleBarcodeScanned = useCallback((data: string) => {
     setShowScanner(false);
     
     let address = data;
@@ -142,7 +144,7 @@ export default function WalletScreen() {
         }
       });
     }
-  };
+  }, [router]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -222,8 +224,8 @@ export default function WalletScreen() {
           </View>
           
           <View style={styles.selectedAmountBox}>
-            <Text style={styles.selectedAmountText}>
-              {getTotalAmount().toLocaleString()} Btcon sélectionné = {getTotalAmount() > 0 ? btconToEuro(getTotalAmount(), btcPrice) : '0.00'} €
+            <Text style={[styles.selectedAmountText, { fontSize: responsive.scale(15) }]}>
+              {totalAmount.toLocaleString()} Btcon sélectionné = {euroValueSelected} €
             </Text>
           </View>
 
@@ -231,7 +233,7 @@ export default function WalletScreen() {
           <View style={styles.tokensSection}>
             <View style={styles.labelRow}>
               <Text style={styles.tokensLabel}>Jetons</Text>
-              {getTotalAmount() > 0 && (
+              {totalAmount > 0 && (
                 <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
                   <Text style={styles.resetText}>Réinitialiser</Text>
                 </TouchableOpacity>
@@ -252,8 +254,8 @@ export default function WalletScreen() {
                       onPress={() => handleTokenPress(value)}
                       onLongPress={() => handleTokenLongPress(value)}
                     >
-                      <Text style={styles.tokenValue}>{value}</Text>
-                      <Text style={styles.tokenUnit}>BTCON</Text>
+                      <Text style={[styles.tokenValue, { fontSize: responsive.scale(28) }]}>{value}</Text>
+                      <Text style={[styles.tokenUnit, { fontSize: responsive.scale(11) }]}>BTCON</Text>
                       {tokenCounts[value] > 0 && (
                         <View style={styles.countBadge}>
                           <Text style={styles.countText}>{tokenCounts[value]}x</Text>
@@ -273,8 +275,8 @@ export default function WalletScreen() {
                     onPress={() => handleTokenPress(50000)}
                     onLongPress={() => handleTokenLongPress(50000)}
                   >
-                    <Text style={styles.tokenValue}>50000</Text>
-                    <Text style={styles.tokenUnit}>BTCON</Text>
+                    <Text style={[styles.tokenValue, { fontSize: responsive.scale(28) }]}>50000</Text>
+                    <Text style={[styles.tokenUnit, { fontSize: responsive.scale(11) }]}>BTCON</Text>
                     {tokenCounts[50000] > 0 && (
                       <View style={styles.countBadge}>
                         <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
