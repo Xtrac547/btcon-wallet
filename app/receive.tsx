@@ -6,7 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
-import { ArrowLeft, Share2, ExternalLink, Copy, Send, Camera, X } from 'lucide-react-native';
+import { ArrowLeft, Share2, ExternalLink, Copy, Camera, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import Svg, { Rect } from 'react-native-svg';
@@ -114,7 +114,6 @@ export default function ReceiveScreen() {
       
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: `Montant: 1000 Btcon\nAdresse BTC: ${address}`,
       });
       
       if (Platform.OS !== 'web') {
@@ -225,50 +224,43 @@ export default function ReceiveScreen() {
               <Text style={styles.amountBannerUnit}>Btcon</Text>
             </View>
             <Text style={styles.amountBannerBtc}>{(requestedAmount / 100000000).toFixed(8)} BTC</Text>
-            <TouchableOpacity 
-              style={styles.sendPaymentButton}
-              onPress={() => {
-                const token1000 = Math.floor(requestedAmount / 1000);
-                router.push({
-                  pathname: '/send',
-                  params: {
-                    token1000: token1000.toString(),
-                    token5000: '0',
-                    token50000: '0',
-                  }
-                });
-              }}
-            >
-              <Send color="#FFF" size={20} />
-              <Text style={styles.sendPaymentButtonText}>Envoyer ce montant</Text>
-            </TouchableOpacity>
           </View>
         )}
 
         <View style={styles.qrCodeContainer}>
           {qrMatrix.length > 0 ? (
             <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
-              <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
-                <Svg width={qrArtSize} height={qrArtSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
-                  {qrMatrix.map((row, y) => 
-                    row.map((cell, x) => {
-                      if (cell === 1) {
-                        return (
-                          <Rect
-                            key={`${y}-${x}`}
-                            x={x}
-                            y={y}
-                            width={1}
-                            height={1}
-                            fill={currentArt.fg}
-                            rx={0.15}
-                          />
-                        );
-                      }
-                      return null;
-                    })
-                  )}
-                </Svg>
+              <View style={styles.shareContainer}>
+                <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
+                  <Svg width={qrArtSize} height={qrArtSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                    {qrMatrix.map((row, y) => 
+                      row.map((cell, x) => {
+                        if (cell === 1) {
+                          return (
+                            <Rect
+                              key={`${y}-${x}`}
+                              x={x}
+                              y={y}
+                              width={1}
+                              height={1}
+                              fill={currentArt.fg}
+                              rx={0.15}
+                            />
+                          );
+                        }
+                        return null;
+                      })
+                    )}
+                  </Svg>
+                </View>
+                {requestedAmount > 0 && (
+                  <View style={styles.shareAmountInfo}>
+                    <Text style={styles.shareAmountText}>Montant: {requestedAmount.toLocaleString()} Btcon</Text>
+                  </View>
+                )}
+                <View style={styles.shareAddressInfo}>
+                  <Text style={styles.shareAddressText}>{address}</Text>
+                </View>
               </View>
             </ViewShot>
           ) : (
@@ -602,5 +594,40 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 20,
     elevation: 10,
+  },
+  shareContainer: {
+    alignItems: 'center',
+    backgroundColor: '#000',
+    padding: 24,
+  },
+  shareAmountInfo: {
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(255, 140, 0, 0.2)',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FF8C00',
+  },
+  shareAmountText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '700' as const,
+    textAlign: 'center' as const,
+  },
+  shareAddressInfo: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    maxWidth: 320,
+  },
+  shareAddressText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600' as const,
+    fontFamily: 'monospace' as const,
+    textAlign: 'center' as const,
   },
 });
