@@ -6,6 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
+import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { ArrowLeft, Share2, ExternalLink, Copy, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
@@ -29,8 +30,10 @@ export default function ReceiveScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [hasScanned, setHasScanned] = useState(false);
   const viewShotRef = useRef<ViewShot>(null);
+  const btcPrice = useBtcPrice();
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
+  const euroAmount = useMemo(() => requestedAmount > 0 ? btconToEuro(requestedAmount, btcPrice) : '0', [requestedAmount, btcPrice]);
 
   useEffect(() => {
     if (!username) {
@@ -240,8 +243,8 @@ export default function ReceiveScreen() {
                   <View style={styles.shareAmountInfo}>
                     <Text style={styles.shareAmountLabel}>Montant demandé</Text>
                     <View style={styles.shareAmountRow}>
-                      <Text style={styles.shareAmountValue}>{requestedAmount.toLocaleString()}</Text>
-                      <Text style={styles.shareAmountUnit}>Btcon</Text>
+                      <Text style={styles.shareAmountValue}>{euroAmount}</Text>
+                      <Text style={styles.shareAmountUnit}>€</Text>
                     </View>
                     <Text style={styles.shareAmountBtc}>{(requestedAmount / 100000000).toFixed(8)} BTC</Text>
                   </View>
