@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Share, Linking, Alert, Platform, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -12,6 +12,7 @@ import Svg, { Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useResponsive } from '@/utils/responsive';
+import ViewShot from 'react-native-view-shot';
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function ReceiveScreen() {
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [hasScanned, setHasScanned] = useState(false);
+  const viewShotRef = useRef<ViewShot>(null);
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
 
@@ -93,13 +95,20 @@ export default function ReceiveScreen() {
   }, [width, responsive.isTablet]);
 
   const handleShare = useCallback(async () => {
-    if (!address) return;
+    if (!address || !viewShotRef.current) return;
     try {
-      const btcAmount = 1000 / 100000000;
+      const uri = await viewShotRef.current.capture();
       const message = `Montant: 1000 Btcon\nAdresse BTC: ${address}`;
-      await Share.share({ message });
+      await Share.share({
+        message,
+        url: Platform.OS === 'ios' ? uri : `file://${uri}`,
+      });
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     } catch (error) {
       console.error('Erreur partage:', error);
+      Alert.alert('Erreur', 'Impossible de partager le QR code');
     }
   }, [address]);
 
@@ -224,28 +233,30 @@ export default function ReceiveScreen() {
 
         <View style={styles.qrCodeContainer}>
           {qrMatrix.length > 0 ? (
-            <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
-              <Svg width={qrArtSize} height={qrArtSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
-                {qrMatrix.map((row, y) => 
-                  row.map((cell, x) => {
-                    if (cell === 1) {
-                      return (
-                        <Rect
-                          key={`${y}-${x}`}
-                          x={x}
-                          y={y}
-                          width={1}
-                          height={1}
-                          fill={currentArt.fg}
-                          rx={0.15}
-                        />
-                      );
-                    }
-                    return null;
-                  })
-                )}
-              </Svg>
-            </View>
+            <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
+              <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
+                <Svg width={qrArtSize} height={qrArtSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                  {qrMatrix.map((row, y) => 
+                    row.map((cell, x) => {
+                      if (cell === 1) {
+                        return (
+                          <Rect
+                            key={`${y}-${x}`}
+                            x={x}
+                            y={y}
+                            width={1}
+                            height={1}
+                            fill={currentArt.fg}
+                            rx={0.15}
+                          />
+                        );
+                      }
+                      return null;
+                    })
+                  )}
+                </Svg>
+              </View>
+            </ViewShot>
           ) : (
             <View style={[styles.qrPlaceholder, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
               <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
