@@ -68,29 +68,24 @@ export default function SendScreen() {
     return euro.toFixed(2);
   };
 
-  const getTotalAmount = useCallback((): number => {
-    return Object.entries(tokenCounts).reduce((total, [value, count]) => {
-      return total + (Number(value) * count);
-    }, 0);
-  }, [tokenCounts]);
+  const [amountInput, setAmountInput] = useState('');
 
-  const totalAmount = useMemo(() => getTotalAmount(), [getTotalAmount]);
-  const euroValue = useMemo(() => btconToEuro(totalAmount), [totalAmount, btcPrice]);
+  const handleAmountChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) return;
+    if (parts[1] && parts[1].length > 2) return;
+    setAmountInput(cleaned);
+  };
 
-  const handleTokenPress = useCallback((value: number) => {
-    setTokenCounts(prev => ({
-      ...prev,
-      [value]: prev[value] + 1
-    }));
-  }, []);
+  const euroAmount = useMemo(() => parseFloat(amountInput) || 0, [amountInput]);
+  const totalAmount = useMemo(() => {
+    if (euroAmount === 0 || btcPrice === 0) return 0;
+    const btcAmount = euroAmount / btcPrice;
+    return Math.floor(btcAmount * 100000000);
+  }, [euroAmount, btcPrice]);
 
-  const handleResetTokens = useCallback(() => {
-    setTokenCounts({
-      1000: 0,
-      5000: 0,
-      50000: 0,
-    });
-  }, []);
+
 
 
 
@@ -121,7 +116,7 @@ export default function SendScreen() {
       }
     }
 
-    const totalAmount = getTotalAmount();
+
 
     if (totalAmount === 0) {
       Alert.alert('Error', 'Veuillez sélectionner un montant');
@@ -150,7 +145,7 @@ export default function SendScreen() {
     
     Alert.alert(
       'Confirmer la transaction',
-      `Montant: ${Math.floor(btconAmount).toLocaleString()} Btcon\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}${feeMessage}\n\nTotal à déduire: ${(satsAmount + totalFeesInSats).toLocaleString()} Btcon`,
+      `Montant: ${euroAmount.toFixed(2)} €\n(${Math.floor(btconAmount).toLocaleString()} Btcon)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}${feeMessage}\n\nTotal à déduire: ${(satsAmount + totalFeesInSats).toLocaleString()} Btcon`,
       [
         {
           text: 'Annuler',
@@ -223,13 +218,8 @@ export default function SendScreen() {
           
           setToAddress(address);
           
-          const tokens1000 = Math.floor(amountSats / 1000);
-          
-          setTokenCounts({
-            1000: tokens1000,
-            5000: 0,
-            50000: 0,
-          });
+          const euroValue = (amountSats / 100000000) * btcPrice;
+          setAmountInput(euroValue.toFixed(2));
           
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -283,15 +273,15 @@ export default function SendScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {totalAmount > 0 && (
+        {euroAmount > 0 && (
           <View style={styles.totalContainer}>
             <Text style={styles.totalLabel}>Montant:</Text>
             <View style={styles.totalRow}>
-              <Text style={[styles.totalAmount, { fontSize: responsive.scale(32) }]}>{totalAmount.toLocaleString()}</Text>
-              <Text style={[styles.totalUnit, { fontSize: responsive.scale(14) }]}>Btcon</Text>
+              <Text style={[styles.totalAmount, { fontSize: responsive.scale(32) }]}>{euroAmount.toFixed(2)}</Text>
+              <Text style={[styles.totalUnit, { fontSize: responsive.scale(14) }]}>€</Text>
             </View>
             <Text style={styles.conversionText}>
-              ≈ {euroValue} €
+              ≈ {totalAmount.toLocaleString()} Btcon
             </Text>
           </View>
         )}
@@ -311,70 +301,24 @@ export default function SendScreen() {
               />
             </View>
           </View>
-        </View>
 
-        <View style={styles.formCard}>
-          <View style={styles.labelWithReset}>
-            <Text style={styles.inputLabel}>Sélectionner le montant</Text>
-            {totalAmount > 0 && (
-              <TouchableOpacity onPress={handleResetTokens} style={styles.resetButton}>
-                <Text style={styles.resetText}>Réinitialiser</Text>
-              </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Montant en €</Text>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                value={amountInput}
+                onChangeText={handleAmountChange}
+                placeholder="0.00"
+                placeholderTextColor="#666"
+                keyboardType="decimal-pad"
+              />
+            </View>
+            {euroAmount > 0 && (
+              <Text style={styles.conversionText}>
+                ≈ {totalAmount.toLocaleString()} Btcon
+              </Text>
             )}
-          </View>
-          
-          <View style={styles.tokensContainer}>
-            <View style={styles.topTokensRow}>
-              <View style={styles.tokenWrapper}>
-                <TouchableOpacity
-                  style={styles.tokenCircle}
-                  onPress={() => handleTokenPress(1000)}
-                  activeOpacity={0.7}
-                >
-                  {tokenCounts[1000] > 0 && (
-                    <View style={styles.countBadge}>
-                      <Text style={styles.countText}>{tokenCounts[1000]}</Text>
-                    </View>
-                  )}
-                  <Text style={styles.tokenValue}>1000</Text>
-                  <Text style={styles.tokenUnit}>Btcon</Text>
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.tokenWrapper}>
-                <TouchableOpacity
-                  style={[styles.tokenCircle, styles.token5000White]}
-                  onPress={() => handleTokenPress(5000)}
-                  activeOpacity={0.7}
-                >
-                  {tokenCounts[5000] > 0 && (
-                    <View style={styles.countBadge}>
-                      <Text style={styles.countText}>{tokenCounts[5000]}</Text>
-                    </View>
-                  )}
-                  <Text style={[styles.tokenValue, styles.tokenValueWhite]}>5000</Text>
-                  <Text style={[styles.tokenUnit, styles.tokenUnitWhite]}>Btcon</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            <View style={styles.bottomTokenRow}>
-              <View style={styles.tokenWrapper50k}>
-                <TouchableOpacity
-                  style={styles.tokenSquare}
-                  onPress={() => handleTokenPress(50000)}
-                  activeOpacity={0.7}
-                >
-                  {tokenCounts[50000] > 0 && (
-                    <View style={styles.countBadge}>
-                      <Text style={styles.countText}>{tokenCounts[50000]}</Text>
-                    </View>
-                  )}
-                  <Text style={styles.tokenValue}>50,000</Text>
-                  <Text style={styles.tokenUnit}>Btcon</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
           </View>
         </View>
 
