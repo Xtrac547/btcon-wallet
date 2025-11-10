@@ -1,6 +1,6 @@
 import '@/utils/shim';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Share, Linking, Alert, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Linking, Alert, Platform, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
@@ -8,6 +8,7 @@ import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
 import { ArrowLeft, Share2, ExternalLink, Copy, Send, Camera, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
+import * as Sharing from 'expo-sharing';
 import Svg, { Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -97,18 +98,31 @@ export default function ReceiveScreen() {
   const handleShare = useCallback(async () => {
     if (!address || !viewShotRef.current) return;
     try {
+      if (Platform.OS === 'web') {
+        Alert.alert('Non disponible', 'Le partage n\'est pas disponible sur le web');
+        return;
+      }
+
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+        return;
+      }
+
       const uri = await viewShotRef.current.capture();
-      const message = `Montant: 1000 Btcon\nAdresse BTC: ${address}`;
-      await Share.share({
-        message,
-        url: Platform.OS === 'ios' ? uri : `file://${uri}`,
+      console.log('QR code capturé:', uri);
+      
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: `Montant: 1000 Btcon\nAdresse BTC: ${address}`,
       });
+      
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (error) {
       console.error('Erreur partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager le QR code');
+      Alert.alert('Erreur', 'Impossible de partager le QR code: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
     }
   }, [address]);
 
