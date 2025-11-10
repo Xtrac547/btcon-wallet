@@ -6,7 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
-import { ArrowLeft, Share2, ExternalLink, Copy, Camera, X } from 'lucide-react-native';
+import { ArrowLeft, Share2, ExternalLink, Copy, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import Svg, { Rect } from 'react-native-svg';
@@ -148,17 +148,7 @@ export default function ReceiveScreen() {
     }
   }, [address]);
 
-  const handleOpenScanner = async () => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) {
-        Alert.alert('Permission refusée', 'Veuillez autoriser l\'accès à la caméra');
-        return;
-      }
-    }
-    setHasScanned(false);
-    setShowScanner(true);
-  };
+
 
   const handleBarcodeScanned = useCallback((data: string) => {
     if (hasScanned) return;
@@ -287,7 +277,7 @@ export default function ReceiveScreen() {
                 onPress={handleShare} 
                 style={[styles.actionButton, { borderColor: currentArt.accent }]}
               >
-                <Share2 color={currentArt.accent} size={20} />
+                <Share2 color={currentArt.accent} size={22} />
                 <Text style={[styles.actionButtonText, { color: currentArt.accent }]}>Partager</Text>
               </TouchableOpacity>
 
@@ -295,18 +285,10 @@ export default function ReceiveScreen() {
                 onPress={handleExplorer} 
                 style={[styles.actionButton, { borderColor: currentArt.accent }]}
               >
-                <ExternalLink color={currentArt.accent} size={20} />
+                <ExternalLink color={currentArt.accent} size={22} />
                 <Text style={[styles.actionButtonText, { color: currentArt.accent }]}>Explorateur</Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity 
-              onPress={handleOpenScanner}
-              style={[styles.scannerButton, { borderColor: currentArt.accent, backgroundColor: `${currentArt.accent}15` }]}
-            >
-              <Camera color={currentArt.accent} size={20} />
-              <Text style={[styles.scannerButtonText, { color: currentArt.accent }]}>Scanner un QR Code</Text>
-            </TouchableOpacity>
           </View>
         )}
       </View>
@@ -373,24 +355,24 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
+    paddingTop: 16,
   },
   qrCodeContainer: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    marginVertical: 32,
   },
   qrCodeWrapper: {
-    borderRadius: 28,
+    borderRadius: 24,
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.7,
-    shadowRadius: 32,
-    elevation: 16,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 140, 0, 0.3)',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 12,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 140, 0, 0.35)',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -410,15 +392,15 @@ const styles = StyleSheet.create({
   },
   addressContainer: {
     width: '100%',
-    marginTop: 32,
-    gap: 16,
+    gap: 20,
+    paddingBottom: 32,
   },
   addressBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
   },
   addressLabel: {
     color: 'rgba(255, 255, 255, 0.6)',
@@ -442,38 +424,44 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   actionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
+    gap: 10,
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   actionButtonText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
+    fontSize: 16,
+    fontWeight: '700' as const,
+    letterSpacing: 0.3,
   },
   amountBanner: {
     width: '100%',
-    backgroundColor: 'rgba(255, 140, 0, 0.15)',
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 24,
+    backgroundColor: 'rgba(255, 140, 0, 0.12)',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 140, 0, 0.4)',
+    borderColor: 'rgba(255, 140, 0, 0.35)',
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   amountBannerLabel: {
     color: 'rgba(255, 255, 255, 0.7)',
@@ -528,21 +516,7 @@ const styles = StyleSheet.create({
     fontWeight: '800' as const,
     letterSpacing: 0.5,
   },
-  scannerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    marginTop: 12,
-  },
-  scannerButtonText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-  },
+
   modalContainer: {
     flex: 1,
     backgroundColor: '#000',
