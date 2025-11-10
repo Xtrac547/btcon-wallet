@@ -221,6 +221,9 @@ export default function ReceiveScreen() {
           {qrMatrix.length > 0 ? (
             <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
               <View style={styles.shareContainer}>
+                <View style={styles.shareAddressInfo}>
+                  <Text style={styles.shareAddressText}>{address}</Text>
+                </View>
                 <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
                   <Svg width={qrArtSize} height={qrArtSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
                     {qrMatrix.map((row, y) => 
@@ -248,9 +251,6 @@ export default function ReceiveScreen() {
                     <Text style={styles.shareAmountText}>Montant: {requestedAmount.toLocaleString()} Btcon</Text>
                   </View>
                 )}
-                <View style={styles.shareAddressInfo}>
-                  <Text style={styles.shareAddressText}>{address}</Text>
-                </View>
               </View>
             </ViewShot>
           ) : (
@@ -262,33 +262,13 @@ export default function ReceiveScreen() {
 
         {address && (
           <View style={styles.addressContainer}>
-            <TouchableOpacity onPress={handleCopyAddress} style={styles.addressBox}>
-              <Text style={styles.addressLabel}>Adresse Bitcoin</Text>
-              <View style={styles.addressRow}>
-                <Text style={styles.addressText} numberOfLines={1} ellipsizeMode="middle">
-                  {address}
-                </Text>
-                <Copy color={currentArt.accent} size={18} />
-              </View>
+            <TouchableOpacity 
+              onPress={handleShare} 
+              style={[styles.actionButton, { borderColor: currentArt.accent }]}
+            >
+              <Share2 color={currentArt.accent} size={22} />
+              <Text style={[styles.actionButtonText, { color: currentArt.accent }]}>Partager</Text>
             </TouchableOpacity>
-
-            <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                onPress={handleShare} 
-                style={[styles.actionButton, { borderColor: currentArt.accent }]}
-              >
-                <Share2 color={currentArt.accent} size={22} />
-                <Text style={[styles.actionButtonText, { color: currentArt.accent }]}>Partager</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                onPress={handleExplorer} 
-                style={[styles.actionButton, { borderColor: currentArt.accent }]}
-              >
-                <ExternalLink color={currentArt.accent} size={22} />
-                <Text style={[styles.actionButtonText, { color: currentArt.accent }]}>Explorateur</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         )}
       </View>
@@ -590,7 +570,7 @@ const styles = StyleSheet.create({
     textAlign: 'center' as const,
   },
   shareAddressInfo: {
-    marginTop: 16,
+    marginBottom: 20,
     paddingVertical: 12,
     paddingHorizontal: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
