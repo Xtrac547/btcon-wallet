@@ -206,22 +206,12 @@ export default function ReceiveScreen() {
       </View>
 
       <View style={styles.content}>
-        {requestedAmount > 0 && (
-          <View style={styles.amountBanner}>
-            <Text style={styles.amountBannerLabel}>Montant demandé</Text>
-            <View style={styles.amountBannerRow}>
-              <Text style={styles.amountBannerValue}>{requestedAmount.toLocaleString()}</Text>
-              <Text style={styles.amountBannerUnit}>Btcon</Text>
-            </View>
-            <Text style={styles.amountBannerBtc}>{(requestedAmount / 100000000).toFixed(8)} BTC</Text>
-          </View>
-        )}
-
-        <View style={styles.qrCodeContainer}>
+        <View style={styles.qrSection}>
           {qrMatrix.length > 0 ? (
             <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
               <View style={styles.shareContainer}>
                 <View style={styles.shareAddressInfo}>
+                  <Text style={styles.shareAddressLabel}>Adresse BTC</Text>
                   <Text style={styles.shareAddressText}>{address}</Text>
                 </View>
                 <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
@@ -248,7 +238,12 @@ export default function ReceiveScreen() {
                 </View>
                 {requestedAmount > 0 && (
                   <View style={styles.shareAmountInfo}>
-                    <Text style={styles.shareAmountText}>Montant: {requestedAmount.toLocaleString()} Btcon</Text>
+                    <Text style={styles.shareAmountLabel}>Montant demandé</Text>
+                    <View style={styles.shareAmountRow}>
+                      <Text style={styles.shareAmountValue}>{requestedAmount.toLocaleString()}</Text>
+                      <Text style={styles.shareAmountUnit}>Btcon</Text>
+                    </View>
+                    <Text style={styles.shareAmountBtc}>{(requestedAmount / 100000000).toFixed(8)} BTC</Text>
                   </View>
                 )}
               </View>
@@ -261,15 +256,13 @@ export default function ReceiveScreen() {
         </View>
 
         {address && (
-          <View style={styles.addressContainer}>
-            <TouchableOpacity 
-              onPress={handleShare} 
-              style={[styles.actionButton, { borderColor: currentArt.accent }]}
-            >
-              <Share2 color={currentArt.accent} size={22} />
-              <Text style={[styles.actionButtonText, { color: currentArt.accent }]}>Partager</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            onPress={handleShare} 
+            style={[styles.shareButton, { backgroundColor: currentArt.accent }]}
+          >
+            <Share2 color="#000" size={24} />
+            <Text style={styles.shareButtonText}>Partager</Text>
+          </TouchableOpacity>
         )}
       </View>
 
@@ -337,22 +330,24 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 20,
+    paddingBottom: 32,
+    justifyContent: 'space-between',
   },
-  qrCodeContainer: {
-    alignItems: 'center',
+  qrSection: {
+    flex: 1,
     justifyContent: 'center',
-    marginVertical: 32,
+    alignItems: 'center',
   },
   qrCodeWrapper: {
-    borderRadius: 24,
+    borderRadius: 28,
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    elevation: 12,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 140, 0, 0.35)',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.6,
+    shadowRadius: 32,
+    elevation: 16,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -370,133 +365,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
   },
-  addressContainer: {
+  shareButton: {
     width: '100%',
-    gap: 20,
-    paddingBottom: 32,
-  },
-  addressBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 140, 0, 0.2)',
-  },
-  addressLabel: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 12,
-    fontWeight: '600' as const,
-    marginBottom: 8,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1,
-  },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  addressText: {
-    flex: 1,
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '500' as const,
-    fontFamily: 'monospace' as const,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  actionButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    borderWidth: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    letterSpacing: 0.3,
-  },
-  amountBanner: {
-    width: '100%',
-    backgroundColor: 'rgba(255, 140, 0, 0.12)',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 140, 0, 0.35)',
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  amountBannerLabel: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 13,
-    fontWeight: '600' as const,
-    marginBottom: 12,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1.5,
-  },
-  amountBannerRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
     gap: 12,
-    marginBottom: 8,
-  },
-  amountBannerValue: {
-    color: '#FFFFFF',
-    fontSize: 48,
-    fontWeight: '900' as const,
-    letterSpacing: -2,
-  },
-  amountBannerUnit: {
-    color: '#FF8C00',
-    fontSize: 20,
-    fontWeight: '800' as const,
-  },
-  amountBannerBtc: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 14,
-    fontWeight: '600' as const,
-    fontFamily: 'monospace' as const,
-  },
-  sendPaymentButton: {
-    marginTop: 16,
-    backgroundColor: '#FF8C00',
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 20,
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  sendPaymentButtonText: {
-    color: '#FFF',
-    fontSize: 16,
+  shareButtonText: {
+    color: '#000',
+    fontSize: 18,
     fontWeight: '800' as const,
     letterSpacing: 0.5,
   },
-
   modalContainer: {
     flex: 1,
     backgroundColor: '#000',
@@ -552,36 +441,76 @@ const styles = StyleSheet.create({
   shareContainer: {
     alignItems: 'center',
     backgroundColor: '#000',
-    padding: 24,
-  },
-  shareAmountInfo: {
-    marginTop: 20,
-    paddingVertical: 12,
+    paddingVertical: 32,
     paddingHorizontal: 24,
-    backgroundColor: 'rgba(255, 140, 0, 0.2)',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#FF8C00',
-  },
-  shareAmountText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '700' as const,
-    textAlign: 'center' as const,
+    borderRadius: 20,
   },
   shareAddressInfo: {
-    marginBottom: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    maxWidth: 320,
+    marginBottom: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+    maxWidth: 360,
+  },
+  shareAddressLabel: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 11,
+    fontWeight: '700' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1.2,
+    marginBottom: 8,
+    textAlign: 'center' as const,
   },
   shareAddressText: {
     color: '#FFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600' as const,
     fontFamily: 'monospace' as const,
     textAlign: 'center' as const,
+    lineHeight: 16,
+  },
+  shareAmountInfo: {
+    marginTop: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 32,
+    backgroundColor: 'rgba(255, 140, 0, 0.15)',
+    borderRadius: 18,
+    borderWidth: 2.5,
+    borderColor: '#FF8C00',
+    alignItems: 'center',
+  },
+  shareAmountLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '700' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1.5,
+    marginBottom: 10,
+  },
+  shareAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 10,
+    marginBottom: 6,
+  },
+  shareAmountValue: {
+    color: '#FFF',
+    fontSize: 36,
+    fontWeight: '900' as const,
+    letterSpacing: -1.5,
+  },
+  shareAmountUnit: {
+    color: '#FF8C00',
+    fontSize: 18,
+    fontWeight: '800' as const,
+  },
+  shareAmountBtc: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 13,
+    fontWeight: '600' as const,
+    fontFamily: 'monospace' as const,
   },
 });
