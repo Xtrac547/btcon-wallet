@@ -42,11 +42,6 @@ export default function SendScreen() {
   const [btcPrice, setBtcPrice] = useState(100000);
   const [hasScanned, setHasScanned] = useState(false);
   const [amountBtcon, setAmountBtcon] = useState(0);
-  const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
-    1000: 0,
-    5000: 0,
-    50000: 0,
-  });
 
   useEffect(() => {
     const fetchBtcPrice = async () => {
@@ -70,14 +65,7 @@ export default function SendScreen() {
     return euro.toFixed(2);
   };
 
-  const getTotalFromTokens = useCallback((): number => {
-    return Object.entries(tokenCounts).reduce((total, [value, count]) => {
-      return total + (Number(value) * count);
-    }, 0);
-  }, [tokenCounts]);
-
-  const totalFromTokens = useMemo(() => getTotalFromTokens(), [getTotalFromTokens]);
-  const totalAmount = amountBtcon > 0 ? amountBtcon : totalFromTokens;
+  const totalAmount = amountBtcon;
 
   const euroAmount = useMemo(() => {
     if (totalAmount === 0 || btcPrice === 0) return 0;
@@ -218,11 +206,6 @@ export default function SendScreen() {
           
           setToAddress(address);
           setAmountBtcon(amountSats);
-          setTokenCounts({
-            1000: 0,
-            5000: 0,
-            50000: 0,
-          });
           
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -236,35 +219,7 @@ export default function SendScreen() {
     setToAddress(address);
   }, [hasScanned, btcPrice, scrollViewRef]);
 
-  const handleTokenPress = useCallback((value: number) => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setTokenCounts(prev => ({
-      ...prev,
-      [value]: prev[value] + 1,
-    }));
-    setAmountBtcon(0);
-  }, []);
 
-  const handleTokenLongPress = useCallback((value: number) => {
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
-    setTokenCounts(prev => ({
-      ...prev,
-      [value]: 0,
-    }));
-  }, []);
-
-  const resetAllTokens = useCallback(() => {
-    setTokenCounts({
-      1000: 0,
-      5000: 0,
-      50000: 0,
-    });
-    setAmountBtcon(0);
-  }, []);
 
   return (
     <View style={styles.container}>
@@ -335,70 +290,6 @@ export default function SendScreen() {
             </Text>
           </View>
         )}
-
-        <View style={styles.tokensSection}>
-          <View style={styles.labelRow}>
-            <Text style={styles.tokensLabel}>Jetons</Text>
-            {totalAmount > 0 && (
-              <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
-                <Text style={styles.resetText}>Réinitialiser</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          
-          <View style={styles.tokensContainer}>
-            <View style={styles.topTokensRow}>
-              {[1000, 5000].map((value) => (
-                <View key={value} style={styles.tokenWrapper}>
-                  <Pressable
-                    style={[
-                      styles.tokenCircle,
-                      value === 1000 && styles.token1000,
-                      value === 5000 && styles.token5000White,
-                      tokenCounts[value] > 0 && styles.tokenSelected,
-                    ]}
-                    onPress={() => handleTokenPress(value)}
-                    onLongPress={() => handleTokenLongPress(value)}
-                  >
-                    <Text style={[
-                      value === 5000 && tokenCounts[value] === 0 ? styles.tokenValueWhite : styles.tokenValue, 
-                      { fontSize: responsive.scale(28) }
-                    ]}>{value}</Text>
-                    <Text style={[
-                      value === 5000 && tokenCounts[value] === 0 ? styles.tokenUnitWhite : styles.tokenUnit, 
-                      { fontSize: responsive.scale(11) }
-                    ]}>BTCON</Text>
-                    {tokenCounts[value] > 0 && (
-                      <View style={styles.countBadge}>
-                        <Text style={styles.countText}>{tokenCounts[value]}x</Text>
-                      </View>
-                    )}
-                  </Pressable>
-                </View>
-              ))}
-            </View>
-            <View style={styles.bottomTokenRow}>
-              <View style={styles.tokenWrapper50k}>
-                <Pressable
-                  style={[
-                    styles.tokenSquare,
-                    tokenCounts[50000] > 0 && styles.tokenSelected,
-                  ]}
-                  onPress={() => handleTokenPress(50000)}
-                  onLongPress={() => handleTokenLongPress(50000)}
-                >
-                  <Text style={[styles.tokenValue, { fontSize: responsive.scale(28) }]}>50000</Text>
-                  <Text style={[styles.tokenUnit, { fontSize: responsive.scale(11) }]}>BTCON</Text>
-                  {tokenCounts[50000] > 0 && (
-                    <View style={styles.countBadge}>
-                      <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
-                    </View>
-                  )}
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </View>
 
         <View style={styles.actionButtonsRow}>
           <TouchableOpacity
