@@ -1,14 +1,15 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder, Modal, Alert, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera } from 'lucide-react-native';
-import { useState, useRef, useMemo, useCallback } from 'react';
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useResponsive } from '@/utils/responsive';
+import QRCodeLib from 'qrcode';
 
 
 export default function WalletScreen() {
@@ -30,9 +31,33 @@ export default function WalletScreen() {
   const panY = useRef(0);
   
   const [showScanner, setShowScanner] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [permission, requestPermission] = useCameraPermissions();
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
+  const { address } = useWallet();
+
+  useEffect(() => {
+    const generateQRCode = async () => {
+      if (address) {
+        try {
+          const dataUrl = await QRCodeLib.toDataURL(`bitcoin:${address}`, {
+            width: 300,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF',
+            },
+          });
+          setQrCodeDataUrl(dataUrl);
+        } catch (error) {
+          console.error('Error generating QR code:', error);
+        }
+      }
+    };
+    generateQRCode();
+  }, [address]);
   
 
 
@@ -105,6 +130,10 @@ export default function WalletScreen() {
       }
     }
     setShowScanner(true);
+  };
+
+  const handleShowQRCode = () => {
+    setShowQRCode(true);
   };
 
   const handleBarcodeScanned = useCallback((data: string) => {
@@ -191,7 +220,7 @@ export default function WalletScreen() {
           
           <TouchableOpacity
             style={styles.topButton}
-            onPress={() => router.push('/receive')}
+            onPress={handleShowQRCode}
             testID="show-address-qr-button"
           >
             <QrCode color="#FF8C00" size={24} />
@@ -356,6 +385,50 @@ export default function WalletScreen() {
             </View>
           </CameraView>
         </View>
+      </Modal>
+
+      <Modal
+        visible={showQRCode}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowQRCode(false)}
+      >
+        <Pressable 
+          style={styles.qrModalOverlay}
+          onPress={() => setShowQRCode(false)}
+        >
+          <View style={styles.qrModalContent}>
+            <View style={styles.qrModalHeader}>
+              <Text style={styles.qrModalTitle}>Mon adresse Bitcoin</Text>
+              <TouchableOpacity
+                onPress={() => setShowQRCode(false)}
+                style={styles.qrCloseButton}
+                testID="close-qr-modal-button"
+              >
+                <X color="#FFF" size={24} />
+              </TouchableOpacity>
+            </View>
+            
+            {qrCodeDataUrl ? (
+              <View style={styles.qrCodeContainer}>
+                <Image
+                  source={{ uri: qrCodeDataUrl }}
+                  style={styles.qrCodeImage}
+                  resizeMode="contain"
+                />
+              </View>
+            ) : (
+              <View style={styles.qrCodeContainer}>
+                <Text style={styles.qrLoadingText}>Génération du QR code...</Text>
+              </View>
+            )}
+            
+            <View style={styles.qrAddressBox}>
+              <Text style={styles.qrAddressLabel}>ADRESSE BTCON</Text>
+              <Text style={styles.qrAddressText}>{address}</Text>
+            </View>
+          </View>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -728,5 +801,73 @@ const styles = StyleSheet.create({
     borderColor: '#FF8C00',
     borderRadius: 24,
     backgroundColor: 'transparent',
+  },
+  qrModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qrModalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 24,
+    padding: 24,
+    width: '90%',
+    maxWidth: 400,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+  },
+  qrModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  qrModalTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700' as const,
+  },
+  qrCloseButton: {
+    padding: 4,
+  },
+  qrCodeContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    minHeight: 300,
+  },
+  qrCodeImage: {
+    width: 300,
+    height: 300,
+  },
+  qrLoadingText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  qrAddressBox: {
+    backgroundColor: '#0f0f0f',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+  },
+  qrAddressLabel: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 10,
+    fontWeight: '700' as const,
+    letterSpacing: 1.5,
+    marginBottom: 8,
+    textAlign: 'center' as const,
+  },
+  qrAddressText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' || Platform.OS === 'android' ? 'Courier' : 'monospace',
+    textAlign: 'center' as const,
+    lineHeight: 18,
   },
 });
