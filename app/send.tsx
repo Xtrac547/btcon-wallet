@@ -247,7 +247,7 @@ export default function SendScreen() {
           style={styles.searchUsersButton}
           testID="search-users-button"
         >
-          <Users color="#FF8C00" size={24} />
+          <Users color="#FFD700" size={24} />
         </TouchableOpacity>
       </View>
 
@@ -295,7 +295,7 @@ export default function SendScreen() {
               onPress={handleOpenCamera}
               testID="scan-qr-button"
             >
-              <Camera color="#FF8C00" size={24} />
+              <Camera color="#FFD700" size={24} />
               <Text style={styles.cameraButtonText}>Scanner</Text>
             </TouchableOpacity>
             
@@ -304,7 +304,7 @@ export default function SendScreen() {
               onPress={() => router.push('/search-users')}
               testID="search-users-button-main"
             >
-              <Users color="#FF8C00" size={24} />
+              <Users color="#FFD700" size={24} />
               <Text style={styles.cameraButtonText}>Contacts</Text>
             </TouchableOpacity>
           </View>
@@ -394,7 +394,7 @@ export default function SendScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#0a0a0a',
     position: 'relative' as const,
   },
   backgroundPattern: {
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     position: 'absolute' as const,
     borderRadius: 1000,
     borderWidth: 3,
-    borderColor: '#FF8C00',
+    borderColor: '#FFD700',
   },
   patternSquare: {
     position: 'absolute' as const,
@@ -454,32 +454,34 @@ const styles = StyleSheet.create({
     paddingRight: 24,
   },
   followingCard: {
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#1a1a1a',
     borderRadius: 20,
     padding: 18,
     alignItems: 'center',
     gap: 10,
     minWidth: 110,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.15)',
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   followingAvatar: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#FF8C00',
+    backgroundColor: '#FFD700',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 10,
+    borderWidth: 2,
+    borderColor: '#CC9900',
   },
   followingAvatarText: {
     color: '#000',
@@ -549,18 +551,18 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   formCard: {
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#1a1a1a',
     borderRadius: 28,
     padding: 28,
     marginBottom: 0,
     gap: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
   },
   inputContainer: {
     gap: 8,
@@ -732,11 +734,16 @@ const styles = StyleSheet.create({
   totalContainer: {
     marginTop: 20,
     padding: 20,
-    backgroundColor: 'rgba(61, 40, 25, 0.8)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    borderRadius: 20,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 140, 0, 0.4)',
+    borderWidth: 3,
+    borderColor: '#FFD700',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 12,
   },
   totalLabel: {
     color: '#FFF',
@@ -755,9 +762,12 @@ const styles = StyleSheet.create({
     fontWeight: '900' as const,
   },
   totalUnit: {
-    color: '#FF8C00',
+    color: '#FFD700',
     fontSize: 14,
     fontWeight: '900' as const,
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   inputRow: {
     flexDirection: 'row',
@@ -851,64 +861,67 @@ const styles = StyleSheet.create({
   },
   cameraButton: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#1a1a1a',
     borderRadius: 20,
     padding: 20,
     alignItems: 'center',
     gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.15)',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
   },
   usersButton: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#1a1a1a',
     borderRadius: 20,
     padding: 20,
     alignItems: 'center',
     gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.15)',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
   },
   cameraButtonText: {
-    color: '#FF8C00',
+    color: '#FFD700',
     fontSize: 13,
-    fontWeight: '700' as const,
-    letterSpacing: 0.3,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(255, 215, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   sendButton: {
-    backgroundColor: '#FF8C00',
-    borderRadius: 20,
-    padding: 22,
+    backgroundColor: '#FFD700',
+    borderRadius: 24,
+    padding: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
     marginBottom: 20,
     marginTop: 8,
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.8,
+    shadowRadius: 24,
+    elevation: 16,
   },
   sendButtonDisabled: {
     opacity: 0.5,
   },
   sendButtonText: {
-    color: '#FFF',
+    color: '#000000',
     fontSize: 17,
     fontWeight: '900' as const,
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   infoCard: {
     backgroundColor: 'rgba(255, 140, 0, 0.05)',
@@ -955,17 +968,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   cameraContainer: {
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#1a1a1a',
     borderRadius: 28,
     overflow: 'hidden',
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.2)',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
   },
   cameraHeaderInline: {
     flexDirection: 'row',
@@ -981,8 +994,10 @@ const styles = StyleSheet.create({
   },
   closeCameraButton: {
     padding: 8,
-    backgroundColor: 'rgba(255, 140, 0, 0.2)',
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
   },
   cameraView: {
     width: '100%',
@@ -1001,7 +1016,7 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     maxHeight: 340,
     borderWidth: 4,
-    borderColor: '#FF8C00',
+    borderColor: '#FFD700',
     borderRadius: 32,
     backgroundColor: 'transparent',
     shadowColor: '#FF8C00',
