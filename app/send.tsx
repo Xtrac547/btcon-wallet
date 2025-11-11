@@ -16,9 +16,6 @@ export default function SendScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
     preselectedAmount?: string;
-    token1000?: string;
-    token5000?: string;
-    token50000?: string;
     address?: string;
   }>();
   const { balance, signAndBroadcastTransaction, esploraService, address } = useWallet();
@@ -41,7 +38,7 @@ export default function SendScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [btcPrice, setBtcPrice] = useState(100000);
   const [hasScanned, setHasScanned] = useState(false);
-  const [amountBtcon, setAmountBtcon] = useState(0);
+  const [amountBtcon, setAmountBtcon] = useState(params.preselectedAmount ? parseInt(params.preselectedAmount, 10) : 0);
 
   useEffect(() => {
     const fetchBtcPrice = async () => {
