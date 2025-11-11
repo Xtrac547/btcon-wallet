@@ -24,7 +24,7 @@ export default function WalletScreen() {
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
     5000: 0,
-    50000: 0,
+    10000: 0,
   });
   
 
@@ -78,7 +78,7 @@ export default function WalletScreen() {
     setTokenCounts({
       1000: 0,
       5000: 0,
-      50000: 0,
+      10000: 0,
     });
   }, []);
 
@@ -99,7 +99,7 @@ export default function WalletScreen() {
         preselectedAmount: totalAmount.toString(),
         token1000: tokenCounts[1000].toString(),
         token5000: tokenCounts[5000].toString(),
-        token50000: tokenCounts[50000].toString()
+        token10000: tokenCounts[10000].toString()
       } 
     });
   }, [totalAmount, tokenCounts, router]);
@@ -278,20 +278,22 @@ export default function WalletScreen() {
                 ))}
               </View>
               <View style={styles.bottomTokenRow}>
-                <View style={styles.tokenWrapper50k}>
+                <View style={styles.tokenWrapper10k}>
                   <Pressable
                     style={[
-                      styles.tokenSquare,
-                      tokenCounts[50000] > 0 && styles.tokenSelected,
+                      styles.token3D,
+                      tokenCounts[10000] > 0 && styles.token3DSelected,
                     ]}
-                    onPress={() => handleTokenPress(50000)}
-                    onLongPress={() => handleTokenLongPress(50000)}
+                    onPress={() => handleTokenPress(10000)}
+                    onLongPress={() => handleTokenLongPress(10000)}
                   >
-                    <Text style={[styles.tokenValue, { fontSize: responsive.scale(28) }]}>50000</Text>
-                    <Text style={[styles.tokenUnit, { fontSize: responsive.scale(11) }]}>BTCON</Text>
-                    {tokenCounts[50000] > 0 && (
+                    <View style={styles.token3DInner}>
+                      <Text style={[styles.tokenValue, { fontSize: responsive.scale(32) }]}>10000</Text>
+                      <Text style={[styles.tokenUnit, { fontSize: responsive.scale(11) }]}>BTCON</Text>
+                    </View>
+                    {tokenCounts[10000] > 0 && (
                       <View style={styles.countBadge}>
-                        <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
+                        <Text style={styles.countText}>{tokenCounts[10000]}x</Text>
                       </View>
                     )}
                   </Pressable>
@@ -637,7 +639,7 @@ const styles = StyleSheet.create({
     width: '35%',
     alignItems: 'center',
   },
-  tokenWrapper50k: {
+  tokenWrapper10k: {
     width: '72%',
     alignItems: 'center',
   },
@@ -664,20 +666,44 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderColor: '#E0E0E0',
   },
-  tokenSquare: {
+  token3D: {
     width: '100%',
-    aspectRatio: 1.3,
+    aspectRatio: 1,
     backgroundColor: '#E8451A',
-    borderRadius: 16,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 6,
-    borderColor: '#F5693F',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 12,
+    borderWidth: 3,
+    borderColor: '#F5693F',
+    transform: [{ perspective: 1000 }, { rotateX: '-5deg' }, { rotateY: '5deg' }],
+  },
+  token3DInner: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 2,
+    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.2)',
+    borderRightColor: 'rgba(0, 0, 0, 0.3)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  token3DSelected: {
+    backgroundColor: '#FF8C00',
+    borderColor: '#FFB347',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 16,
+    transform: [{ perspective: 1000 }, { rotateX: '-3deg' }, { rotateY: '3deg' }, { scale: 1.05 }],
   },
   tokenSelected: {
     backgroundColor: '#FF8C00',

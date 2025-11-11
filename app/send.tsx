@@ -56,10 +56,29 @@ export default function SendScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  const [networkFeeEstimate, setNetworkFeeEstimate] = useState<number>(2);
+
+  useEffect(() => {
+    const fetchNetworkFee = async () => {
+      try {
+        const fee = await esploraService.getFeeEstimate();
+        setNetworkFeeEstimate(fee);
+      } catch (error) {
+        console.error('Error fetching network fee:', error);
+      }
+    };
+    fetchNetworkFee();
+  }, [esploraService]);
+
   const btconToEuro = (btcon: number): string => {
     const btc = btcon / 100000000;
     const euro = btc * btcPrice;
     return euro.toFixed(2);
+  };
+
+  const calculateNetworkFee = (): number => {
+    const estimatedSize = 200;
+    return Math.ceil(estimatedSize * networkFeeEstimate);
   };
 
   const totalAmount = amountBtcon;
@@ -290,6 +309,14 @@ export default function SendScreen() {
 
         {totalAmount > 0 && (
           <View style={styles.feesCard}>
+            <View style={styles.feesRow}>
+              <Text style={styles.feesLeftLabel}>Frais du réseau BTC</Text>
+              <View style={styles.feesRightColumn}>
+                <Text style={styles.feesValueBig}>{calculateNetworkFee().toLocaleString()} sats</Text>
+                <Text style={styles.feesEuroValue}>≈ {btconToEuro(calculateNetworkFee())} €</Text>
+              </View>
+            </View>
+            <View style={styles.feesDivider} />
             <View style={styles.feesRow}>
               <Text style={styles.feesLeftLabel}>Frais de transaction</Text>
               <View style={styles.feesRightColumn}>

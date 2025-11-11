@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -8,8 +8,8 @@ import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { ArrowLeft } from 'lucide-react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useResponsive } from '@/utils/responsive';
+import { Image } from 'expo-image';
 
 
 export default function ReceiveScreen() {
@@ -21,8 +21,6 @@ export default function ReceiveScreen() {
   const { getQRColors } = useQRColor();
   const { width } = useWindowDimensions();
   const responsive = useResponsive();
-  const [permission, requestPermission] = useCameraPermissions();
-  const [hasScanned, setHasScanned] = useState(false);
   const btcPrice = useBtcPrice();
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
@@ -53,45 +51,14 @@ export default function ReceiveScreen() {
   }, [width, responsive.isTablet]);
 
 
-  const handleBarcodeScanned = useCallback((data: string) => {
-    if (hasScanned) return;
-    setHasScanned(true);
-    
-    let scannedAddress = data;
-    let amount = 0;
-    
-    if (scannedAddress.toLowerCase().startsWith('bitcoin:')) {
-      const uri = scannedAddress.substring(8);
-      const parts = uri.split('?');
-      scannedAddress = parts[0];
-      
-      if (parts.length > 1) {
-        const params = new URLSearchParams(parts[1]);
-        const amountBtc = params.get('amount');
-        
-        if (amountBtc) {
-          amount = Math.floor(parseFloat(amountBtc) * 100000000);
-        }
-      }
+  const qrCodeUri = useMemo(() => {
+    if (!address) return '';
+    if (requestedAmount > 0) {
+      const btcAmount = (requestedAmount / 100000000).toFixed(8);
+      return `bitcoin:${address}?amount=${btcAmount}`;
     }
-    
-    if (amount > 0) {
-      router.replace({
-        pathname: '/send',
-        params: {
-          address: scannedAddress,
-          preselectedAmount: amount.toString(),
-        }
-      });
-    } else {
-      router.replace({
-        pathname: '/send',
-        params: {
-          address: scannedAddress,
-        }
-      });
-    }
-  }, [hasScanned, router]);
+    return `bitcoin:${address}`;
+  }, [address, requestedAmount]);
 
   return (
     <View style={styles.container}>
@@ -110,32 +77,18 @@ export default function ReceiveScreen() {
             <Text style={styles.addressText}>{address}</Text>
           </View>
 
-          {permission?.granted ? (
-            <View style={[styles.cameraWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2 }]}>
-              <CameraView
-                style={styles.cameraView}
-                facing="back"
-                barcodeScannerSettings={{
-                  barcodeTypes: ['qr'],
-                }}
-                onBarcodeScanned={(result) => {
-                  if (result?.data) {
-                    handleBarcodeScanned(result.data);
-                  }
-                }}
-              >
-                <View style={styles.cameraOverlay}>
-                  <View style={styles.cameraFrame} />
-                </View>
-              </CameraView>
-            </View>
-          ) : (
-            <View style={[styles.qrPlaceholder, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
-              <TouchableOpacity onPress={requestPermission} style={styles.permissionButton}>
-                <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Activer la caméra</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
+            {qrCodeUri ? (
+              <Image
+                source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&bgcolor=${currentArt.bg.replace('#', '')}&color=${currentArt.fg.replace('#', '')}&data=${encodeURIComponent(qrCodeUri)}`}
+                style={{ width: qrArtSize, height: qrArtSize }}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+              />
+            ) : (
+              <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération...</Text>
+            )}
+          </View>
 
           {requestedAmount > 0 && (
             <View style={styles.amountInfo}>
@@ -191,7 +144,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 20,
   },
-  cameraWrapper: {
+  qrCodeWrapper: {
     borderRadius: 28,
     shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 16 },
@@ -200,37 +153,9 @@ const styles = StyleSheet.create({
     elevation: 16,
     borderWidth: 4,
     borderColor: 'rgba(255, 140, 0, 0.4)',
-    overflow: 'hidden',
-  },
-  cameraView: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  cameraOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  cameraFrame: {
-    width: '70%',
-    aspectRatio: 1,
-    borderWidth: 3,
-    borderColor: '#FF8C00',
-    borderRadius: 20,
-    backgroundColor: 'transparent',
-  },
-  permissionButton: {
     padding: 20,
-  },
-  qrPlaceholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 28,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 140, 0, 0.3)',
-    padding: 32,
   },
   qrPlaceholderText: {
     fontSize: 16,
