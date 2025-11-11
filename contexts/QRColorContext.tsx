@@ -11,8 +11,8 @@ interface ColorAssignments {
 const USED_COLORS = new Set<string>();
 
 const DEVELOPER_COLORS = {
-  foreground: '#0047AB',
-  background: '#FFD700',
+  foreground: '#FFD700',
+  background: '#0047AB',
 };
 
 const generateUniqueColor = (): string => {
