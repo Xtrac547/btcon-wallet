@@ -214,7 +214,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingTop: 20,
+    justifyContent: 'space-between',
   },
   balanceBox: {
     backgroundColor: 'transparent',
@@ -232,18 +233,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   selectedBox: {
-    backgroundColor: 'rgba(255, 140, 0, 0.15)',
+    backgroundColor: 'rgba(255, 140, 0, 0.25)',
     borderRadius: 16,
     borderWidth: 2,
     borderColor: '#FF8C00',
     paddingVertical: 20,
     paddingHorizontal: 24,
-    marginBottom: 40,
+    marginBottom: 24,
   },
   selectedText: {
     color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600' as const,
+    fontSize: 18,
+    fontWeight: '700' as const,
     textAlign: 'center',
   },
   labelRow: {
@@ -270,7 +271,7 @@ const styles = StyleSheet.create({
   },
   tokensContainer: {
     gap: 16,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   topRow: {
     flexDirection: 'row',
@@ -309,11 +310,12 @@ const styles = StyleSheet.create({
   },
   tokenSelected: {
     borderColor: '#FF8C00',
+    backgroundColor: '#FF8C00',
     shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.8,
+    shadowRadius: 16,
+    elevation: 12,
   },
   cameraButton: {
     width: '100%',
@@ -324,9 +326,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 12,
+    marginBottom: 24,
   },
   tokenValue: {
     color: '#FFF',
@@ -364,6 +367,8 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 8,
+    backgroundColor: 'rgba(255, 140, 0, 0.2)',
+    borderRadius: 12,
   },
   camera: {
     flex: 1,
@@ -377,7 +382,7 @@ const styles = StyleSheet.create({
   scannerFrame: {
     width: 280,
     height: 280,
-    borderWidth: 3,
+    borderWidth: 4,
     borderColor: '#FF8C00',
     borderRadius: 24,
   },
