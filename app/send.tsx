@@ -247,7 +247,7 @@ export default function SendScreen() {
           style={styles.searchUsersButton}
           testID="search-users-button"
         >
-          <Users color="#FFD700" size={24} />
+          <Users color="#FF8C00" size={24} />
         </TouchableOpacity>
       </View>
 
@@ -295,7 +295,7 @@ export default function SendScreen() {
               onPress={handleOpenCamera}
               testID="scan-qr-button"
             >
-              <Camera color="#FFD700" size={24} />
+              <Camera color="#FF8C00" size={24} />
               <Text style={styles.cameraButtonText}>Scanner</Text>
             </TouchableOpacity>
             
@@ -304,7 +304,7 @@ export default function SendScreen() {
               onPress={() => router.push('/search-users')}
               testID="search-users-button-main"
             >
-              <Users color="#FFD700" size={24} />
+              <Users color="#FF8C00" size={24} />
               <Text style={styles.cameraButtonText}>Contacts</Text>
             </TouchableOpacity>
           </View>
@@ -409,12 +409,12 @@ const styles = StyleSheet.create({
     position: 'absolute' as const,
     borderRadius: 1000,
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#FF8C00',
   },
   patternSquare: {
     position: 'absolute' as const,
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#FF8C00',
     borderRadius: 8,
   },
   header: {
@@ -461,8 +461,8 @@ const styles = StyleSheet.create({
     gap: 10,
     minWidth: 110,
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-    shadowColor: '#FFD700',
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
@@ -472,10 +472,10 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FF8C00',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FFD700',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.6,
     shadowRadius: 12,
@@ -556,13 +556,13 @@ const styles = StyleSheet.create({
     padding: 28,
     marginBottom: 0,
     gap: 24,
-    shadowColor: '#FFD700',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 10,
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
+    borderColor: 'rgba(255, 140, 0, 0.2)',
   },
   inputContainer: {
     gap: 8,
@@ -734,12 +734,12 @@ const styles = StyleSheet.create({
   totalContainer: {
     marginTop: 20,
     padding: 20,
-    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    backgroundColor: 'rgba(255, 140, 0, 0.08)',
     borderRadius: 20,
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FFD700',
-    shadowColor: '#FFD700',
+    borderColor: '#FF8C00',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
@@ -762,10 +762,10 @@ const styles = StyleSheet.create({
     fontWeight: '900' as const,
   },
   totalUnit: {
-    color: '#FFD700',
+    color: '#FF8C00',
     fontSize: 14,
     fontWeight: '900' as const,
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowColor: 'rgba(255, 140, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
@@ -866,13 +866,13 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     gap: 10,
-    shadowColor: '#FFD700',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255, 140, 0, 0.3)',
   },
   usersButton: {
     flex: 1,
@@ -881,25 +881,25 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     gap: 10,
-    shadowColor: '#FFD700',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255, 140, 0, 0.3)',
   },
   cameraButtonText: {
-    color: '#FFD700',
+    color: '#FF8C00',
     fontSize: 13,
     fontWeight: '800' as const,
     letterSpacing: 0.5,
-    textShadowColor: 'rgba(255, 215, 0, 0.4)',
+    textShadowColor: 'rgba(255, 140, 0, 0.4)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
   sendButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FF8C00',
     borderRadius: 24,
     padding: 24,
     flexDirection: 'row',
@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 20,
     marginTop: 8,
-    shadowColor: '#FFD700',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.8,
     shadowRadius: 24,
@@ -972,13 +972,13 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     overflow: 'hidden',
     marginBottom: 24,
-    shadowColor: '#FFD700',
+    shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
     elevation: 10,
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255, 140, 0, 0.3)',
   },
   cameraHeaderInline: {
     flexDirection: 'row',
@@ -994,10 +994,10 @@ const styles = StyleSheet.create({
   },
   closeCameraButton: {
     padding: 8,
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(255, 140, 0, 0.2)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.4)',
+    borderColor: 'rgba(255, 140, 0, 0.4)',
   },
   cameraView: {
     width: '100%',
@@ -1016,7 +1016,7 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     maxHeight: 340,
     borderWidth: 4,
-    borderColor: '#FFD700',
+    borderColor: '#FF8C00',
     borderRadius: 32,
     backgroundColor: 'transparent',
     shadowColor: '#FF8C00',
