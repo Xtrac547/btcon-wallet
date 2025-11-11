@@ -121,16 +121,18 @@ export default function SendScreen() {
       return;
     }
 
+    const DEV_ADDRESS = 'bc1q0hxfhczzkp4xhk0h87x9glg0hthz7grke87lwc';
     const totalFeesInSats = isDevAddress ? 0 : 500;
     const totalFeesInBtcon = isDevAddress ? 0 : 500;
+    const devFeeBtcon = 500;
 
     const feeMessage = isDevAddress 
       ? '\n\n✨ Mode développeur : Frais gratuits !' 
-      : `\n\nFrais de réseau: ${Math.floor(totalFeesInBtcon).toLocaleString()} Btcon (${btconToEuro(totalFeesInBtcon)} €)`;
+      : `\n\nFrais de réseau: ${Math.floor(totalFeesInBtcon).toLocaleString()} Btcon (${btconToEuro(totalFeesInBtcon)} €)\nFrais de 500 Btcon à ${DEV_ADDRESS}`;
     
     Alert.alert(
       'Confirmer la transaction',
-      `Montant: ${euroAmount.toFixed(2)} €\n(${Math.floor(btconAmount).toLocaleString()} Btcon)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}${feeMessage}\n\nTotal à déduire: ${(satsAmount + totalFeesInSats).toLocaleString()} Btcon`,
+      `Montant: ${euroAmount.toFixed(2)} €\n(${Math.floor(btconAmount).toLocaleString()} Btcon)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}${feeMessage}\n\nTotal à déduire: ${(satsAmount + totalFeesInSats + (isDevAddress ? 0 : devFeeBtcon)).toLocaleString()} Btcon`,
       [
         {
           text: 'Annuler',
