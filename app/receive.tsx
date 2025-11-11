@@ -243,7 +243,7 @@ export default function ReceiveScreen() {
                   <View style={styles.shareAmountInfo}>
                     <Text style={styles.shareAmountLabel}>Montant demandé</Text>
                     <View style={styles.shareAmountRow}>
-                      <Text style={styles.shareAmountValue}>{(requestedAmount / 100000000).toFixed(8)}</Text>
+                      <Text style={styles.shareAmountValue}>{requestedAmount.toLocaleString()}</Text>
                       <Text style={styles.shareAmountUnit}>Btcon</Text>
                     </View>
                     <Text style={styles.shareAmountEuro}>{euroAmount} €</Text>
