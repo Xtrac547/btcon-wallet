@@ -1,20 +1,16 @@
 import '@/utils/shim';
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Linking, Alert, Platform, Modal } from 'react-native';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
-import { ArrowLeft, Share2, ExternalLink, Copy, X } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
-import * as Sharing from 'expo-sharing';
-import Svg, { Rect } from 'react-native-svg';
-import * as Haptics from 'expo-haptics';
+import { ArrowLeft } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useResponsive } from '@/utils/responsive';
-import ViewShot from 'react-native-view-shot';
+
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -25,11 +21,8 @@ export default function ReceiveScreen() {
   const { getQRColors } = useQRColor();
   const { width } = useWindowDimensions();
   const responsive = useResponsive();
-  const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
-  const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [hasScanned, setHasScanned] = useState(false);
-  const viewShotRef = useRef<ViewShot>(null);
   const btcPrice = useBtcPrice();
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
@@ -51,46 +44,7 @@ export default function ReceiveScreen() {
     };
   }, [address, getQRColors]);
 
-  const generateQRMatrix = async (text: string): Promise<number[][]> => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const QRCode = require('qrcode');
-      
-      const qrData = await QRCode.create(text, { errorCorrectionLevel: 'H' });
-      const modules = qrData.modules;
-      const size = modules.size;
-      const matrix: number[][] = [];
-      
-      for (let row = 0; row < size; row++) {
-        matrix[row] = [];
-        for (let col = 0; col < size; col++) {
-          matrix[row][col] = modules.get(row, col) ? 1 : 0;
-        }
-      }
-      return matrix;
-    } catch (error) {
-      console.error('Erreur génération QR:', error);
-      return [];
-    }
-  };
 
-  useEffect(() => {
-    if (address) {
-      (async () => {
-        try {
-          let qrContent = address;
-          if (requestedAmount > 0) {
-            const btcAmount = requestedAmount / 100000000;
-            qrContent = `bitcoin:${address}?amount=${btcAmount}`;
-          }
-          const matrix = await generateQRMatrix(qrContent);
-          setQrMatrix(matrix);
-        } catch (err) {
-          console.error('Erreur génération QR:', err);
-        }
-      })();
-    }
-  }, [address, requestedAmount]);
 
   const padding = responsive.scale(32);
   const qrArtSize = useMemo(() => {
@@ -98,65 +52,10 @@ export default function ReceiveScreen() {
     return Math.min(width - 100, maxSize);
   }, [width, responsive.isTablet]);
 
-  const handleShare = useCallback(async () => {
-    if (!address || !viewShotRef.current) return;
-    try {
-      if (Platform.OS === 'web') {
-        Alert.alert('Non disponible', 'Le partage n\'est pas disponible sur le web');
-        return;
-      }
-
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (!isAvailable) {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
-        return;
-      }
-
-      const uri = await viewShotRef.current.capture();
-      console.log('QR code capturé:', uri);
-      
-      await Sharing.shareAsync(uri, {
-        mimeType: 'image/png',
-      });
-      
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-    } catch (error) {
-      console.error('Erreur partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager le QR code: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
-    }
-  }, [address]);
-
-  const handleExplorer = useCallback(() => {
-    if (!address) return;
-    const url = `https://mempool.space/address/${address}`;
-    Linking.openURL(url).catch(err => {
-      console.error('Erreur ouverture explorateur:', err);
-      Alert.alert('Erreur', 'Impossible d\'ouvrir l\'explorateur');
-    });
-  }, [address]);
-
-  const handleCopyAddress = useCallback(async () => {
-    if (!address) return;
-    try {
-      await Clipboard.setStringAsync(address);
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      Alert.alert('Copié', 'Adresse copiée dans le presse-papier');
-    } catch (error) {
-      console.error('Erreur copie:', error);
-      Alert.alert('Erreur', 'Impossible de copier l\'adresse');
-    }
-  }, [address]);
-
-
 
   const handleBarcodeScanned = useCallback((data: string) => {
     if (hasScanned) return;
     setHasScanned(true);
-    setShowScanner(false);
     
     let scannedAddress = data;
     let amount = 0;
@@ -210,98 +109,51 @@ export default function ReceiveScreen() {
 
       <View style={styles.content}>
         <View style={styles.qrSection}>
-          {qrMatrix.length > 0 ? (
-            <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
-              <View style={styles.shareContainer}>
-                <View style={styles.shareAddressInfo}>
-                  <Text style={styles.shareAddressLabel}>Adresse Btcon</Text>
-                  <Text style={styles.shareAddressText}>{address}</Text>
+          <View style={styles.addressInfo}>
+            <Text style={styles.addressLabel}>Adresse Btcon</Text>
+            <Text style={styles.addressText}>{address}</Text>
+          </View>
+
+          {permission?.granted ? (
+            <View style={[styles.cameraWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2 }]}>
+              <CameraView
+                style={styles.cameraView}
+                facing="back"
+                barcodeScannerSettings={{
+                  barcodeTypes: ['qr'],
+                }}
+                onBarcodeScanned={(result) => {
+                  if (result?.data) {
+                    handleBarcodeScanned(result.data);
+                  }
+                }}
+              >
+                <View style={styles.cameraOverlay}>
+                  <View style={styles.cameraFrame} />
                 </View>
-                <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
-                  <Svg width={qrArtSize} height={qrArtSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
-                    {qrMatrix.map((row, y) => 
-                      row.map((cell, x) => {
-                        if (cell === 1) {
-                          return (
-                            <Rect
-                              key={`${y}-${x}`}
-                              x={x}
-                              y={y}
-                              width={1}
-                              height={1}
-                              fill={currentArt.fg}
-                              rx={0.15}
-                            />
-                          );
-                        }
-                        return null;
-                      })
-                    )}
-                  </Svg>
-                </View>
-                {requestedAmount > 0 && (
-                  <View style={styles.shareAmountInfo}>
-                    <Text style={styles.shareAmountLabel}>Montant demandé</Text>
-                    <View style={styles.shareAmountRow}>
-                      <Text style={styles.shareAmountValue}>{requestedAmount.toLocaleString()}</Text>
-                      <Text style={styles.shareAmountUnit}>Btcon</Text>
-                    </View>
-                    <Text style={styles.shareAmountEuro}>{euroAmount} €</Text>
-                  </View>
-                )}
-              </View>
-            </ViewShot>
+              </CameraView>
+            </View>
           ) : (
             <View style={[styles.qrPlaceholder, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
-              <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération du QR...</Text>
+              <TouchableOpacity onPress={requestPermission} style={styles.permissionButton}>
+                <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Activer la caméra</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {requestedAmount > 0 && (
+            <View style={styles.amountInfo}>
+              <Text style={styles.amountLabel}>Montant demandé</Text>
+              <View style={styles.amountRow}>
+                <Text style={styles.amountValue}>{requestedAmount.toLocaleString()}</Text>
+                <Text style={styles.amountUnit}>Btcon</Text>
+              </View>
+              <Text style={styles.amountEuro}>{euroAmount} €</Text>
             </View>
           )}
         </View>
 
-        {address && (
-          <TouchableOpacity 
-            onPress={handleShare} 
-            style={[styles.shareButton, { backgroundColor: currentArt.accent }]}
-          >
-            <Share2 color="#000" size={24} />
-            <Text style={styles.shareButtonText}>Partager</Text>
-          </TouchableOpacity>
-        )}
       </View>
-
-      <Modal
-        visible={showScanner}
-        animationType="slide"
-        presentationStyle="fullScreen"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.scannerHeader}>
-            <Text style={styles.scannerTitle}>Scanner QR Code</Text>
-            <TouchableOpacity
-              onPress={() => setShowScanner(false)}
-              style={styles.closeButton}
-            >
-              <X color="#FFF" size={28} />
-            </TouchableOpacity>
-          </View>
-          <CameraView
-            style={styles.camera}
-            facing="back"
-            barcodeScannerSettings={{
-              barcodeTypes: ['qr'],
-            }}
-            onBarcodeScanned={(result) => {
-              if (result?.data) {
-                handleBarcodeScanned(result.data);
-              }
-            }}
-          >
-            <View style={styles.scannerOverlay}>
-              <View style={styles.scannerFrame} />
-            </View>
-          </CameraView>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -341,8 +193,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 20,
   },
-  qrCodeWrapper: {
+  cameraWrapper: {
     borderRadius: 28,
     shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 16 },
@@ -352,9 +205,28 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: 'rgba(255, 140, 0, 0.4)',
     overflow: 'hidden',
-    alignItems: 'center',
+  },
+  cameraView: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  cameraOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     justifyContent: 'center',
-    padding: 32,
+    alignItems: 'center',
+  },
+  cameraFrame: {
+    width: '70%',
+    aspectRatio: 1,
+    borderWidth: 3,
+    borderColor: '#FF8C00',
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+  },
+  permissionButton: {
+    padding: 20,
   },
   qrPlaceholder: {
     justifyContent: 'center',
@@ -441,15 +313,7 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
-  shareContainer: {
-    alignItems: 'center',
-    backgroundColor: '#000',
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-    borderRadius: 20,
-  },
-  shareAddressInfo: {
-    marginBottom: 24,
+  addressInfo: {
     paddingVertical: 16,
     paddingHorizontal: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -457,8 +321,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(255, 140, 0, 0.3)',
     maxWidth: 360,
+    alignSelf: 'center',
   },
-  shareAddressLabel: {
+  addressLabel: {
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 11,
     fontWeight: '700' as const,
@@ -467,7 +332,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center' as const,
   },
-  shareAddressText: {
+  addressText: {
     color: '#FFF',
     fontSize: 11,
     fontWeight: '600' as const,
@@ -475,8 +340,7 @@ const styles = StyleSheet.create({
     textAlign: 'center' as const,
     lineHeight: 16,
   },
-  shareAmountInfo: {
-    marginTop: 24,
+  amountInfo: {
     paddingVertical: 20,
     paddingHorizontal: 32,
     backgroundColor: 'rgba(255, 140, 0, 0.15)',
@@ -485,7 +349,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF8C00',
     alignItems: 'center',
   },
-  shareAmountLabel: {
+  amountLabel: {
     color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 12,
     fontWeight: '700' as const,
@@ -493,30 +357,24 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 10,
   },
-  shareAmountRow: {
+  amountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 10,
     marginBottom: 6,
   },
-  shareAmountValue: {
+  amountValue: {
     color: '#FFF',
     fontSize: 36,
     fontWeight: '900' as const,
     letterSpacing: -1.5,
   },
-  shareAmountUnit: {
+  amountUnit: {
     color: '#FF8C00',
     fontSize: 18,
     fontWeight: '800' as const,
   },
-  shareAmountBtc: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 13,
-    fontWeight: '600' as const,
-    fontFamily: 'monospace' as const,
-  },
-  shareAmountEuro: {
+  amountEuro: {
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 16,
     fontWeight: '600' as const,
