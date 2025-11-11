@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Modal, A
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { Camera, Settings, Eye, X } from 'lucide-react-native';
+import { Camera, Settings, X } from 'lucide-react-native';
 import { useState, useCallback } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -27,7 +27,14 @@ export default function WalletScreen() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setSelectedAmount(prev => prev + value);
+    setSelectedAmount(value);
+  }, []);
+
+  const handleReset = useCallback(() => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    setSelectedAmount(0);
   }, []);
 
   const handleOpenScanner = async () => {
@@ -76,22 +83,6 @@ export default function WalletScreen() {
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={handleOpenScanner}
-          testID="scan-qr-button"
-        >
-          <Camera color="#FF8C00" size={28} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => router.push('/receive')}
-          testID="view-qr-button"
-        >
-          <Eye color="#FF8C00" size={28} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.iconButton}
           onPress={() => router.push('/settings')}
           testID="settings-button"
         >
@@ -106,18 +97,27 @@ export default function WalletScreen() {
           </Text>
         </View>
 
-        <View style={styles.selectedBox}>
-          <Text style={styles.selectedText}>
-            {selectedAmount.toLocaleString()} Btcon sélectionné = {euroValueSelected} €
-          </Text>
-        </View>
+        {selectedAmount > 0 && (
+          <View style={styles.selectedBox}>
+            <Text style={styles.selectedText}>
+              {selectedAmount.toLocaleString()} Btcon sélectionné = {euroValueSelected} €
+            </Text>
+          </View>
+        )}
 
-        <Text style={styles.tokensLabel}>Jetons</Text>
+        <View style={styles.labelRow}>
+          <Text style={styles.tokensLabel}>Jetons</Text>
+          {selectedAmount > 0 && (
+            <TouchableOpacity onPress={handleReset} style={styles.resetButton}>
+              <Text style={styles.resetText}>Réinitialiser</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <View style={styles.tokensContainer}>
           <View style={styles.topRow}>
             <Pressable
-              style={styles.token1000}
+              style={[styles.token1000, selectedAmount === 1000 && styles.tokenSelected]}
               onPress={() => handleTokenPress(1000)}
             >
               <Text style={styles.tokenValue}>1000</Text>
@@ -125,7 +125,7 @@ export default function WalletScreen() {
             </Pressable>
 
             <Pressable
-              style={styles.token5000}
+              style={[styles.token5000, selectedAmount === 5000 && styles.tokenSelected]}
               onPress={() => handleTokenPress(5000)}
             >
               <Text style={[styles.tokenValue, styles.tokenValueDark]}>5000</Text>
@@ -134,13 +134,21 @@ export default function WalletScreen() {
           </View>
 
           <Pressable
-            style={styles.token50000}
+            style={[styles.token50000, selectedAmount === 50000 && styles.tokenSelected]}
             onPress={() => handleTokenPress(50000)}
           >
             <Text style={styles.tokenValue}>50000</Text>
             <Text style={styles.tokenUnit}>BTCON</Text>
           </Pressable>
         </View>
+
+        <TouchableOpacity
+          style={styles.cameraButton}
+          onPress={handleOpenScanner}
+          testID="scan-camera-button"
+        >
+          <Camera color="#FFF" size={40} />
+        </TouchableOpacity>
       </View>
 
       <Modal
@@ -189,7 +197,7 @@ const styles = StyleSheet.create({
   },
   topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
@@ -224,7 +232,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   selectedBox: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 140, 0, 0.15)',
     borderRadius: 16,
     borderWidth: 2,
     borderColor: '#FF8C00',
@@ -238,15 +246,31 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     textAlign: 'center',
   },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
   tokensLabel: {
     color: '#FFF',
     fontSize: 18,
     fontWeight: '700' as const,
-    marginBottom: 24,
+  },
+  resetButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#FF8C00',
+    borderRadius: 12,
+  },
+  resetText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '700' as const,
   },
   tokensContainer: {
-    flex: 1,
     gap: 16,
+    marginBottom: 32,
   },
   topRow: {
     flexDirection: 'row',
@@ -260,6 +284,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#5B9BD5',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 4,
+    borderColor: 'transparent',
   },
   token5000: {
     width: 140,
@@ -268,6 +294,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 4,
+    borderColor: 'transparent',
   },
   token50000: {
     width: '100%',
@@ -276,6 +304,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8451A',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 4,
+    borderColor: 'transparent',
+  },
+  tokenSelected: {
+    borderColor: '#FF8C00',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  cameraButton: {
+    width: '100%',
+    height: 100,
+    borderRadius: 24,
+    backgroundColor: '#FF8C00',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
   },
   tokenValue: {
     color: '#FFF',
