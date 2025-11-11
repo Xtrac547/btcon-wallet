@@ -10,14 +10,16 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
+import { useQRColor } from '@/contexts/QRColorContext';
 
 
 export default function WalletScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { balance } = useWallet();
+  const { balance, address } = useWallet();
   const btcPrice = useBtcPrice();
   const responsive = useResponsive();
+  const { getQRColors } = useQRColor();
 
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
@@ -35,7 +37,8 @@ export default function WalletScreen() {
   const [permission, requestPermission] = useCameraPermissions();
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
-  const { address } = useWallet();
+  
+  const qrColors = useMemo(() => getQRColors(address), [address, getQRColors]);
 
 
   
@@ -389,10 +392,10 @@ export default function WalletScreen() {
               </TouchableOpacity>
             </View>
             
-            <View style={styles.qrCodeContainer}>
+            <View style={[styles.qrCodeContainer, { backgroundColor: qrColors.background }]}>
               {address ? (
                 <Image
-                  source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=bitcoin:${address}`}
+                  source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&bgcolor=${qrColors.background.replace('#', '')}&color=${qrColors.qr.replace('#', '')}&data=bitcoin:${address}`}
                   style={styles.qrCodeImage}
                   contentFit="contain"
                   cachePolicy="memory-disk"
