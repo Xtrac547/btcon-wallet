@@ -1,6 +1,6 @@
 import '@/utils/shim';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions, Pressable, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
@@ -10,6 +10,7 @@ import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
 import { ArrowLeft, Send, X, Users, Camera } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useResponsive } from '@/utils/responsive';
+import * as Haptics from 'expo-haptics';
 
 export default function SendScreen() {
   const router = useRouter();
@@ -41,6 +42,11 @@ export default function SendScreen() {
   const [btcPrice, setBtcPrice] = useState(100000);
   const [hasScanned, setHasScanned] = useState(false);
   const [amountBtcon, setAmountBtcon] = useState(0);
+  const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
+    1000: 0,
+    5000: 0,
+    50000: 0,
+  });
 
   useEffect(() => {
     const fetchBtcPrice = async () => {
@@ -64,13 +70,20 @@ export default function SendScreen() {
     return euro.toFixed(2);
   };
 
+  const getTotalFromTokens = useCallback((): number => {
+    return Object.entries(tokenCounts).reduce((total, [value, count]) => {
+      return total + (Number(value) * count);
+    }, 0);
+  }, [tokenCounts]);
+
+  const totalFromTokens = useMemo(() => getTotalFromTokens(), [getTotalFromTokens]);
+  const totalAmount = amountBtcon > 0 ? amountBtcon : totalFromTokens;
+
   const euroAmount = useMemo(() => {
-    if (amountBtcon === 0 || btcPrice === 0) return 0;
-    const btc = amountBtcon / 100000000;
+    if (totalAmount === 0 || btcPrice === 0) return 0;
+    const btc = totalAmount / 100000000;
     return btc * btcPrice;
-  }, [amountBtcon, btcPrice]);
-  
-  const totalAmount = amountBtcon;
+  }, [totalAmount, btcPrice]);
 
 
 
@@ -205,6 +218,11 @@ export default function SendScreen() {
           
           setToAddress(address);
           setAmountBtcon(amountSats);
+          setTokenCounts({
+            1000: 0,
+            5000: 0,
+            50000: 0,
+          });
           
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -217,6 +235,36 @@ export default function SendScreen() {
     
     setToAddress(address);
   }, [hasScanned, btcPrice, scrollViewRef]);
+
+  const handleTokenPress = useCallback((value: number) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setTokenCounts(prev => ({
+      ...prev,
+      [value]: prev[value] + 1,
+    }));
+    setAmountBtcon(0);
+  }, []);
+
+  const handleTokenLongPress = useCallback((value: number) => {
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    setTokenCounts(prev => ({
+      ...prev,
+      [value]: 0,
+    }));
+  }, []);
+
+  const resetAllTokens = useCallback(() => {
+    setTokenCounts({
+      1000: 0,
+      5000: 0,
+      50000: 0,
+    });
+    setAmountBtcon(0);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -258,19 +306,6 @@ export default function SendScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {totalAmount > 0 && (
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Montant:</Text>
-            <View style={styles.totalRow}>
-              <Text style={[styles.totalAmount, { fontSize: responsive.scale(32) }]}>{euroAmount.toFixed(2)}</Text>
-              <Text style={[styles.totalUnit, { fontSize: responsive.scale(14) }]}>€</Text>
-            </View>
-            <Text style={styles.conversionText}>
-              ≈ {totalAmount.toLocaleString()} Btcon
-            </Text>
-          </View>
-        )}
-
         <View style={styles.formCard}>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Destinataire</Text>
@@ -286,8 +321,83 @@ export default function SendScreen() {
               />
             </View>
           </View>
+        </View>
 
+        {totalAmount > 0 && (
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Montant:</Text>
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalAmount, { fontSize: responsive.scale(32) }]}>{euroAmount.toFixed(2)}</Text>
+              <Text style={[styles.totalUnit, { fontSize: responsive.scale(14) }]}>€</Text>
+            </View>
+            <Text style={styles.conversionText}>
+              ≈ {totalAmount.toLocaleString()} Btcon
+            </Text>
+          </View>
+        )}
 
+        <View style={styles.tokensSection}>
+          <View style={styles.labelRow}>
+            <Text style={styles.tokensLabel}>Jetons</Text>
+            {totalAmount > 0 && (
+              <TouchableOpacity onPress={resetAllTokens} style={styles.resetButton}>
+                <Text style={styles.resetText}>Réinitialiser</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          <View style={styles.tokensContainer}>
+            <View style={styles.topTokensRow}>
+              {[1000, 5000].map((value) => (
+                <View key={value} style={styles.tokenWrapper}>
+                  <Pressable
+                    style={[
+                      styles.tokenCircle,
+                      value === 1000 && styles.token1000,
+                      value === 5000 && styles.token5000White,
+                      tokenCounts[value] > 0 && styles.tokenSelected,
+                    ]}
+                    onPress={() => handleTokenPress(value)}
+                    onLongPress={() => handleTokenLongPress(value)}
+                  >
+                    <Text style={[
+                      value === 5000 && tokenCounts[value] === 0 ? styles.tokenValueWhite : styles.tokenValue, 
+                      { fontSize: responsive.scale(28) }
+                    ]}>{value}</Text>
+                    <Text style={[
+                      value === 5000 && tokenCounts[value] === 0 ? styles.tokenUnitWhite : styles.tokenUnit, 
+                      { fontSize: responsive.scale(11) }
+                    ]}>BTCON</Text>
+                    {tokenCounts[value] > 0 && (
+                      <View style={styles.countBadge}>
+                        <Text style={styles.countText}>{tokenCounts[value]}x</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+            <View style={styles.bottomTokenRow}>
+              <View style={styles.tokenWrapper50k}>
+                <Pressable
+                  style={[
+                    styles.tokenSquare,
+                    tokenCounts[50000] > 0 && styles.tokenSelected,
+                  ]}
+                  onPress={() => handleTokenPress(50000)}
+                  onLongPress={() => handleTokenLongPress(50000)}
+                >
+                  <Text style={[styles.tokenValue, { fontSize: responsive.scale(28) }]}>50000</Text>
+                  <Text style={[styles.tokenUnit, { fontSize: responsive.scale(11) }]}>BTCON</Text>
+                  {tokenCounts[50000] > 0 && (
+                    <View style={styles.countBadge}>
+                      <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+          </View>
         </View>
 
         <View style={styles.actionButtonsRow}>
@@ -589,15 +699,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600' as const,
   },
+  tokensSection: {
+    marginBottom: 24,
+    backgroundColor: '#0f0f0f',
+    borderRadius: 28,
+    padding: 28,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  tokensLabel: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700' as const,
+  },
   tokensContainer: {
-    flexDirection: 'column',
     gap: 16,
-    marginTop: 8,
-    marginBottom: 12,
   },
   topTokensRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     gap: 16,
   },
   bottomTokenRow: {
@@ -605,14 +731,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tokenWrapper: {
-    width: '48%',
+    width: '35%',
     alignItems: 'center',
-    gap: 8,
   },
   tokenWrapper50k: {
-    width: '100%',
+    width: '72%',
     alignItems: 'center',
-    gap: 8,
   },
   tokenCircle: {
     width: '100%',
@@ -649,9 +773,9 @@ const styles = StyleSheet.create({
   },
   tokenSquare: {
     width: '100%',
-    height: 180,
+    aspectRatio: 1.3,
     backgroundColor: '#E8451A',
-    borderRadius: 28,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 6,
@@ -718,7 +842,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   totalContainer: {
-    marginTop: 0,
+    marginTop: 20,
     padding: 20,
     backgroundColor: 'rgba(61, 40, 25, 0.8)',
     borderRadius: 16,
