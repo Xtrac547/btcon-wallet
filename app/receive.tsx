@@ -243,10 +243,10 @@ export default function ReceiveScreen() {
                   <View style={styles.shareAmountInfo}>
                     <Text style={styles.shareAmountLabel}>Montant demandé</Text>
                     <View style={styles.shareAmountRow}>
-                      <Text style={styles.shareAmountValue}>{euroAmount}</Text>
-                      <Text style={styles.shareAmountUnit}>€</Text>
+                      <Text style={styles.shareAmountValue}>{(requestedAmount / 100000000).toFixed(8)}</Text>
+                      <Text style={styles.shareAmountUnit}>BTC</Text>
                     </View>
-                    <Text style={styles.shareAmountBtc}>{(requestedAmount / 100000000).toFixed(8)} BTC</Text>
+                    <Text style={styles.shareAmountEuro}>{euroAmount} €</Text>
                   </View>
                 )}
               </View>
@@ -515,5 +515,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600' as const,
     fontFamily: 'monospace' as const,
+  },
+  shareAmountEuro: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 16,
+    fontWeight: '600' as const,
   },
 });
