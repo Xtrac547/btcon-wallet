@@ -35,16 +35,12 @@ export default function SendScreen() {
     }
   }, [username, router]);
   const [toAddress, setToAddress] = useState(params.address || '');
-  const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
-    1000: params.token1000 ? parseInt(params.token1000) : 0,
-    5000: params.token5000 ? parseInt(params.token5000) : 0,
-    50000: params.token50000 ? parseInt(params.token50000) : 0,
-  });
   const [isSending, setIsSending] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [btcPrice, setBtcPrice] = useState(100000);
   const [hasScanned, setHasScanned] = useState(false);
+  const [amountBtcon, setAmountBtcon] = useState(0);
 
   useEffect(() => {
     const fetchBtcPrice = async () => {
@@ -68,22 +64,13 @@ export default function SendScreen() {
     return euro.toFixed(2);
   };
 
-  const [amountInput, setAmountInput] = useState('');
-
-  const handleAmountChange = (text: string) => {
-    const cleaned = text.replace(/[^0-9.]/g, '');
-    const parts = cleaned.split('.');
-    if (parts.length > 2) return;
-    if (parts[1] && parts[1].length > 2) return;
-    setAmountInput(cleaned);
-  };
-
-  const euroAmount = useMemo(() => parseFloat(amountInput) || 0, [amountInput]);
-  const totalAmount = useMemo(() => {
-    if (euroAmount === 0 || btcPrice === 0) return 0;
-    const btcAmount = euroAmount / btcPrice;
-    return Math.floor(btcAmount * 100000000);
-  }, [euroAmount, btcPrice]);
+  const euroAmount = useMemo(() => {
+    if (amountBtcon === 0 || btcPrice === 0) return 0;
+    const btc = amountBtcon / 100000000;
+    return btc * btcPrice;
+  }, [amountBtcon, btcPrice]);
+  
+  const totalAmount = amountBtcon;
 
 
 
@@ -217,9 +204,7 @@ export default function SendScreen() {
           const amountSats = Math.floor(parseFloat(amountBtc) * 100000000);
           
           setToAddress(address);
-          
-          const euroValue = (amountSats / 100000000) * btcPrice;
-          setAmountInput(euroValue.toFixed(2));
+          setAmountBtcon(amountSats);
           
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -231,7 +216,7 @@ export default function SendScreen() {
     }
     
     setToAddress(address);
-  }, [hasScanned, router, scrollViewRef]);
+  }, [hasScanned, btcPrice, scrollViewRef]);
 
   return (
     <View style={styles.container}>
@@ -273,7 +258,7 @@ export default function SendScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {euroAmount > 0 && (
+        {totalAmount > 0 && (
           <View style={styles.totalContainer}>
             <Text style={styles.totalLabel}>Montant:</Text>
             <View style={styles.totalRow}>
@@ -302,24 +287,7 @@ export default function SendScreen() {
             </View>
           </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Montant en €</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.input}
-                value={amountInput}
-                onChangeText={handleAmountChange}
-                placeholder="0.00"
-                placeholderTextColor="#666"
-                keyboardType="decimal-pad"
-              />
-            </View>
-            {euroAmount > 0 && (
-              <Text style={styles.conversionText}>
-                ≈ {totalAmount.toLocaleString()} Btcon
-              </Text>
-            )}
-          </View>
+
         </View>
 
         <View style={styles.actionButtonsRow}>
