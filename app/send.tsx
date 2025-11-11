@@ -1,6 +1,6 @@
 import '@/utils/shim';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, Modal, useWindowDimensions, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, useWindowDimensions } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
@@ -10,7 +10,7 @@ import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
 import { ArrowLeft, Send, X, Users, Camera } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useResponsive } from '@/utils/responsive';
-import * as Haptics from 'expo-haptics';
+
 
 export default function SendScreen() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function SendScreen() {
   }, [username, router]);
   const [toAddress, setToAddress] = useState(params.address || '');
   const [isSending, setIsSending] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [btcPrice, setBtcPrice] = useState(100000);
   const [hasScanned, setHasScanned] = useState(false);
@@ -170,7 +170,7 @@ export default function SendScreen() {
     );
   };
 
-  const handleOpenScanner = async () => {
+  const handleOpenCamera = async () => {
     if (!permission?.granted) {
       const result = await requestPermission();
       if (!result.granted) {
@@ -179,13 +179,13 @@ export default function SendScreen() {
       }
     }
     setHasScanned(false);
-    setShowScanner(true);
+    setShowCamera(true);
   };
 
   const handleBarcodeScanned = useCallback((data: string) => {
     if (hasScanned) return;
     setHasScanned(true);
-    setShowScanner(false);
+    setShowCamera(false);
     
     let address = data;
     
@@ -288,25 +288,58 @@ export default function SendScreen() {
           </View>
         )}
 
-        <View style={styles.actionButtonsRow}>
-          <TouchableOpacity
-            style={styles.cameraButton}
-            onPress={handleOpenScanner}
-            testID="scan-qr-button"
-          >
-            <Camera color="#FF8C00" size={24} />
-            <Text style={styles.cameraButtonText}>Scanner</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.usersButton}
-            onPress={() => router.push('/search-users')}
-            testID="search-users-button-main"
-          >
-            <Users color="#FF8C00" size={24} />
-            <Text style={styles.cameraButtonText}>Contacts</Text>
-          </TouchableOpacity>
-        </View>
+        {!showCamera && (
+          <View style={styles.actionButtonsRow}>
+            <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={handleOpenCamera}
+              testID="scan-qr-button"
+            >
+              <Camera color="#FF8C00" size={24} />
+              <Text style={styles.cameraButtonText}>Scanner</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.usersButton}
+              onPress={() => router.push('/search-users')}
+              testID="search-users-button-main"
+            >
+              <Users color="#FF8C00" size={24} />
+              <Text style={styles.cameraButtonText}>Contacts</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {showCamera && (
+          <View style={styles.cameraContainer}>
+            <View style={styles.cameraHeaderInline}>
+              <Text style={styles.cameraTitle}>Scanner QR Code</Text>
+              <TouchableOpacity
+                onPress={() => setShowCamera(false)}
+                style={styles.closeCameraButton}
+                testID="close-camera-button"
+              >
+                <X color="#FFF" size={24} />
+              </TouchableOpacity>
+            </View>
+            <CameraView
+              style={styles.cameraView}
+              facing="back"
+              barcodeScannerSettings={{
+                barcodeTypes: ['qr'],
+              }}
+              onBarcodeScanned={(result) => {
+                if (result?.data) {
+                  handleBarcodeScanned(result.data);
+                }
+              }}
+            >
+              <View style={styles.scannerOverlay}>
+                <View style={styles.scannerFrame} />
+              </View>
+            </CameraView>
+          </View>
+        )}
 
         {following.length > 0 && (
           <View style={styles.followingSection}>
@@ -353,40 +386,7 @@ export default function SendScreen() {
         )}
       </ScrollView>
 
-      <Modal
-        visible={showScanner}
-        animationType="slide"
-        presentationStyle="fullScreen"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.scannerHeader}>
-            <Text style={styles.scannerTitle}>Scanner QR Code</Text>
-            <TouchableOpacity
-              onPress={() => setShowScanner(false)}
-              style={styles.closeButton}
-              testID="close-scanner-button"
-            >
-              <X color="#FFF" size={28} />
-            </TouchableOpacity>
-          </View>
-          <CameraView
-            style={styles.camera}
-            facing="back"
-            barcodeScannerSettings={{
-              barcodeTypes: ['qr'],
-            }}
-            onBarcodeScanned={(result) => {
-              if (result?.data) {
-                handleBarcodeScanned(result.data);
-              }
-            }}
-          >
-            <View style={styles.scannerOverlay}>
-              <View style={styles.scannerFrame} />
-            </View>
-          </CameraView>
-        </View>
-      </Modal>
+
     </View>
   );
 }
@@ -954,36 +954,40 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     marginTop: 4,
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#000',
+  cameraContainer: {
+    backgroundColor: '#0f0f0f',
+    borderRadius: 28,
+    overflow: 'hidden',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
   },
-  scannerHeader: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    right: 0,
+  cameraHeaderInline: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    zIndex: 10,
+    padding: 20,
+    backgroundColor: '#000',
   },
-  scannerTitle: {
+  cameraTitle: {
     color: '#FFF',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700' as const,
   },
-  closeButton: {
+  closeCameraButton: {
     padding: 8,
     backgroundColor: 'rgba(255, 140, 0, 0.2)',
     borderRadius: 12,
   },
-  camera: {
-    flex: 1,
+  cameraView: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#000',
   },
   scannerOverlay: {
     flex: 1,
