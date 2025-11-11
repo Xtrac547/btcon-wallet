@@ -10,7 +10,6 @@ import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { ArrowLeft } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useResponsive } from '@/utils/responsive';
-import { Image } from 'expo-image';
 
 
 export default function ReceiveScreen() {
@@ -111,18 +110,32 @@ export default function ReceiveScreen() {
             <Text style={styles.addressText}>{address}</Text>
           </View>
 
-          <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
-            {address ? (
-              <Image
-                source={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&bgcolor=${currentArt.bg.replace('#', '')}&color=${currentArt.fg.replace('#', '')}&data=bitcoin:${address}${requestedAmount > 0 ? `?amount=${(requestedAmount / 100000000).toFixed(8)}` : ''}`}
-                style={{ width: qrArtSize, height: qrArtSize }}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération...</Text>
-            )}
-          </View>
+          {permission?.granted ? (
+            <View style={[styles.cameraWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2 }]}>
+              <CameraView
+                style={styles.cameraView}
+                facing="back"
+                barcodeScannerSettings={{
+                  barcodeTypes: ['qr'],
+                }}
+                onBarcodeScanned={(result) => {
+                  if (result?.data) {
+                    handleBarcodeScanned(result.data);
+                  }
+                }}
+              >
+                <View style={styles.cameraOverlay}>
+                  <View style={styles.cameraFrame} />
+                </View>
+              </CameraView>
+            </View>
+          ) : (
+            <View style={[styles.qrPlaceholder, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
+              <TouchableOpacity onPress={requestPermission} style={styles.permissionButton}>
+                <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Activer la caméra</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {requestedAmount > 0 && (
             <View style={styles.amountInfo}>
@@ -218,19 +231,6 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: 'rgba(255, 140, 0, 0.3)',
     padding: 32,
-  },
-  qrCodeWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 28,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 140, 0, 0.3)',
-    padding: 32,
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.6,
-    shadowRadius: 32,
-    elevation: 16,
   },
   qrPlaceholderText: {
     fontSize: 16,

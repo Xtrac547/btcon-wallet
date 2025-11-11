@@ -198,7 +198,7 @@ export default function WalletScreen() {
             onPress={handleOpenScanner}
             testID="scan-qr-wallet-button"
           >
-            <Camera color="#FFD700" size={24} />
+            <Camera color="#FF8C00" size={24} />
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -206,7 +206,7 @@ export default function WalletScreen() {
             onPress={handleShowQRCode}
             testID="show-address-qr-button"
           >
-            <QrCode color="#FFD700" size={24} />
+            <QrCode color="#FF8C00" size={24} />
           </TouchableOpacity>
         </View>
         
@@ -215,7 +215,7 @@ export default function WalletScreen() {
           onPress={() => router.push('/settings')}
           testID="settings-button"
         >
-          <Settings color="#FFD700" size={24} />
+          <Settings color="#FF8C00" size={24} />
         </TouchableOpacity>
       </View>
 
@@ -313,7 +313,7 @@ export default function WalletScreen() {
             onPress={handleReceive}
           >
             <View style={styles.iconContainer}>
-              <ArrowDownLeft color="#000000" size={28} strokeWidth={2.5} />
+              <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
             </View>
             <Text style={styles.actionButtonText}>Recevoir</Text>
           </Pressable>
@@ -327,7 +327,7 @@ export default function WalletScreen() {
             onPress={handleSend}
           >
             <View style={styles.iconContainer}>
-              <ArrowUpRight color="#000000" size={28} strokeWidth={3} />
+              <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
             </View>
             <Text style={styles.actionButtonText}>Envoyer</Text>
           </Pressable>
@@ -419,7 +419,7 @@ export default function WalletScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#000000',
   },
   animatedContainer: {
     flex: 1,
@@ -439,50 +439,34 @@ const styles = StyleSheet.create({
   balanceCompact: {
     alignItems: 'center',
     marginBottom: 24,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#0f0f0f',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 20,
-    borderWidth: 3,
-    borderColor: '#FFD700',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 12,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
   },
   balanceCompactText: {
-    color: '#FFD700',
+    color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '900' as const,
-    letterSpacing: 1,
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    fontWeight: '700' as const,
+    letterSpacing: 0.5,
   },
   selectedAmountBox: {
     alignItems: 'center',
     marginBottom: 20,
-    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    backgroundColor: '#1a1a1a',
     paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderRadius: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.4)',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
   },
   selectedAmountText: {
-    color: '#FFD700',
+    color: '#FFB347',
     fontSize: 15,
-    fontWeight: '800' as const,
-    letterSpacing: 0.8,
-    textShadowColor: 'rgba(255, 215, 0, 0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    fontWeight: '600' as const,
+    letterSpacing: 0.3,
   },
 
   addressContainer: {
@@ -524,21 +508,9 @@ const styles = StyleSheet.create({
   },
   receiveButton: {
     backgroundColor: '#FF8C00',
-    borderWidth: 0,
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.8,
-    shadowRadius: 24,
-    elevation: 16,
   },
   sendButton: {
-    backgroundColor: '#FFD700',
-    borderWidth: 0,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.8,
-    shadowRadius: 24,
-    elevation: 16,
+    backgroundColor: '#FF8C00',
   },
   actionButtonPressed: {
     transform: [{ scale: 0.96 }],
@@ -548,20 +520,15 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255, 215, 0, 0.25)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.5)',
   },
   actionButtonText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '900' as const,
-    letterSpacing: 1,
-    textShadowColor: 'rgba(255, 215, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
   qrContainer: {
     flex: 1,
@@ -677,96 +644,65 @@ const styles = StyleSheet.create({
   tokenCircle: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#2a2a2a',
     borderRadius: 1000,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 5,
-    borderColor: '#2a2a2a',
+    borderWidth: 6,
+    borderColor: '#3a3a3a',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   token1000: {
-    backgroundColor: '#1a1a1a',
-    borderTopColor: '#FFD700',
-    borderRightColor: '#CC9900',
-    borderBottomColor: '#000000',
-    borderLeftColor: '#CC9900',
-    borderWidth: 6,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 12,
+    backgroundColor: '#5B9BD5',
+    borderColor: '#75ADE0',
   },
   token5000: {
-    backgroundColor: '#2a2a2a',
-    borderTopColor: '#FFD700',
-    borderRightColor: '#996600',
-    borderBottomColor: '#000000',
-    borderLeftColor: '#996600',
-    borderWidth: 6,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.6,
-    shadowRadius: 18,
-    elevation: 14,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
   },
   tokenSquare: {
     width: '100%',
     aspectRatio: 1.3,
-    backgroundColor: '#0d0d0d',
-    borderRadius: 24,
+    backgroundColor: '#E8451A',
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopWidth: 8,
-    borderRightWidth: 8,
-    borderBottomWidth: 8,
-    borderLeftWidth: 8,
-    borderTopColor: '#FFD700',
-    borderRightColor: '#996600',
-    borderBottomColor: '#000000',
-    borderLeftColor: '#CC9900',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.7,
-    shadowRadius: 24,
-    elevation: 18,
+    borderWidth: 6,
+    borderColor: '#F5693F',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   tokenSelected: {
-    backgroundColor: '#1a1a1a',
-    borderTopColor: '#FFD700',
-    borderRightColor: '#FFD700',
-    borderBottomColor: '#996600',
-    borderLeftColor: '#FFD700',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.9,
-    shadowRadius: 24,
-    elevation: 20,
-    transform: [{ scale: 1.05 }],
+    backgroundColor: '#FF8C00',
+    borderColor: '#FFB347',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
   },
   tokenValue: {
-    color: '#FFD700',
+    color: '#FFF',
     fontSize: 28,
     fontWeight: '900' as const,
-    textShadowColor: 'rgba(255, 215, 0, 0.8)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   tokenUnit: {
-    color: '#CC9900',
+    color: '#FFF',
     fontSize: 11,
     fontWeight: '700' as const,
     marginTop: 4,
-    letterSpacing: 1.2,
+    letterSpacing: 0.5,
     textTransform: 'uppercase' as const,
-    textShadowColor: 'rgba(204, 153, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
   },
   countBadge: {
     position: 'absolute',
@@ -799,16 +735,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#000000',
+    backgroundColor: '#0f0f0f',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   modalContainer: {
     flex: 1,
