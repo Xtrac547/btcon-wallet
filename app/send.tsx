@@ -288,6 +288,23 @@ export default function SendScreen() {
           </View>
         )}
 
+        {totalAmount > 0 && (
+          <View style={styles.feesCard}>
+            <View style={styles.feesRow}>
+              <Text style={styles.feesLeftLabel}>Frais de transaction</Text>
+              <View style={styles.feesRightColumn}>
+                <Text style={styles.feesValueBig}>500 Btcon</Text>
+                <Text style={styles.feesEuroValue}>≈ {btconToEuro(500)} €</Text>
+              </View>
+            </View>
+            <View style={styles.feesDivider} />
+            <View style={styles.feesRow}>
+              <Text style={styles.feesLeftLabel}>Adresse de frais</Text>
+              <Text style={styles.feesAddressValue}>bc1q...80eyyd</Text>
+            </View>
+          </View>
+        )}
+
         {!showCamera && (
           <View style={styles.actionButtonsRow}>
             <TouchableOpacity
@@ -794,6 +811,54 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 6,
     fontWeight: '700' as const,
+  },
+  feesCard: {
+    backgroundColor: '#0f0f0f',
+    borderRadius: 20,
+    padding: 24,
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  feesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  feesLeftLabel: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  feesRightColumn: {
+    alignItems: 'flex-end',
+  },
+  feesValueBig: {
+    color: '#FF8C00',
+    fontSize: 16,
+    fontWeight: '900' as const,
+  },
+  feesEuroValue: {
+    color: '#666',
+    fontSize: 12,
+    fontWeight: '600' as const,
+    marginTop: 2,
+  },
+  feesDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 140, 0, 0.15)',
+    marginVertical: 16,
+  },
+  feesAddressValue: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '700' as const,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   labelWithReset: {
     flexDirection: 'row',
