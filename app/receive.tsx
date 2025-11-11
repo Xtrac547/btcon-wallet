@@ -76,19 +76,15 @@ export default function ReceiveScreen() {
     }
     
     if (amount > 0) {
-      const tokens1000 = Math.floor(amount / 1000);
-      
-      router.push({
+      router.replace({
         pathname: '/send',
         params: {
           address: scannedAddress,
-          token1000: tokens1000.toString(),
-          token5000: '0',
-          token50000: '0',
+          preselectedAmount: amount.toString(),
         }
       });
     } else {
-      router.push({
+      router.replace({
         pathname: '/send',
         params: {
           address: scannedAddress,

@@ -206,7 +206,7 @@ export default function SendScreen() {
           
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
-          }, 300);
+          }, 100);
           
           return;
         }
