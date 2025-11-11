@@ -1,30 +1,79 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder, Modal, Alert, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, ArrowDownLeft, QrCode, Settings, X, Eye } from 'lucide-react-native';
-import { useState, useRef, useMemo, useCallback } from 'react';
+import { useQRColor } from '@/contexts/QRColorContext';
+import { ArrowUpRight, ArrowDownLeft, QrCode, Settings, X } from 'lucide-react-native';
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useResponsive } from '@/utils/responsive';
+import Svg, { Rect } from 'react-native-svg';
 
 
 export default function WalletScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { balance } = useWallet();
+  const { balance, address } = useWallet();
   const btcPrice = useBtcPrice();
   const responsive = useResponsive();
+  const { width } = useWindowDimensions();
+  const { getQRColors } = useQRColor();
+  const [qrMatrix, setQrMatrix] = useState<number[][]>([]);
 
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
     5000: 0,
     50000: 0,
   });
-  
 
+  const currentArt = useMemo(() => {
+    if (!address) return { bg: '#FFF', fg: '#000', accent: '#FF8C00' };
+    const qrColors = getQRColors(address);
+    return {
+      bg: qrColors.background,
+      fg: qrColors.qr,
+      accent: qrColors.qr,
+    };
+  }, [address, getQRColors]);
+
+  const generateQRMatrix = async (text: string): Promise<number[][]> => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const QRCode = require('qrcode');
+      
+      const qrData = await QRCode.create(text, { errorCorrectionLevel: 'H' });
+      const modules = qrData.modules;
+      const size = modules.size;
+      const matrix: number[][] = [];
+      
+      for (let row = 0; row < size; row++) {
+        matrix[row] = [];
+        for (let col = 0; col < size; col++) {
+          matrix[row][col] = modules.get(row, col) ? 1 : 0;
+        }
+      }
+      return matrix;
+    } catch (error) {
+      console.error('Erreur génération QR:', error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    if (address) {
+      (async () => {
+        try {
+          const matrix = await generateQRMatrix(address);
+          setQrMatrix(matrix);
+        } catch (err) {
+          console.error('Erreur génération QR:', err);
+        }
+      })();
+    }
+  }, [address]);
 
   const translateY = useRef(new Animated.Value(0)).current;
   const panY = useRef(0);
@@ -177,27 +226,12 @@ export default function WalletScreen() {
     })
   ).current;
 
+  const qrSize = Math.min(width * 0.4, 160);
+  const padding = 16;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.topBar}>
-        <View style={styles.leftButtons}>
-          <TouchableOpacity
-            style={styles.topButton}
-            onPress={handleOpenScanner}
-            testID="scan-qr-wallet-button"
-          >
-            <QrCode color="#FF8C00" size={24} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.topButton}
-            onPress={() => router.push('/receive')}
-            testID="show-address-qr-button"
-          >
-            <Eye color="#FF8C00" size={24} />
-          </TouchableOpacity>
-        </View>
-        
         <TouchableOpacity
           style={styles.topButton}
           onPress={() => router.push('/settings')}
@@ -221,6 +255,52 @@ export default function WalletScreen() {
             <Text style={styles.balanceCompactText}>
               {balance.toLocaleString()} Btcon = {euroValue} €
             </Text>
+          </View>
+
+          <View style={styles.qrScannerSection}>
+            <View style={styles.qrContainer}>
+              <Text style={styles.sectionTitle}>QR Code de réception</Text>
+              {qrMatrix.length > 0 ? (
+                <View style={[styles.qrWrapper, { width: qrSize + padding * 2, height: qrSize + padding * 2, backgroundColor: currentArt.bg }]}>
+                  <Svg width={qrSize} height={qrSize} viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
+                    {qrMatrix.map((row, y) => 
+                      row.map((cell, x) => {
+                        if (cell === 1) {
+                          return (
+                            <Rect
+                              key={`${y}-${x}`}
+                              x={x}
+                              y={y}
+                              width={1}
+                              height={1}
+                              fill={currentArt.fg}
+                              rx={0.15}
+                            />
+                          );
+                        }
+                        return null;
+                      })
+                    )}
+                  </Svg>
+                </View>
+              ) : (
+                <View style={[styles.qrPlaceholder, { width: qrSize + padding * 2, height: qrSize + padding * 2 }]}>
+                  <Text style={styles.qrPlaceholderText}>Chargement...</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.cameraContainer}>
+              <Text style={styles.sectionTitle}>Scanner QR Code</Text>
+              <TouchableOpacity 
+                style={[styles.cameraButton, { width: qrSize + padding * 2, height: qrSize + padding * 2 }]}
+                onPress={handleOpenScanner}
+                testID="scan-qr-wallet-button"
+              >
+                <QrCode color="#FFF" size={60} />
+                <Text style={styles.cameraButtonText}>Scanner</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           
           <View style={styles.selectedAmountBox}>
@@ -475,12 +555,6 @@ const styles = StyleSheet.create({
     fontWeight: '800' as const,
     letterSpacing: 0.5,
   },
-  qrContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
   qrTitle: {
     color: '#FFFFFF',
     fontSize: 28,
@@ -667,14 +741,10 @@ const styles = StyleSheet.create({
   },
   topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingVertical: 12,
-  },
-  leftButtons: {
-    flexDirection: 'row',
-    gap: 12,
   },
   topButton: {
     width: 48,
@@ -728,5 +798,72 @@ const styles = StyleSheet.create({
     borderColor: '#FF8C00',
     borderRadius: 24,
     backgroundColor: 'transparent',
+  },
+  qrScannerSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    gap: 16,
+  },
+  qrContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  cameraContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700' as const,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  qrWrapper: {
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  qrPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+    backgroundColor: '#1a1a1a',
+  },
+  qrPlaceholderText: {
+    color: '#888',
+    fontSize: 12,
+    fontWeight: '600' as const,
+  },
+  cameraButton: {
+    aspectRatio: 1,
+    backgroundColor: '#FF8C00',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cameraButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700' as const,
   },
 });
