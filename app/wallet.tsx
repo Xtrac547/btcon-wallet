@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Modal, A
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { QrCode, Settings, Eye, X } from 'lucide-react-native';
+import { Camera, Settings, Eye, X } from 'lucide-react-native';
 import { useState, useCallback } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -79,7 +79,7 @@ export default function WalletScreen() {
           onPress={handleOpenScanner}
           testID="scan-qr-button"
         >
-          <QrCode color="#FF8C00" size={28} />
+          <Camera color="#FF8C00" size={28} />
         </TouchableOpacity>
         
         <TouchableOpacity
