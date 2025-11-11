@@ -214,7 +214,7 @@ export default function ReceiveScreen() {
             <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
               <View style={styles.shareContainer}>
                 <View style={styles.shareAddressInfo}>
-                  <Text style={styles.shareAddressLabel}>Adresse BTC</Text>
+                  <Text style={styles.shareAddressLabel}>Adresse Btcon</Text>
                   <Text style={styles.shareAddressText}>{address}</Text>
                 </View>
                 <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
@@ -244,7 +244,7 @@ export default function ReceiveScreen() {
                     <Text style={styles.shareAmountLabel}>Montant demandé</Text>
                     <View style={styles.shareAmountRow}>
                       <Text style={styles.shareAmountValue}>{(requestedAmount / 100000000).toFixed(8)}</Text>
-                      <Text style={styles.shareAmountUnit}>BTC</Text>
+                      <Text style={styles.shareAmountUnit}>Btcon</Text>
                     </View>
                     <Text style={styles.shareAmountEuro}>{euroAmount} €</Text>
                   </View>
