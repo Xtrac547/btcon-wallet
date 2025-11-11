@@ -1,15 +1,15 @@
 import '@/utils/shim';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder, Modal, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated, PanResponder, Modal, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera } from 'lucide-react-native';
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useResponsive } from '@/utils/responsive';
-import QRCodeLib from 'qrcode';
+import { Image } from 'expo-image';
 
 
 export default function WalletScreen() {
@@ -32,32 +32,12 @@ export default function WalletScreen() {
   
   const [showScanner, setShowScanner] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [permission, requestPermission] = useCameraPermissions();
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
   const { address } = useWallet();
 
-  useEffect(() => {
-    const generateQRCode = async () => {
-      if (address) {
-        try {
-          const dataUrl = await QRCodeLib.toDataURL(`bitcoin:${address}`, {
-            width: 300,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF',
-            },
-          });
-          setQrCodeDataUrl(dataUrl);
-        } catch (error) {
-          console.error('Error generating QR code:', error);
-        }
-      }
-    };
-    generateQRCode();
-  }, [address]);
+
   
 
 
@@ -409,19 +389,18 @@ export default function WalletScreen() {
               </TouchableOpacity>
             </View>
             
-            {qrCodeDataUrl ? (
-              <View style={styles.qrCodeContainer}>
+            <View style={styles.qrCodeContainer}>
+              {address ? (
                 <Image
-                  source={{ uri: qrCodeDataUrl }}
+                  source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=bitcoin:${address}`}
                   style={styles.qrCodeImage}
-                  resizeMode="contain"
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
                 />
-              </View>
-            ) : (
-              <View style={styles.qrCodeContainer}>
+              ) : (
                 <Text style={styles.qrLoadingText}>Génération du QR code...</Text>
-              </View>
-            )}
+              )}
+            </View>
             
             <View style={styles.qrAddressBox}>
               <Text style={styles.qrAddressLabel}>ADRESSE BTCON</Text>
