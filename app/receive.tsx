@@ -1,5 +1,5 @@
 import '@/utils/shim';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -13,6 +13,7 @@ import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { Share, Platform } from 'react-native';
+import ViewShot from 'react-native-view-shot';
 
 
 export default function ReceiveScreen() {
@@ -26,6 +27,7 @@ export default function ReceiveScreen() {
   const responsive = useResponsive();
   const btcPrice = useBtcPrice();
   const [isCopied, setIsCopied] = useState(false);
+  const viewShotRef = useRef<ViewShot>(null);
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
   const euroAmount = useMemo(() => requestedAmount > 0 ? btconToEuro(requestedAmount, btcPrice) : '0', [requestedAmount, btcPrice]);
@@ -103,10 +105,27 @@ export default function ReceiveScreen() {
           );
         }
       } else {
-        const result = await Share.share({
+        let imageUri: string | undefined;
+        
+        if (viewShotRef.current && viewShotRef.current.capture) {
+          try {
+            imageUri = await viewShotRef.current.capture();
+            console.log('Screenshot captured:', imageUri);
+          } catch (captureError) {
+            console.error('Capture error:', captureError);
+          }
+        }
+
+        const shareOptions: any = {
           message: shareMessage,
           title: 'Recevoir Btcon',
-        });
+        };
+
+        if (imageUri) {
+          shareOptions.url = imageUri;
+        }
+
+        const result = await Share.share(shareOptions);
 
         if (result.action === Share.sharedAction) {
           if (result.activityType) {
@@ -135,41 +154,43 @@ export default function ReceiveScreen() {
       </View>
 
       <View style={styles.content}>
-        <View style={styles.qrSection}>
-          <View style={styles.addressInfo}>
-            <Text style={styles.addressLabel}>Adresse Btcon</Text>
-            <View style={styles.addressRow}>
-              <Text style={styles.addressText}>{address}</Text>
-              <TouchableOpacity onPress={handleCopyAddress} style={styles.copyButton}>
-                <Copy color={isCopied ? '#00FF00' : '#FF8C00'} size={18} />
-              </TouchableOpacity>
+        <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }} style={styles.captureContainer}>
+          <View style={styles.qrSection}>
+            <View style={styles.addressInfo}>
+              <Text style={styles.addressLabel}>Adresse Btcon</Text>
+              <View style={styles.addressRow}>
+                <Text style={styles.addressText}>{address}</Text>
+                <TouchableOpacity onPress={handleCopyAddress} style={styles.copyButton}>
+                  <Copy color={isCopied ? '#00FF00' : '#FF8C00'} size={18} />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
-            {qrCodeUri ? (
-              <Image
-                source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&bgcolor=${currentArt.bg.replace('#', '')}&color=${currentArt.fg.replace('#', '')}&data=${encodeURIComponent(qrCodeUri)}`}
-                style={{ width: qrArtSize, height: qrArtSize }}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération...</Text>
+            <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
+              {qrCodeUri ? (
+                <Image
+                  source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&bgcolor=${currentArt.bg.replace('#', '')}&color=${currentArt.fg.replace('#', '')}&data=${encodeURIComponent(qrCodeUri)}`}
+                  style={{ width: qrArtSize, height: qrArtSize }}
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération...</Text>
+              )}
+            </View>
+
+            {requestedAmount > 0 && (
+              <View style={styles.amountInfo}>
+                <Text style={styles.amountLabel}>Montant demandé</Text>
+                <View style={styles.amountRow}>
+                  <Text style={styles.amountValue}>{requestedAmount.toLocaleString()}</Text>
+                  <Text style={styles.amountUnit}>Btcon</Text>
+                </View>
+                <Text style={styles.amountEuro}>{euroAmount} €</Text>
+              </View>
             )}
           </View>
-
-          {requestedAmount > 0 && (
-            <View style={styles.amountInfo}>
-              <Text style={styles.amountLabel}>Montant demandé</Text>
-              <View style={styles.amountRow}>
-                <Text style={styles.amountValue}>{requestedAmount.toLocaleString()}</Text>
-                <Text style={styles.amountUnit}>Btcon</Text>
-              </View>
-              <Text style={styles.amountEuro}>{euroAmount} €</Text>
-            </View>
-          )}
-        </View>
+        </ViewShot>
 
         <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
           <Share2 color="#FFF" size={24} />
@@ -383,5 +404,10 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 16,
     fontWeight: '600' as const,
+  },
+  captureContainer: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#000000',
   },
 });
