@@ -160,32 +160,10 @@ export default function WalletScreen() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !hasSelectedTokens,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return !hasSelectedTokens && Math.abs(gestureState.dy) > 10;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (!hasSelectedTokens && gestureState.dy > 0) {
-          panY.current = gestureState.dy;
-          translateY.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (!hasSelectedTokens && gestureState.dy > 150) {
-          router.push('/stories');
-          Animated.timing(translateY, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: true,
-          }).start();
-        } else {
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        }
-        panY.current = 0;
-      },
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: () => false,
+      onPanResponderMove: () => {},
+      onPanResponderRelease: () => {},
     })
   ).current;
 
@@ -228,7 +206,7 @@ export default function WalletScreen() {
           },
         ]}
       >
-        <View style={[styles.selectionContent, hasSelectedTokens && styles.contentAtBottom]}>
+        <View style={styles.selectionContent}>
           <View style={styles.balanceCompact}>
             <Text style={styles.balanceCompactText}>
               {balance.toLocaleString()} Btcon = {euroValue} €
@@ -315,7 +293,7 @@ export default function WalletScreen() {
             onPress={handleReceive}
           >
             <View style={styles.iconContainer}>
-              <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
+              <ArrowDownLeft color="#FFFFFF" size={24} strokeWidth={2.5} />
             </View>
             <Text style={styles.actionButtonText}>Recevoir</Text>
           </Pressable>
@@ -329,7 +307,7 @@ export default function WalletScreen() {
             onPress={handleSend}
           >
             <View style={styles.iconContainer}>
-              <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
+              <ArrowUpRight color="#FFFFFF" size={24} strokeWidth={2.5} />
             </View>
             <Text style={styles.actionButtonText}>Envoyer</Text>
           </Pressable>
@@ -436,7 +414,7 @@ const styles = StyleSheet.create({
   contentAtBottom: {
     flex: 1,
     justifyContent: 'flex-end',
-    paddingBottom: 160,
+    paddingBottom: 140,
   },
   balanceCompact: {
     alignItems: 'center',
@@ -499,14 +477,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 32,
-    borderRadius: 24,
-    gap: 12,
+    paddingVertical: 20,
+    borderRadius: 20,
+    gap: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
   receiveButton: {
     backgroundColor: '#FF8C00',
@@ -519,16 +497,16 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   actionButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800' as const,
     letterSpacing: 0.5,
   },
@@ -636,11 +614,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tokenWrapper: {
-    width: '35%',
+    width: '30%',
     alignItems: 'center',
   },
   tokenWrapper10k: {
-    width: '72%',
+    width: '62%',
     alignItems: 'center',
   },
   tokenCircle: {
