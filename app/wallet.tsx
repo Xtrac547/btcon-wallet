@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera, Copy } from 'lucide-react-native';
 import { useState, useRef, useMemo, useCallback } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -11,6 +11,7 @@ import * as Haptics from 'expo-haptics';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
 import { useQRColor } from '@/contexts/QRColorContext';
+import * as Clipboard from 'expo-clipboard';
 
 
 export default function WalletScreen() {
@@ -34,6 +35,7 @@ export default function WalletScreen() {
   const [showScanner, setShowScanner] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  const [isCopied, setIsCopied] = useState(false);
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
   
@@ -116,6 +118,18 @@ export default function WalletScreen() {
 
   const handleShowQRCode = () => {
     setShowQRCode(true);
+  };
+
+  const handleCopyAddress = async () => {
+    if (address) {
+      await Clipboard.setStringAsync(address);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert('Copié', 'Adresse copiée dans le presse-papiers');
+    }
   };
 
   const handleBarcodeScanned = useCallback((data: string) => {
@@ -408,7 +422,12 @@ export default function WalletScreen() {
             
             <View style={styles.qrAddressBox}>
               <Text style={styles.qrAddressLabel}>ADRESSE BTCON</Text>
-              <Text style={styles.qrAddressText}>{address}</Text>
+              <View style={styles.addressRowQR}>
+                <Text style={styles.qrAddressText}>{address}</Text>
+                <TouchableOpacity onPress={handleCopyAddress} style={styles.copyButtonQR}>
+                  <Copy color={isCopied ? '#00FF00' : '#FF8C00'} size={20} />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Pressable>
@@ -876,5 +895,15 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' || Platform.OS === 'android' ? 'Courier' : 'monospace',
     textAlign: 'center' as const,
     lineHeight: 18,
+    flex: 1,
+  },
+  addressRowQR: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  copyButtonQR: {
+    padding: 4,
   },
 });

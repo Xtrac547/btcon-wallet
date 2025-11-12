@@ -1,15 +1,17 @@
 import '@/utils/shim';
-import { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Copy, Share2 } from 'lucide-react-native';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
+import * as Clipboard from 'expo-clipboard';
+import * as Linking from 'expo-linking';
 
 
 export default function ReceiveScreen() {
@@ -22,6 +24,7 @@ export default function ReceiveScreen() {
   const { width } = useWindowDimensions();
   const responsive = useResponsive();
   const btcPrice = useBtcPrice();
+  const [isCopied, setIsCopied] = useState(false);
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
   const euroAmount = useMemo(() => requestedAmount > 0 ? btconToEuro(requestedAmount, btcPrice) : '0', [requestedAmount, btcPrice]);
@@ -60,6 +63,48 @@ export default function ReceiveScreen() {
     return `bitcoin:${address}`;
   }, [address, requestedAmount]);
 
+  const handleCopyAddress = async () => {
+    if (address) {
+      await Clipboard.setStringAsync(address);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+      Alert.alert('Copié', 'Adresse copiée dans le presse-papiers');
+    }
+  };
+
+  const handleShare = async () => {
+    if (!address) return;
+    
+    const deepLink = Linking.createURL('/send', {
+      queryParams: {
+        address: username ? `@${username}` : address,
+        ...(requestedAmount > 0 ? { preselectedAmount: requestedAmount.toString() } : {}),
+      },
+    });
+
+    try {
+      const shareMessage = requestedAmount > 0
+        ? `Envoyez-moi ${requestedAmount.toLocaleString()} Btcon (${euroAmount} €)\n\n${deepLink}`
+        : `Envoyez-moi des Btcon\n\n${deepLink}`;
+
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: 'Recevoir Btcon',
+          text: shareMessage,
+        });
+      } else {
+        await Clipboard.setStringAsync(deepLink);
+        Alert.alert(
+          'Lien copié',
+          'Le lien de paiement a été copié dans le presse-papiers',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Erreur lors du partage:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
@@ -74,7 +119,12 @@ export default function ReceiveScreen() {
         <View style={styles.qrSection}>
           <View style={styles.addressInfo}>
             <Text style={styles.addressLabel}>Adresse Btcon</Text>
-            <Text style={styles.addressText}>{address}</Text>
+            <View style={styles.addressRow}>
+              <Text style={styles.addressText}>{address}</Text>
+              <TouchableOpacity onPress={handleCopyAddress} style={styles.copyButton}>
+                <Copy color={isCopied ? '#00FF00' : '#FF8C00'} size={18} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
@@ -102,6 +152,10 @@ export default function ReceiveScreen() {
           )}
         </View>
 
+        <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+          <Share2 color="#FFF" size={24} />
+          <Text style={styles.shareButtonText}>Partager</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -162,7 +216,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   shareButton: {
-    width: '100%',
+    width: '90%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -170,14 +224,16 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 32,
     borderRadius: 20,
+    backgroundColor: '#FF8C00',
     shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
     elevation: 8,
+    marginTop: 24,
   },
   shareButtonText: {
-    color: '#000',
+    color: '#FFF',
     fontSize: 18,
     fontWeight: '800' as const,
     letterSpacing: 0.5,
@@ -243,6 +299,15 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 140, 0, 0.3)',
     maxWidth: 360,
     alignSelf: 'center',
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  copyButton: {
+    padding: 4,
   },
   addressLabel: {
     color: 'rgba(255, 255, 255, 0.6)',

@@ -2,6 +2,7 @@ import '@/utils/shim';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as Linking from 'expo-linking';
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WalletProvider } from "@/contexts/WalletContext";
@@ -57,6 +58,11 @@ export default function RootLayout() {
     };
     
     setTimeout(hideSplash, 100);
+  }, []);
+
+  useEffect(() => {
+    const url = Linking.createURL('');
+    console.log('Deep link URL scheme:', url);
   }, []);
 
   return (
