@@ -39,6 +39,7 @@ function RootLayoutNav() {
       <Stack.Screen name="buy-btc" options={{ headerShown: false }} />
       <Stack.Screen name="setup-auth" options={{ headerShown: false }} />
       <Stack.Screen name="verify-auth" options={{ headerShown: false }} />
+      <Stack.Screen name="stories" options={{ presentation: "modal", headerShown: false }} />
     </Stack>
   );
 }
