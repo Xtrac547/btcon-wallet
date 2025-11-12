@@ -12,6 +12,7 @@ import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
+import { Share, Platform } from 'react-native';
 
 
 export default function ReceiveScreen() {
@@ -87,21 +88,39 @@ export default function ReceiveScreen() {
         ? `Envoyez-moi ${requestedAmount.toLocaleString()} Btcon (${euroAmount} €)\n\n${deepLink}`
         : `Envoyez-moi des Btcon\n\n${deepLink}`;
 
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({
-          title: 'Recevoir Btcon',
-          text: shareMessage,
-        });
+      if (Platform.OS === 'web') {
+        if (typeof navigator !== 'undefined' && navigator.share) {
+          await navigator.share({
+            title: 'Recevoir Btcon',
+            text: shareMessage,
+          });
+        } else {
+          await Clipboard.setStringAsync(deepLink);
+          Alert.alert(
+            'Lien copié',
+            'Le lien de paiement a été copié dans le presse-papiers',
+            [{ text: 'OK' }]
+          );
+        }
       } else {
-        await Clipboard.setStringAsync(deepLink);
-        Alert.alert(
-          'Lien copié',
-          'Le lien de paiement a été copié dans le presse-papiers',
-          [{ text: 'OK' }]
-        );
+        const result = await Share.share({
+          message: shareMessage,
+          title: 'Recevoir Btcon',
+        });
+
+        if (result.action === Share.sharedAction) {
+          if (result.activityType) {
+            console.log('Partagé via:', result.activityType);
+          } else {
+            console.log('Partagé avec succès');
+          }
+        } else if (result.action === Share.dismissedAction) {
+          console.log('Partage annulé');
+        }
       }
     } catch (error) {
       console.error('Erreur lors du partage:', error);
+      Alert.alert('Erreur', 'Impossible de partager le lien');
     }
   };
 
