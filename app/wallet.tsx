@@ -24,7 +24,7 @@ export default function WalletScreen() {
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
     5000: 0,
-    10000: 0,
+    50000: 0,
   });
   
 
@@ -78,7 +78,7 @@ export default function WalletScreen() {
     setTokenCounts({
       1000: 0,
       5000: 0,
-      10000: 0,
+      50000: 0,
     });
   }, []);
 
@@ -99,7 +99,7 @@ export default function WalletScreen() {
         preselectedAmount: totalAmount.toString(),
         token1000: tokenCounts[1000].toString(),
         token5000: tokenCounts[5000].toString(),
-        token10000: tokenCounts[10000].toString()
+        token50000: tokenCounts[50000].toString()
       } 
     });
   }, [totalAmount, tokenCounts, router]);
@@ -260,18 +260,18 @@ export default function WalletScreen() {
                   <Pressable
                     style={[
                       styles.token3D,
-                      tokenCounts[10000] > 0 && styles.token3DSelected,
+                      tokenCounts[50000] > 0 && styles.token3DSelected,
                     ]}
-                    onPress={() => handleTokenPress(10000)}
-                    onLongPress={() => handleTokenLongPress(10000)}
+                    onPress={() => handleTokenPress(50000)}
+                    onLongPress={() => handleTokenLongPress(50000)}
                   >
                     <View style={styles.token3DInner}>
-                      <Text style={[styles.tokenValue, { fontSize: responsive.scale(32) }]}>10000</Text>
+                      <Text style={[styles.tokenValue, { fontSize: responsive.scale(32) }]}>50000</Text>
                       <Text style={[styles.tokenUnit, { fontSize: responsive.scale(11) }]}>BTCON</Text>
                     </View>
-                    {tokenCounts[10000] > 0 && (
+                    {tokenCounts[50000] > 0 && (
                       <View style={styles.countBadge}>
-                        <Text style={styles.countText}>{tokenCounts[10000]}x</Text>
+                        <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
                       </View>
                     )}
                   </Pressable>
