@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera, Clock } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera } from 'lucide-react-native';
 import { useState, useRef, useMemo, useCallback } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -164,12 +164,12 @@ export default function WalletScreen() {
         return Math.abs(gestureState.dy) > 10;
       },
       onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy < 0) {
+        if (gestureState.dy > 0) {
           translateY.setValue(gestureState.dy);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy < -100) {
+        if (gestureState.dy > 100) {
           Animated.timing(translateY, {
             toValue: 0,
             duration: 300,
@@ -206,14 +206,6 @@ export default function WalletScreen() {
             testID="show-address-qr-button"
           >
             <QrCode color="#FF8C00" size={24} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.topButton}
-            onPress={() => router.push('/stories')}
-            testID="history-button"
-          >
-            <Clock color="#FF8C00" size={24} />
           </TouchableOpacity>
         </View>
         
