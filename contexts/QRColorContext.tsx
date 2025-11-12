@@ -57,6 +57,17 @@ export const [QRColorProvider, useQRColor] = createContextHook(() => {
     }
   };
 
+  const ensureColorAssignment = useCallback(async (address: string) => {
+    if (!address || DEVELOPER_ADDRESSES.includes(address) || colorAssignments[address]) {
+      return;
+    }
+    
+    const newColor = generateColorFromAddress(address);
+    const newAssignments = { ...colorAssignments, [address]: newColor };
+    setColorAssignments(newAssignments);
+    await saveColorAssignments(newAssignments);
+  }, [colorAssignments]);
+
   const getQRColors = useCallback((address: string | null) => {
     if (!address) {
       return { background: '#FFFFFF', qr: '#000000' };
@@ -72,16 +83,13 @@ export const [QRColorProvider, useQRColor] = createContextHook(() => {
       return { background: '#FFFFFF', qr: colorAssignments[address] };
     }
     
-    const newColor = generateColorFromAddress(address);
-    const newAssignments = { ...colorAssignments, [address]: newColor };
-    setColorAssignments(newAssignments);
-    saveColorAssignments(newAssignments);
-    
-    return { background: '#FFFFFF', qr: newColor };
+    const color = generateColorFromAddress(address);
+    return { background: '#FFFFFF', qr: color };
   }, [colorAssignments]);
 
   return useMemo(() => ({
     getQRColors,
+    ensureColorAssignment,
     isLoaded,
-  }), [getQRColors, isLoaded]);
+  }), [getQRColors, ensureColorAssignment, isLoaded]);
 });
