@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2ECC71',
   },
   iconSent: {
-    backgroundColor: '#FF8C00',
+    backgroundColor: '#E53935',
   },
   transactionInfo: {
     flex: 1,
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     color: '#2ECC71',
   },
   amountSent: {
-    color: '#FF8C00',
+    color: '#E53935',
   },
   transactionDate: {
     color: '#888888',
