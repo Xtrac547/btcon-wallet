@@ -4,11 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY = 'btcon_qr_color_assignments';
 
-const DEVELOPER_ADDRESSES = [
-  'bc1qdff8680vyy0qthr5vpe3ywzw48r8rr4jn4jvac',
-  'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd',
-];
-
 interface ColorAssignments {
   [address: string]: string;
 }
@@ -58,7 +53,7 @@ export const [QRColorProvider, useQRColor] = createContextHook(() => {
   };
 
   const ensureColorAssignment = useCallback(async (address: string) => {
-    if (!address || DEVELOPER_ADDRESSES.includes(address) || colorAssignments[address]) {
+    if (!address || colorAssignments[address]) {
       return;
     }
     
@@ -71,12 +66,6 @@ export const [QRColorProvider, useQRColor] = createContextHook(() => {
   const getQRColors = useCallback((address: string | null) => {
     if (!address) {
       return { background: '#FFFFFF', qr: '#000000' };
-    }
-    
-    const isDeveloper = DEVELOPER_ADDRESSES.includes(address);
-    
-    if (isDeveloper) {
-      return { background: '#FFFFFF', qr: '#FF8C00' };
     }
     
     if (colorAssignments[address]) {
