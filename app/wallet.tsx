@@ -30,7 +30,6 @@ export default function WalletScreen() {
 
 
   const translateY = useRef(new Animated.Value(0)).current;
-  const panY = useRef(0);
   
   const [showScanner, setShowScanner] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
@@ -160,10 +159,32 @@ export default function WalletScreen() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: () => false,
-      onPanResponderMove: () => {},
-      onPanResponderRelease: () => {},
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dy) > 10;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy < 0) {
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy < -100) {
+          Animated.timing(translateY, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }).start(() => {
+            router.push('/stories');
+            translateY.setValue(0);
+          });
+        } else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
     })
   ).current;
 
