@@ -230,21 +230,13 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
 
     let inputSum = 0;
     const selectedUtxos: UTXO[] = [];
+    const confirmedUtxos = utxos.filter(utxo => utxo.status.confirmed);
+
+    if (confirmedUtxos.length === 0) {
+      throw new Error('Aucune transaction confirmée disponible');
+    }
     
-    for (const utxo of utxos) {
-      const tx = await esploraService.getTransaction(utxo.txid);
-      if (!tx) continue;
-
-      const nonWitnessUtxo = await fetch(`${state.isTestnet ? 'https://blockstream.info/testnet/api' : 'https://blockstream.info/api'}/tx/${utxo.txid}/hex`)
-        .then(res => res.text())
-        .then(hex => Buffer.from(hex, 'hex'));
-
-      psbt.addInput({
-        hash: utxo.txid,
-        index: utxo.vout,
-        nonWitnessUtxo,
-      });
-
+    for (const utxo of confirmedUtxos) {
       selectedUtxos.push(utxo);
       inputSum += utxo.value;
 
@@ -255,15 +247,28 @@ export const [WalletProvider, useWallet] = createContextHook(() => {
       if (inputSum >= totalNeeded + 546) break;
     }
 
-    const numInputs = psbt.txInputs.length;
-    const numOutputs = 3;
+    const numInputs = selectedUtxos.length;
+    const numOutputs = additionalFee > 0 ? 3 : 2;
     const estimatedSize = numInputs * 68 + numOutputs * 31 + 10;
     const calculatedFee = Math.ceil(estimatedSize * actualFeeRate);
 
-    const change = inputSum - amountSats - additionalFee - calculatedFee;
+    const totalNeeded = amountSats + additionalFee + calculatedFee;
+    const change = inputSum - totalNeeded;
 
-    if (change < 0) {
-      throw new Error(`Fonds insuffisants. Nécessaire: ${amountSats + additionalFee + calculatedFee} sats, Disponible: ${inputSum} sats`);
+    if (inputSum < totalNeeded) {
+      throw new Error(`Fonds insuffisants. Nécessaire: ${totalNeeded} sats, Disponible: ${inputSum} sats`);
+    }
+
+    for (const utxo of selectedUtxos) {
+      const nonWitnessUtxo = await fetch(`${state.isTestnet ? 'https://blockstream.info/testnet/api' : 'https://blockstream.info/api'}/tx/${utxo.txid}/hex`)
+        .then(res => res.text())
+        .then(hex => Buffer.from(hex, 'hex'));
+
+      psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        nonWitnessUtxo,
+      });
     }
 
     psbt.addOutput({
