@@ -5,20 +5,12 @@ import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQRColor } from '@/contexts/QRColorContext';
 
 export default function IndexScreen() {
   const router = useRouter();
-  const { hasWallet, isLoading: walletLoading, address } = useWallet();
+  const { hasWallet, isLoading: walletLoading } = useWallet();
   const { username, isLoading: usernameLoading } = useUsername();
   const { isAuthConfigured, authType, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { ensureColorAssignment } = useQRColor();
-
-  useEffect(() => {
-    if (hasWallet && address) {
-      ensureColorAssignment(address);
-    }
-  }, [hasWallet, address, ensureColorAssignment]);
 
   useEffect(() => {
     if (!walletLoading && !usernameLoading && !authLoading) {

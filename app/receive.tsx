@@ -11,7 +11,7 @@ import { ArrowLeft, Copy, Share2 } from 'lucide-react-native';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
-
+import * as Linking from 'expo-linking';
 import { Share, Platform } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 
@@ -76,43 +76,70 @@ export default function ReceiveScreen() {
   };
 
   const handleShare = async () => {
-    if (!address) {
-      Alert.alert('Erreur', 'Adresse non disponible');
-      return;
-    }
+    if (!address) return;
+    
+    const deepLink = Linking.createURL('/send', {
+      queryParams: {
+        address: username ? `@${username}` : address,
+        ...(requestedAmount > 0 ? { preselectedAmount: requestedAmount.toString() } : {}),
+      },
+    });
 
     try {
+      const shareMessage = requestedAmount > 0
+        ? `Envoyez-moi ${requestedAmount.toLocaleString()} Btcon (${euroAmount} €)\n\n${deepLink}`
+        : `Envoyez-moi des Btcon\n\n${deepLink}`;
+
       if (Platform.OS === 'web') {
-        Alert.alert(
-          'Non supporté',
-          'Le partage n\'est pas disponible sur web',
-          [{ text: 'OK' }]
-        );
-        return;
+        if (typeof navigator !== 'undefined' && navigator.share) {
+          await navigator.share({
+            title: 'Recevoir Btcon',
+            text: shareMessage,
+          });
+        } else {
+          await Clipboard.setStringAsync(deepLink);
+          Alert.alert(
+            'Lien copié',
+            'Le lien de paiement a été copié dans le presse-papiers',
+            [{ text: 'OK' }]
+          );
+        }
+      } else {
+        let imageUri: string | undefined;
+        
+        if (viewShotRef.current && viewShotRef.current.capture) {
+          try {
+            imageUri = await viewShotRef.current.capture();
+            console.log('Screenshot captured:', imageUri);
+          } catch (captureError) {
+            console.error('Capture error:', captureError);
+          }
+        }
+
+        const shareOptions: any = {
+          message: shareMessage,
+          title: 'Recevoir Btcon',
+        };
+
+        if (imageUri) {
+          shareOptions.url = imageUri;
+        }
+
+        const result = await Share.share(shareOptions);
+
+        if (result.action === Share.sharedAction) {
+          if (result.activityType) {
+            console.log('Partagé via:', result.activityType);
+          } else {
+            console.log('Partagé avec succès');
+          }
+        } else if (result.action === Share.dismissedAction) {
+          console.log('Partage annulé');
+        }
       }
-
-      if (!viewShotRef.current) {
-        Alert.alert('Erreur', 'Référence de capture non disponible');
-        return;
-      }
-
-      console.log('Début de la capture...');
-      const imageUri = await viewShotRef.current.capture();
-      console.log('Screenshot capturé:', imageUri);
-
-      if (!imageUri) {
-        Alert.alert('Erreur', 'Impossible de capturer l\'image');
-        return;
-      }
-
-      console.log('Partage en cours...');
-      await Share.share({
-        url: imageUri,
-        message: 'Mon QR Code Btcon',
-      });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur lors du partage:', error);
-      Alert.alert('Erreur', `Impossible de partager: ${error.message || 'Erreur inconnue'}`);
+      Alert.alert('Erreur', 'Impossible de partager le lien');
     }
   };
 
@@ -127,18 +154,8 @@ export default function ReceiveScreen() {
       </View>
 
       <View style={styles.content}>
-        <View style={styles.qrSection}>
-          <ViewShot 
-            ref={viewShotRef} 
-            options={{ 
-              format: 'png', 
-              quality: 1.0,
-              result: 'tmpfile'
-            }} 
-            style={styles.captureContainer}
-          >
-            <Text style={styles.captureTitle}>Recevoir Bitcoin</Text>
-            
+        <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }} style={styles.captureContainer}>
+          <View style={styles.qrSection}>
             <View style={styles.addressInfo}>
               <Text style={styles.addressLabel}>Adresse Btcon</Text>
               <View style={styles.addressRow}>
@@ -172,8 +189,8 @@ export default function ReceiveScreen() {
                 <Text style={styles.amountEuro}>{euroAmount} €</Text>
               </View>
             )}
-          </ViewShot>
-        </View>
+          </View>
+        </ViewShot>
 
         <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
           <Share2 color="#FFF" size={24} />
@@ -219,7 +236,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
+    gap: 20,
   },
   qrCodeWrapper: {
     borderRadius: 28,
@@ -389,17 +406,8 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   captureContainer: {
+    flex: 1,
+    width: '100%',
     backgroundColor: '#000000',
-    padding: 24,
-    gap: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  captureTitle: {
-    color: '#FFF',
-    fontSize: 24,
-    fontWeight: '700' as const,
-    textAlign: 'center' as const,
-    marginBottom: 8,
   },
 });

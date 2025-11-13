@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera, Copy } from 'lucide-react-native';
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
@@ -20,7 +20,7 @@ export default function WalletScreen() {
   const { balance, address } = useWallet();
   const btcPrice = useBtcPrice();
   const responsive = useResponsive();
-  const { getQRColors, ensureColorAssignment } = useQRColor();
+  const { getQRColors } = useQRColor();
 
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
@@ -39,12 +39,6 @@ export default function WalletScreen() {
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
   
-  useEffect(() => {
-    if (address) {
-      ensureColorAssignment(address);
-    }
-  }, [address, ensureColorAssignment]);
-
   const qrColors = useMemo(() => getQRColors(address), [address, getQRColors]);
 
 

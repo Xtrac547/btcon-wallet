@@ -16,8 +16,8 @@ const generateColorFromAddress = (address: string): string => {
   }
   
   const hue = Math.abs(hash) % 360;
-  const saturation = 70 + (Math.abs(hash >> 8) % 25);
-  const lightness = 45 + (Math.abs(hash >> 16) % 15);
+  const saturation = 60 + (Math.abs(hash >> 8) % 20);
+  const lightness = 40 + (Math.abs(hash >> 16) % 15);
   
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 };
@@ -52,17 +52,6 @@ export const [QRColorProvider, useQRColor] = createContextHook(() => {
     }
   };
 
-  const ensureColorAssignment = useCallback(async (address: string) => {
-    if (!address || colorAssignments[address]) {
-      return;
-    }
-    
-    const newColor = generateColorFromAddress(address);
-    const newAssignments = { ...colorAssignments, [address]: newColor };
-    setColorAssignments(newAssignments);
-    await saveColorAssignments(newAssignments);
-  }, [colorAssignments]);
-
   const getQRColors = useCallback((address: string | null) => {
     if (!address) {
       return { background: '#FFFFFF', qr: '#000000' };
@@ -72,13 +61,16 @@ export const [QRColorProvider, useQRColor] = createContextHook(() => {
       return { background: '#FFFFFF', qr: colorAssignments[address] };
     }
     
-    const color = generateColorFromAddress(address);
-    return { background: '#FFFFFF', qr: color };
+    const newColor = generateColorFromAddress(address);
+    const newAssignments = { ...colorAssignments, [address]: newColor };
+    setColorAssignments(newAssignments);
+    saveColorAssignments(newAssignments);
+    
+    return { background: '#FFFFFF', qr: newColor };
   }, [colorAssignments]);
 
   return useMemo(() => ({
     getQRColors,
-    ensureColorAssignment,
     isLoaded,
-  }), [getQRColors, ensureColorAssignment, isLoaded]);
+  }), [getQRColors, isLoaded]);
 });
