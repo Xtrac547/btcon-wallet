@@ -6,11 +6,12 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useQRColor } from '@/contexts/QRColorContext';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
-import { ArrowLeft, Share2 } from 'lucide-react-native';
+import { ArrowLeft, Share2, Copy } from 'lucide-react-native';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import * as Clipboard from 'expo-clipboard';
 
 
 export default function ReceiveScreen() {
@@ -24,6 +25,7 @@ export default function ReceiveScreen() {
   const btcPrice = useBtcPrice();
   const viewShotRef = useRef<View>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
   const euroAmount = useMemo(() => requestedAmount > 0 ? btconToEuro(requestedAmount, btcPrice) : '0', [requestedAmount, btcPrice]);
@@ -55,6 +57,17 @@ export default function ReceiveScreen() {
     }
     return `bitcoin:${address}`;
   }, [address, requestedAmount]);
+
+  const handleCopy = async () => {
+    try {
+      await Clipboard.setStringAsync(address);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error('Error copying:', error);
+      Alert.alert('Erreur', 'Impossible de copier l\'adresse.');
+    }
+  };
 
   const handleShare = async () => {
     if (Platform.OS === 'web') {
@@ -105,7 +118,15 @@ export default function ReceiveScreen() {
         <View style={styles.qrSection}>
           <View ref={viewShotRef} collapsable={false} style={styles.shareableContent}>
             <View style={styles.addressInfo}>
-              <Text style={styles.addressLabel}>Adresse Btcon</Text>
+              <View style={styles.addressHeader}>
+                <Text style={styles.addressLabel}>Adresse Btcon</Text>
+                <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
+                  <Copy color={isCopied ? "#4CAF50" : "#FF8C00"} size={16} />
+                  <Text style={[styles.copyButtonText, isCopied && styles.copyButtonTextCopied]}>
+                    {isCopied ? 'Copié' : 'Copier'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <Text style={styles.addressText}>{address}</Text>
             </View>
 
@@ -290,14 +311,39 @@ const styles = StyleSheet.create({
     maxWidth: 360,
     alignSelf: 'center',
   },
+  addressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   addressLabel: {
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 11,
     fontWeight: '700' as const,
     textTransform: 'uppercase' as const,
     letterSpacing: 1.2,
-    marginBottom: 8,
-    textAlign: 'center' as const,
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 140, 0, 0.2)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
+  },
+  copyButtonText: {
+    color: '#FF8C00',
+    fontSize: 10,
+    fontWeight: '700' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  copyButtonTextCopied: {
+    color: '#4CAF50',
   },
   addressText: {
     color: '#FFF',

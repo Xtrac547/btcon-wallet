@@ -122,6 +122,11 @@ export default function HistoryScreen() {
     return type === 'sent' ? '#FF8C00' : '#4CAF50';
   };
 
+  const getIconBackgroundColor = (status: TransactionStatus, type: TransactionType) => {
+    if (status === 'pending') return '#FFD700';
+    return type === 'sent' ? '#FF8C00' : '#4CAF50';
+  };
+
   const getStatusIcon = (status: TransactionStatus) => {
     if (status === 'confirmed') {
       return <CheckCircle color="#4CAF50" size={20} strokeWidth={2.5} />;
@@ -185,7 +190,7 @@ export default function HistoryScreen() {
                   <View style={styles.transactionLeft}>
                     <View style={[
                       styles.transactionIcon,
-                      tx.type === 'sent' ? styles.transactionIconSent : styles.transactionIconReceived,
+                      { backgroundColor: getIconBackgroundColor(tx.status, tx.type) },
                     ]}>
                       {tx.type === 'sent' ? (
                         <ArrowUpRight color="#FFF" size={20} strokeWidth={2.5} />
@@ -328,7 +333,8 @@ const styles = StyleSheet.create({
   },
   transactionCardPending: {
     borderColor: '#FFD700',
-    backgroundColor: 'rgba(255, 215, 0, 0.25)',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderWidth: 2,
   },
   transactionCardPressed: {
     opacity: 0.8,
@@ -346,12 +352,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  transactionIconSent: {
-    backgroundColor: '#FF8C00',
-  },
-  transactionIconReceived: {
-    backgroundColor: '#4CAF50',
   },
   transactionInfo: {
     flex: 1,
