@@ -1,19 +1,15 @@
 import '@/utils/shim';
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Alert } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
-import { ArrowLeft, Copy, Share2 } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
-import * as Clipboard from 'expo-clipboard';
-import * as Linking from 'expo-linking';
-import { Share, Platform } from 'react-native';
-import ViewShot from 'react-native-view-shot';
 
 
 export default function ReceiveScreen() {
@@ -26,8 +22,6 @@ export default function ReceiveScreen() {
   const { width } = useWindowDimensions();
   const responsive = useResponsive();
   const btcPrice = useBtcPrice();
-  const [isCopied, setIsCopied] = useState(false);
-  const viewShotRef = useRef<ViewShot>(null);
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
   const euroAmount = useMemo(() => requestedAmount > 0 ? btconToEuro(requestedAmount, btcPrice) : '0', [requestedAmount, btcPrice]);
@@ -66,83 +60,6 @@ export default function ReceiveScreen() {
     return `bitcoin:${address}`;
   }, [address, requestedAmount]);
 
-  const handleCopyAddress = async () => {
-    if (address) {
-      await Clipboard.setStringAsync(address);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-      Alert.alert('Copié', 'Adresse copiée dans le presse-papiers');
-    }
-  };
-
-  const handleShare = async () => {
-    if (!address) return;
-    
-    const deepLink = Linking.createURL('/send', {
-      queryParams: {
-        address: username ? `@${username}` : address,
-        ...(requestedAmount > 0 ? { preselectedAmount: requestedAmount.toString() } : {}),
-      },
-    });
-
-    try {
-      const shareMessage = requestedAmount > 0
-        ? `Envoyez-moi ${requestedAmount.toLocaleString()} Btcon (${euroAmount} €)\n\n${deepLink}`
-        : `Envoyez-moi des Btcon\n\n${deepLink}`;
-
-      if (Platform.OS === 'web') {
-        if (typeof navigator !== 'undefined' && navigator.share) {
-          await navigator.share({
-            title: 'Recevoir Btcon',
-            text: shareMessage,
-          });
-        } else {
-          await Clipboard.setStringAsync(deepLink);
-          Alert.alert(
-            'Lien copié',
-            'Le lien de paiement a été copié dans le presse-papiers',
-            [{ text: 'OK' }]
-          );
-        }
-      } else {
-        let imageUri: string | undefined;
-        
-        if (viewShotRef.current && viewShotRef.current.capture) {
-          try {
-            imageUri = await viewShotRef.current.capture();
-            console.log('Screenshot captured:', imageUri);
-          } catch (captureError) {
-            console.error('Capture error:', captureError);
-          }
-        }
-
-        const shareOptions: any = {
-          message: shareMessage,
-          title: 'Recevoir Btcon',
-        };
-
-        if (imageUri) {
-          shareOptions.url = imageUri;
-        }
-
-        const result = await Share.share(shareOptions);
-
-        if (result.action === Share.sharedAction) {
-          if (result.activityType) {
-            console.log('Partagé via:', result.activityType);
-          } else {
-            console.log('Partagé avec succès');
-          }
-        } else if (result.action === Share.dismissedAction) {
-          console.log('Partage annulé');
-        }
-      }
-    } catch (error) {
-      console.error('Erreur lors du partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager le lien');
-    }
-  };
-
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
@@ -154,48 +71,37 @@ export default function ReceiveScreen() {
       </View>
 
       <View style={styles.content}>
-        <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }} style={styles.captureContainer}>
-          <View style={styles.qrSection}>
-            <View style={styles.addressInfo}>
-              <Text style={styles.addressLabel}>Adresse Btcon</Text>
-              <View style={styles.addressRow}>
-                <Text style={styles.addressText}>{address}</Text>
-                <TouchableOpacity onPress={handleCopyAddress} style={styles.copyButton}>
-                  <Copy color={isCopied ? '#00FF00' : '#FF8C00'} size={18} />
-                </TouchableOpacity>
-              </View>
-            </View>
+        <View style={styles.qrSection}>
+          <View style={styles.addressInfo}>
+            <Text style={styles.addressLabel}>Adresse Btcon</Text>
+            <Text style={styles.addressText}>{address}</Text>
+          </View>
 
-            <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
-              {qrCodeUri ? (
-                <Image
-                  source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&bgcolor=${currentArt.bg.replace('#', '')}&color=${currentArt.fg.replace('#', '')}&data=${encodeURIComponent(qrCodeUri)}`}
-                  style={{ width: qrArtSize, height: qrArtSize }}
-                  contentFit="contain"
-                  cachePolicy="memory-disk"
-                />
-              ) : (
-                <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération...</Text>
-              )}
-            </View>
-
-            {requestedAmount > 0 && (
-              <View style={styles.amountInfo}>
-                <Text style={styles.amountLabel}>Montant demandé</Text>
-                <View style={styles.amountRow}>
-                  <Text style={styles.amountValue}>{requestedAmount.toLocaleString()}</Text>
-                  <Text style={styles.amountUnit}>Btcon</Text>
-                </View>
-                <Text style={styles.amountEuro}>{euroAmount} €</Text>
-              </View>
+          <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
+            {qrCodeUri ? (
+              <Image
+                source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&bgcolor=${currentArt.bg.replace('#', '')}&color=${currentArt.fg.replace('#', '')}&data=${encodeURIComponent(qrCodeUri)}`}
+                style={{ width: qrArtSize, height: qrArtSize }}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+              />
+            ) : (
+              <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération...</Text>
             )}
           </View>
-        </ViewShot>
 
-        <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-          <Share2 color="#FFF" size={24} />
-          <Text style={styles.shareButtonText}>Partager</Text>
-        </TouchableOpacity>
+          {requestedAmount > 0 && (
+            <View style={styles.amountInfo}>
+              <Text style={styles.amountLabel}>Montant demandé</Text>
+              <View style={styles.amountRow}>
+                <Text style={styles.amountValue}>{requestedAmount.toLocaleString()}</Text>
+                <Text style={styles.amountUnit}>Btcon</Text>
+              </View>
+              <Text style={styles.amountEuro}>{euroAmount} €</Text>
+            </View>
+          )}
+        </View>
+
       </View>
     </View>
   );
@@ -256,7 +162,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   shareButton: {
-    width: '90%',
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -264,16 +170,14 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 32,
     borderRadius: 20,
-    backgroundColor: '#FF8C00',
     shadowColor: '#FF8C00',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
     elevation: 8,
-    marginTop: 24,
   },
   shareButtonText: {
-    color: '#FFF',
+    color: '#000',
     fontSize: 18,
     fontWeight: '800' as const,
     letterSpacing: 0.5,
@@ -340,15 +244,6 @@ const styles = StyleSheet.create({
     maxWidth: 360,
     alignSelf: 'center',
   },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    justifyContent: 'center',
-  },
-  copyButton: {
-    padding: 4,
-  },
   addressLabel: {
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 11,
@@ -404,10 +299,5 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 16,
     fontWeight: '600' as const,
-  },
-  captureContainer: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: '#000000',
   },
 });

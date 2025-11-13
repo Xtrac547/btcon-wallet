@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera, Copy } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera } from 'lucide-react-native';
 import { useState, useRef, useMemo, useCallback } from 'react';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -11,7 +11,6 @@ import * as Haptics from 'expo-haptics';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
 import { useQRColor } from '@/contexts/QRColorContext';
-import * as Clipboard from 'expo-clipboard';
 
 
 export default function WalletScreen() {
@@ -25,17 +24,17 @@ export default function WalletScreen() {
   const [tokenCounts, setTokenCounts] = useState<{ [key: number]: number }>({
     1000: 0,
     5000: 0,
-    50000: 0,
+    10000: 0,
   });
   
 
 
   const translateY = useRef(new Animated.Value(0)).current;
+  const panY = useRef(0);
   
   const [showScanner, setShowScanner] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const [isCopied, setIsCopied] = useState(false);
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
   
@@ -79,7 +78,7 @@ export default function WalletScreen() {
     setTokenCounts({
       1000: 0,
       5000: 0,
-      50000: 0,
+      10000: 0,
     });
   }, []);
 
@@ -100,7 +99,7 @@ export default function WalletScreen() {
         preselectedAmount: totalAmount.toString(),
         token1000: tokenCounts[1000].toString(),
         token5000: tokenCounts[5000].toString(),
-        token50000: tokenCounts[50000].toString()
+        token10000: tokenCounts[10000].toString()
       } 
     });
   }, [totalAmount, tokenCounts, router]);
@@ -118,18 +117,6 @@ export default function WalletScreen() {
 
   const handleShowQRCode = () => {
     setShowQRCode(true);
-  };
-
-  const handleCopyAddress = async () => {
-    if (address) {
-      await Clipboard.setStringAsync(address);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      Alert.alert('Copié', 'Adresse copiée dans le presse-papiers');
-    }
   };
 
   const handleBarcodeScanned = useCallback((data: string) => {
@@ -173,31 +160,31 @@ export default function WalletScreen() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => !hasSelectedTokens,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 10;
+        return !hasSelectedTokens && Math.abs(gestureState.dy) > 10;
       },
       onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0) {
+        if (!hasSelectedTokens && gestureState.dy > 0) {
+          panY.current = gestureState.dy;
           translateY.setValue(gestureState.dy);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 100) {
+        if (!hasSelectedTokens && gestureState.dy > 150) {
+          router.push('/stories');
           Animated.timing(translateY, {
             toValue: 0,
-            duration: 300,
+            duration: 200,
             useNativeDriver: true,
-          }).start(() => {
-            router.push('/stories');
-            translateY.setValue(0);
-          });
+          }).start();
         } else {
           Animated.spring(translateY, {
             toValue: 0,
             useNativeDriver: true,
           }).start();
         }
+        panY.current = 0;
       },
     })
   ).current;
@@ -241,7 +228,7 @@ export default function WalletScreen() {
           },
         ]}
       >
-        <View style={styles.selectionContent}>
+        <View style={[styles.selectionContent, hasSelectedTokens && styles.contentAtBottom]}>
           <View style={styles.balanceCompact}>
             <Text style={styles.balanceCompactText}>
               {balance.toLocaleString()} Btcon = {euroValue} €
@@ -295,18 +282,18 @@ export default function WalletScreen() {
                   <Pressable
                     style={[
                       styles.token3D,
-                      tokenCounts[50000] > 0 && styles.token3DSelected,
+                      tokenCounts[10000] > 0 && styles.token3DSelected,
                     ]}
-                    onPress={() => handleTokenPress(50000)}
-                    onLongPress={() => handleTokenLongPress(50000)}
+                    onPress={() => handleTokenPress(10000)}
+                    onLongPress={() => handleTokenLongPress(10000)}
                   >
                     <View style={styles.token3DInner}>
-                      <Text style={[styles.tokenValue, { fontSize: responsive.scale(32) }]}>50000</Text>
+                      <Text style={[styles.tokenValue, { fontSize: responsive.scale(32) }]}>10000</Text>
                       <Text style={[styles.tokenUnit, { fontSize: responsive.scale(11) }]}>BTCON</Text>
                     </View>
-                    {tokenCounts[50000] > 0 && (
+                    {tokenCounts[10000] > 0 && (
                       <View style={styles.countBadge}>
-                        <Text style={styles.countText}>{tokenCounts[50000]}x</Text>
+                        <Text style={styles.countText}>{tokenCounts[10000]}x</Text>
                       </View>
                     )}
                   </Pressable>
@@ -328,7 +315,7 @@ export default function WalletScreen() {
             onPress={handleReceive}
           >
             <View style={styles.iconContainer}>
-              <ArrowDownLeft color="#FFFFFF" size={24} strokeWidth={2.5} />
+              <ArrowDownLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
             </View>
             <Text style={styles.actionButtonText}>Recevoir</Text>
           </Pressable>
@@ -342,7 +329,7 @@ export default function WalletScreen() {
             onPress={handleSend}
           >
             <View style={styles.iconContainer}>
-              <ArrowUpRight color="#FFFFFF" size={24} strokeWidth={2.5} />
+              <ArrowUpRight color="#FFFFFF" size={28} strokeWidth={2.5} />
             </View>
             <Text style={styles.actionButtonText}>Envoyer</Text>
           </Pressable>
@@ -422,12 +409,7 @@ export default function WalletScreen() {
             
             <View style={styles.qrAddressBox}>
               <Text style={styles.qrAddressLabel}>ADRESSE BTCON</Text>
-              <View style={styles.addressRowQR}>
-                <Text style={styles.qrAddressText}>{address}</Text>
-                <TouchableOpacity onPress={handleCopyAddress} style={styles.copyButtonQR}>
-                  <Copy color={isCopied ? '#00FF00' : '#FF8C00'} size={20} />
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.qrAddressText}>{address}</Text>
             </View>
           </View>
         </Pressable>
@@ -454,7 +436,7 @@ const styles = StyleSheet.create({
   contentAtBottom: {
     flex: 1,
     justifyContent: 'flex-end',
-    paddingBottom: 140,
+    paddingBottom: 160,
   },
   balanceCompact: {
     alignItems: 'center',
@@ -517,14 +499,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
-    borderRadius: 20,
-    gap: 8,
+    paddingVertical: 32,
+    borderRadius: 24,
+    gap: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
   },
   receiveButton: {
     backgroundColor: '#FF8C00',
@@ -537,16 +519,16 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   actionButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800' as const,
     letterSpacing: 0.5,
   },
@@ -654,11 +636,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tokenWrapper: {
-    width: '30%',
+    width: '35%',
     alignItems: 'center',
   },
   tokenWrapper10k: {
-    width: '62%',
+    width: '72%',
     alignItems: 'center',
   },
   tokenCircle: {
@@ -895,15 +877,5 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' || Platform.OS === 'android' ? 'Courier' : 'monospace',
     textAlign: 'center' as const,
     lineHeight: 18,
-    flex: 1,
-  },
-  addressRowQR: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    justifyContent: 'center',
-  },
-  copyButtonQR: {
-    padding: 4,
   },
 });

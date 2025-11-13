@@ -2,7 +2,6 @@ import '@/utils/shim';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import * as Linking from 'expo-linking';
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WalletProvider } from "@/contexts/WalletContext";
@@ -40,7 +39,6 @@ function RootLayoutNav() {
       <Stack.Screen name="buy-btc" options={{ headerShown: false }} />
       <Stack.Screen name="setup-auth" options={{ headerShown: false }} />
       <Stack.Screen name="verify-auth" options={{ headerShown: false }} />
-      <Stack.Screen name="stories" options={{ presentation: "modal", headerShown: false }} />
     </Stack>
   );
 }
@@ -58,11 +56,6 @@ export default function RootLayout() {
     };
     
     setTimeout(hideSplash, 100);
-  }, []);
-
-  useEffect(() => {
-    const url = Linking.createURL('');
-    console.log('Deep link URL scheme:', url);
   }, []);
 
   return (

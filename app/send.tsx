@@ -310,10 +310,24 @@ export default function SendScreen() {
         {totalAmount > 0 && (
           <View style={styles.feesCard}>
             <View style={styles.feesRow}>
-              <Text style={styles.feesLeftLabel}>Frais total</Text>
+              <Text style={styles.feesLeftLabel}>Frais du réseau BTC</Text>
               <View style={styles.feesRightColumn}>
-                <Text style={styles.feesValueBig}>{(calculateNetworkFee() + 500).toLocaleString()} Btcon = {btconToEuro(calculateNetworkFee() + 500)} €</Text>
+                <Text style={styles.feesValueBig}>{calculateNetworkFee().toLocaleString()} sats</Text>
+                <Text style={styles.feesEuroValue}>≈ {btconToEuro(calculateNetworkFee())} €</Text>
               </View>
+            </View>
+            <View style={styles.feesDivider} />
+            <View style={styles.feesRow}>
+              <Text style={styles.feesLeftLabel}>Frais de transaction</Text>
+              <View style={styles.feesRightColumn}>
+                <Text style={styles.feesValueBig}>500 Btcon</Text>
+                <Text style={styles.feesEuroValue}>≈ {btconToEuro(500)} €</Text>
+              </View>
+            </View>
+            <View style={styles.feesDivider} />
+            <View style={styles.feesRow}>
+              <Text style={styles.feesLeftLabel}>Adresse de frais</Text>
+              <Text style={styles.feesAddressValue}>bc1q...80eyyd</Text>
             </View>
           </View>
         )}

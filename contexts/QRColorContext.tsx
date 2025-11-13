@@ -8,38 +8,42 @@ interface ColorAssignments {
   [address: string]: string;
 }
 
-const COLOR_PALETTE = [
-  '#FF6B6B',
-  '#4ECDC4',
-  '#45B7D1',
-  '#96CEB4',
-  '#FFEAA7',
-  '#DFE6E9',
-  '#00B894',
-  '#0984E3',
-  '#6C5CE7',
-  '#FD79A8',
-  '#FDCB6E',
-  '#E17055',
-  '#74B9FF',
-  '#A29BFE',
-  '#FF7675',
-  '#FF8C00',
-  '#55EFC4',
-  '#81ECEC',
-  '#FAB1A0',
-  '#FF85A2',
-];
+const USED_COLORS = new Set<string>();
 
-const generateColorFromAddress = (address: string): string => {
-  let hash = 0;
-  for (let i = 0; i < address.length; i++) {
-    hash = address.charCodeAt(i) + ((hash << 5) - hash);
-    hash = hash & hash;
+const DEVELOPER_COLORS = {
+  foreground: '#FFD700',
+  background: '#0047AB',
+};
+
+const generateUniqueColor = (): string => {
+  const maxAttempts = 1000;
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const hue = Math.floor(Math.random() * 360);
+    const saturation = 50 + Math.floor(Math.random() * 30);
+    const lightness = 35 + Math.floor(Math.random() * 25);
+    
+    const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    
+    if (!USED_COLORS.has(color)) {
+      USED_COLORS.add(color);
+      return color;
+    }
   }
   
-  const colorIndex = Math.abs(hash) % COLOR_PALETTE.length;
-  return COLOR_PALETTE[colorIndex];
+  const timestamp = Date.now();
+  const hue = timestamp % 360;
+  const color = `hsl(${hue}, 65%, 45%)`;
+  USED_COLORS.add(color);
+  return color;
+};
+
+const isDeveloper = (address: string): boolean => {
+  const developerAddresses = [
+    'bc1qdff8680vyy0qthr5vpe3ywzw48r8rr4jn4jvac',
+    'bc1qh78w8awednuw3336fnwcnr0sr4q5jxu980eyyd',
+  ];
+  return developerAddresses.includes(address);
 };
 
 export const [QRColorProvider, useQRColor] = createContextHook(() => {
@@ -53,6 +57,10 @@ export const [QRColorProvider, useQRColor] = createContextHook(() => {
         if (stored) {
           const parsed: ColorAssignments = JSON.parse(stored);
           setColorAssignments(parsed);
+          
+          Object.values(parsed).forEach(color => {
+            USED_COLORS.add(color);
+          });
         }
       } catch (error) {
         console.error('Error loading color assignments:', error);
@@ -77,11 +85,18 @@ export const [QRColorProvider, useQRColor] = createContextHook(() => {
       return { background: '#FFFFFF', qr: '#000000' };
     }
     
+    if (isDeveloper(address)) {
+      return { 
+        background: DEVELOPER_COLORS.background, 
+        qr: DEVELOPER_COLORS.foreground 
+      };
+    }
+    
     if (colorAssignments[address]) {
       return { background: '#FFFFFF', qr: colorAssignments[address] };
     }
     
-    const newColor = generateColorFromAddress(address);
+    const newColor = generateUniqueColor();
     const newAssignments = { ...colorAssignments, [address]: newColor };
     setColorAssignments(newAssignments);
     saveColorAssignments(newAssignments);
