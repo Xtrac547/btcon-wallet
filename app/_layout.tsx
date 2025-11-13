@@ -35,8 +35,8 @@ function RootLayoutNav() {
       <Stack.Screen name="developer-hierarchy" options={{ headerShown: false }} />
 
       <Stack.Screen name="profile-image" options={{ headerShown: false }} />
-      <Stack.Screen name="qr-colors" options={{ headerShown: false }} />
       <Stack.Screen name="buy-btc" options={{ headerShown: false }} />
+      <Stack.Screen name="stories" options={{ headerShown: false }} />
       <Stack.Screen name="setup-auth" options={{ headerShown: false }} />
       <Stack.Screen name="verify-auth" options={{ headerShown: false }} />
     </Stack>
