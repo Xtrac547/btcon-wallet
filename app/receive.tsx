@@ -106,11 +106,11 @@ export default function ReceiveScreen() {
       }
 
       const shareOptions: any = {
-        message: `Recevoir Btcon\n\nAdresse: ${address}${requestedAmount > 0 ? `\nMontant: ${requestedAmount.toLocaleString()} Btcon (${euroAmount}€)` : ''}`,
-        url: imageUri,
+        url: Platform.OS === 'ios' ? imageUri : `file://${imageUri}`,
+        title: 'Mon QR Code Btcon',
       };
 
-      console.log('Partage en cours...');
+      console.log('Partage en cours avec options:', shareOptions);
       const result = await Share.share(shareOptions);
 
       if (result.action === Share.sharedAction) {
@@ -135,7 +135,15 @@ export default function ReceiveScreen() {
       </View>
 
       <View style={styles.content}>
-        <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }} style={styles.captureContainer}>
+        <ViewShot 
+          ref={viewShotRef} 
+          options={{ 
+            format: 'png', 
+            quality: 1.0,
+            result: 'tmpfile'
+          }} 
+          style={styles.captureContainer}
+        >
           <View style={styles.qrSection}>
             <View style={styles.addressInfo}>
               <Text style={styles.addressLabel}>Adresse Btcon</Text>
