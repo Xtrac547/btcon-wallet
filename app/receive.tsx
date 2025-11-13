@@ -11,7 +11,7 @@ import { ArrowLeft, Copy, Share2 } from 'lucide-react-native';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
-import * as Linking from 'expo-linking';
+
 import { Share, Platform } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 
@@ -77,66 +77,52 @@ export default function ReceiveScreen() {
 
   const handleShare = async () => {
     if (!address) return;
-    
-    const recipientAddress = username ? `@${username}` : address;
-    const amountParam = requestedAmount > 0 ? `&preselectedAmount=${requestedAmount}` : '';
-    const deepLink = `${Linking.createURL('')}send?address=${encodeURIComponent(recipientAddress)}${amountParam}`;
 
     try {
-      const shareMessage = requestedAmount > 0
-        ? `Envoyez-moi ${requestedAmount.toLocaleString()} Btcon (${euroAmount} €)\n\n${deepLink}`
-        : `Envoyez-moi des Btcon\n\n${deepLink}`;
-
       if (Platform.OS === 'web') {
-        if (typeof navigator !== 'undefined' && navigator.share) {
-          await navigator.share({
-            title: 'Recevoir Btcon',
-            text: shareMessage,
-          });
+        Alert.alert(
+          'Non supporté',
+          'Le partage n\'est pas disponible sur web',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      let imageUri: string | undefined;
+      
+      if (viewShotRef.current && viewShotRef.current.capture) {
+        try {
+          imageUri = await viewShotRef.current.capture();
+          console.log('Screenshot captured:', imageUri);
+        } catch (captureError) {
+          console.error('Capture error:', captureError);
+        }
+      }
+
+      if (!imageUri) {
+        Alert.alert('Erreur', 'Impossible de capturer l\'image');
+        return;
+      }
+
+      const shareOptions: any = {
+        title: 'Recevoir Btcon',
+        url: imageUri,
+      };
+
+      const result = await Share.share(shareOptions);
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('Partagé via:', result.activityType);
         } else {
-          await Clipboard.setStringAsync(deepLink);
-          Alert.alert(
-            'Lien copié',
-            'Le lien de paiement a été copié dans le presse-papiers',
-            [{ text: 'OK' }]
-          );
+          console.log('Partagé avec succès');
         }
-      } else {
-        let imageUri: string | undefined;
-        
-        if (viewShotRef.current && viewShotRef.current.capture) {
-          try {
-            imageUri = await viewShotRef.current.capture();
-            console.log('Screenshot captured:', imageUri);
-          } catch (captureError) {
-            console.error('Capture error:', captureError);
-          }
-        }
-
-        const shareOptions: any = {
-          message: shareMessage,
-          title: 'Recevoir Btcon',
-        };
-
-        if (imageUri) {
-          shareOptions.url = imageUri;
-        }
-
-        const result = await Share.share(shareOptions);
-
-        if (result.action === Share.sharedAction) {
-          if (result.activityType) {
-            console.log('Partagé via:', result.activityType);
-          } else {
-            console.log('Partagé avec succès');
-          }
-        } else if (result.action === Share.dismissedAction) {
-          console.log('Partage annulé');
-        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('Partage annulé');
       }
     } catch (error) {
       console.error('Erreur lors du partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager le lien');
+      Alert.alert('Erreur', 'Impossible de partager');
     }
   };
 
