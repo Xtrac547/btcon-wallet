@@ -327,8 +327,8 @@ const styles = StyleSheet.create({
     borderColor: '#222',
   },
   transactionCardPending: {
-    borderColor: 'rgba(255, 215, 0, 0.5)',
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderColor: '#FFD700',
+    backgroundColor: 'rgba(255, 215, 0, 0.25)',
   },
   transactionCardPressed: {
     opacity: 0.8,
