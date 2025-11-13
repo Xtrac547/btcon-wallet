@@ -1,10 +1,9 @@
 import '@/utils/shim';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Alert, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { ArrowLeft, Share2 } from 'lucide-react-native';
@@ -19,7 +18,6 @@ export default function ReceiveScreen() {
   const params = useLocalSearchParams<{ amount?: string }>();
   const insets = useSafeAreaInsets();
   const { address } = useWallet();
-  const { username } = useUsername();
   const { getQRColors } = useQRColor();
   const { width } = useWindowDimensions();
   const responsive = useResponsive();
@@ -29,12 +27,6 @@ export default function ReceiveScreen() {
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
   const euroAmount = useMemo(() => requestedAmount > 0 ? btconToEuro(requestedAmount, btcPrice) : '0', [requestedAmount, btcPrice]);
-
-  useEffect(() => {
-    if (!username) {
-      router.replace('/set-username');
-    }
-  }, [username, router]);
 
   const currentArt = useMemo(() => {
     const qrColors = getQRColors(address);
