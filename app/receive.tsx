@@ -78,12 +78,9 @@ export default function ReceiveScreen() {
   const handleShare = async () => {
     if (!address) return;
     
-    const deepLink = Linking.createURL('/send', {
-      queryParams: {
-        address: username ? `@${username}` : address,
-        ...(requestedAmount > 0 ? { preselectedAmount: requestedAmount.toString() } : {}),
-      },
-    });
+    const recipientAddress = username ? `@${username}` : address;
+    const amountParam = requestedAmount > 0 ? `&preselectedAmount=${requestedAmount}` : '';
+    const deepLink = `${Linking.createURL('')}send?address=${encodeURIComponent(recipientAddress)}${amountParam}`;
 
     try {
       const shareMessage = requestedAmount > 0
