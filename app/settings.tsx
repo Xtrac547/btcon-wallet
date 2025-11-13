@@ -282,7 +282,7 @@ export default function SettingsScreen() {
         {isDeveloper(address || '') && (
           <Pressable
             style={styles.adminCard}
-            onPress={() => router.push('/developer')}
+            onPress={() => router.push('/developer-hierarchy')}
           >
             <View style={styles.adminCardHeader}>
               <View style={styles.adminCardIcon}>
