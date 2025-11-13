@@ -21,7 +21,7 @@ interface ProcessedTransaction {
 
 export default function HistoryScreen() {
   const router = useRouter();
-  const { transactions, address, esploraService } = useWallet();
+  const { transactions, address, esploraService, refreshBalance } = useWallet();
   const insets = useSafeAreaInsets();
   const [processedTransactions, setProcessedTransactions] = useState<ProcessedTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +79,23 @@ export default function HistoryScreen() {
     processTransactions();
   }, [transactions, address]);
 
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      console.log('Auto-refresh: Mise à jour des transactions...');
+      if (refreshBalance) {
+        refreshBalance()
+          .then(() => {
+            console.log('Auto-refresh: Transactions mises à jour');
+          })
+          .catch((error) => {
+            console.error('Auto-refresh: Erreur lors de la mise à jour', error);
+          });
+      }
+    }, 10000);
+
+    return () => clearInterval(refreshInterval);
+  }, [refreshBalance]);
+
   const formatDate = (timestamp?: number) => {
     if (!timestamp) return 'En attente';
     const date = new Date(timestamp * 1000);
@@ -100,8 +117,9 @@ export default function HistoryScreen() {
     });
   };
 
-  const getStatusColor = (status: TransactionStatus) => {
-    return status === 'confirmed' ? '#4CAF50' : '#FFB800';
+  const getStatusColor = (status: TransactionStatus, type: TransactionType) => {
+    if (status === 'pending') return '#FFB800';
+    return type === 'sent' ? '#FF8C00' : '#4CAF50';
   };
 
   const getStatusIcon = (status: TransactionStatus) => {
@@ -189,17 +207,18 @@ export default function HistoryScreen() {
                   <View style={styles.transactionRight}>
                     <Text style={[
                       styles.transactionAmount,
-                      tx.type === 'sent' ? styles.transactionAmountSent : styles.transactionAmountReceived,
+                      tx.status === 'pending' ? styles.transactionAmountPending : 
+                        (tx.type === 'sent' ? styles.transactionAmountSent : styles.transactionAmountReceived),
                     ]}>
                       {tx.type === 'sent' ? '-' : '+'}{tx.amount.toLocaleString()} Btcon
                     </Text>
                     
                     <View style={[
                       styles.statusBadge,
-                      { backgroundColor: `${getStatusColor(tx.status)}15`, borderColor: getStatusColor(tx.status) }
+                      { backgroundColor: `${getStatusColor(tx.status, tx.type)}15`, borderColor: getStatusColor(tx.status, tx.type) }
                     ]}>
                       {getStatusIcon(tx.status)}
-                      <Text style={[styles.statusText, { color: getStatusColor(tx.status) }]}>
+                      <Text style={[styles.statusText, { color: getStatusColor(tx.status, tx.type) }]}>
                         {getStatusText(tx.status)}
                       </Text>
                     </View>
@@ -362,6 +381,9 @@ const styles = StyleSheet.create({
   },
   transactionAmountReceived: {
     color: '#4CAF50',
+  },
+  transactionAmountPending: {
+    color: '#FFB800',
   },
   statusBadge: {
     flexDirection: 'row',
