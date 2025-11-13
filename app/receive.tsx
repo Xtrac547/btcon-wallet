@@ -1,16 +1,15 @@
 import '@/utils/shim';
-import { useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Alert, Platform } from 'react-native';
+import { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useQRColor } from '@/contexts/QRColorContext';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
-import { ArrowLeft, Share2, Copy } from 'lucide-react-native';
+import { ArrowLeft, Copy } from 'lucide-react-native';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
-import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
+
 import * as Clipboard from 'expo-clipboard';
 
 
@@ -23,8 +22,7 @@ export default function ReceiveScreen() {
   const { width } = useWindowDimensions();
   const responsive = useResponsive();
   const btcPrice = useBtcPrice();
-  const viewShotRef = useRef<View>(null);
-  const [isSharing, setIsSharing] = useState(false);
+
   const [isCopied, setIsCopied] = useState(false);
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
@@ -69,40 +67,7 @@ export default function ReceiveScreen() {
     }
   };
 
-  const handleShare = async () => {
-    if (Platform.OS === 'web') {
-      Alert.alert('Non disponible', 'Le partage n\'est pas disponible sur le web.');
-      return;
-    }
 
-    if (!viewShotRef.current) {
-      console.log('View ref is not available');
-      return;
-    }
-
-    setIsSharing(true);
-    try {
-      const uri = await captureRef(viewShotRef, {
-        format: 'png',
-        quality: 1,
-      });
-
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (isAvailable) {
-        await Sharing.shareAsync(uri, {
-          mimeType: 'image/png',
-          dialogTitle: 'Partager le QR Code',
-        });
-      } else {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil.');
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-      Alert.alert('Erreur', 'Impossible de partager l\'image.');
-    } finally {
-      setIsSharing(false);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -116,7 +81,7 @@ export default function ReceiveScreen() {
 
       <View style={styles.content}>
         <View style={styles.qrSection}>
-          <View ref={viewShotRef} collapsable={false} style={styles.shareableContent}>
+          <View style={styles.shareableContent}>
             <View style={styles.addressInfo}>
               <View style={styles.addressHeader}>
                 <Text style={styles.addressLabel}>Adresse Btcon</Text>
@@ -156,14 +121,7 @@ export default function ReceiveScreen() {
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={[styles.shareButton, { backgroundColor: currentArt.fg }]} 
-          onPress={handleShare}
-          disabled={isSharing}
-        >
-          <Share2 color="#000" size={24} />
-          <Text style={styles.shareButtonText}>{isSharing ? 'Partage...' : 'Partager'}</Text>
-        </TouchableOpacity>
+
       </View>
     </View>
   );
@@ -198,8 +156,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 32,
-    justifyContent: 'space-between',
-    gap: 32,
+    justifyContent: 'center',
   },
   qrSection: {
     flex: 1,
@@ -228,27 +185,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
   },
-  shareButton: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    borderRadius: 20,
-    shadowColor: '#FF8C00',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  shareButtonText: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: '800' as const,
-    letterSpacing: 0.5,
-  },
+
   modalContainer: {
     flex: 1,
     backgroundColor: '#000',
