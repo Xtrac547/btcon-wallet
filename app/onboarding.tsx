@@ -3,22 +3,23 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-
-
+import { useUsername } from '@/contexts/UsernameContext';
+import { Key, RefreshCw } from 'lucide-react-native';
 import * as ScreenCapture from 'expo-screen-capture';
 
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { createWallet, restoreWallet, isLoading, address } = useWallet();
+  const { setUsername: saveUsername } = useUsername();
 
-
-  const [mode, setMode] = useState<'choose' | 'restore' | 'show-seed'>('choose');
+  const [mode, setMode] = useState<'choose' | 'restore' | 'show-seed' | 'set-username'>('choose');
   const [restorePhrase, setRestorePhrase] = useState<string>('');
   const [isCreating, setIsCreating] = useState(false);
   const [seedWords, setSeedWords] = useState<string[]>([]);
 
-
+  const [seedConfirmed, setSeedConfirmed] = useState<boolean>(false);
+  const [usernameInput, setUsernameInput] = useState<string>('');
 
   const handleCreateWallet = async () => {
     setIsCreating(true);
@@ -53,6 +54,7 @@ export default function OnboardingScreen() {
         {
           text: 'Oui, j\'ai noté',
           onPress: () => {
+            setSeedConfirmed(true);
             router.replace('/setup-auth');
           },
         },
@@ -95,7 +97,44 @@ export default function OnboardingScreen() {
     }
   };
 
+  const handleSetUsername = async () => {
+    const cleanUsername = usernameInput.trim().toLowerCase();
+    
+    if (!cleanUsername) {
+      Alert.alert('Erreur', 'Le pseudo est obligatoire');
+      return;
+    }
 
+    if (cleanUsername.length < 3) {
+      Alert.alert('Erreur', 'Le pseudo doit contenir au moins 3 caractères');
+      return;
+    }
+
+    if (!/^[a-z0-9_]+$/.test(cleanUsername)) {
+      Alert.alert('Erreur', 'Le pseudo ne peut contenir que des lettres, chiffres et underscores');
+      return;
+    }
+
+    if (!address) {
+      Alert.alert('Erreur', 'Adresse non disponible');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const success = await saveUsername(cleanUsername, address);
+      if (success) {
+        router.replace('/wallet');
+      } else {
+        Alert.alert('Erreur', 'Pseudo déjà pris');
+      }
+    } catch (error) {
+      console.error('Error setting username:', error);
+      Alert.alert('Erreur', 'Échec de la définition du pseudo');
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
 
 

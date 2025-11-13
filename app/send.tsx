@@ -3,11 +3,11 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, ScrollView, useWindowDimensions, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-
+import { useUsername } from '@/contexts/UsernameContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useFollowing } from '@/contexts/FollowingContext';
 import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
-import { ArrowLeft, Send, X, Camera } from 'lucide-react-native';
+import { ArrowLeft, Send, X, Users, Camera } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useResponsive } from '@/utils/responsive';
 
@@ -19,7 +19,7 @@ export default function SendScreen() {
     address?: string;
   }>();
   const { balance, signAndBroadcastTransaction, esploraService, address } = useWallet();
-
+  const { username, getAddressForUsername } = useUsername();
   const { notifyTransaction } = useNotifications();
   const { following } = useFollowing();
   const { isDeveloper } = useDeveloperHierarchy();
@@ -27,7 +27,11 @@ export default function SendScreen() {
   const responsive = useResponsive();
   const scrollViewRef = useRef<ScrollView>(null);
 
-
+  useEffect(() => {
+    if (!username) {
+      router.replace('/set-username');
+    }
+  }, [username, router]);
   const [toAddress, setToAddress] = useState(params.address || '');
   const [isSending, setIsSending] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
@@ -101,7 +105,20 @@ export default function SendScreen() {
 
     let resolvedAddress = input;
     
-
+    if (resolvedAddress.startsWith('@')) {
+      const username = resolvedAddress.substring(1);
+      const addressResult = await getAddressForUsername(username);
+      if (!addressResult) {
+        Alert.alert('Error', 'Pseudo introuvable');
+        return;
+      }
+      resolvedAddress = addressResult;
+    } else if (!resolvedAddress.startsWith('bc1') && !resolvedAddress.startsWith('tb1')) {
+      const addressResult = await getAddressForUsername(resolvedAddress);
+      if (addressResult) {
+        resolvedAddress = addressResult;
+      }
+    }
 
 
 
@@ -132,7 +149,7 @@ export default function SendScreen() {
     
     Alert.alert(
       'Confirmer la transaction',
-      `Montant: ${euroAmount.toFixed(2)} €\n(${Math.floor(btconAmount).toLocaleString()} Btcon)\n\nDestinataire: ${resolvedAddress.slice(0, 10) + '...'}${feeMessage}\n\nTotal à déduire: ${(satsAmount + totalFeesInSats).toLocaleString()} Btcon`,
+      `Montant: ${euroAmount.toFixed(2)} €\n(${Math.floor(btconAmount).toLocaleString()} Btcon)\n\nDestinataire: ${toAddress.startsWith('@') ? toAddress : resolvedAddress.slice(0, 10) + '...'}${feeMessage}\n\nTotal à déduire: ${(satsAmount + totalFeesInSats).toLocaleString()} Btcon`,
       [
         {
           text: 'Annuler',
@@ -244,7 +261,13 @@ export default function SendScreen() {
           <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Envoyer</Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity 
+          onPress={() => router.push('/search-users')} 
+          style={styles.searchUsersButton}
+          testID="search-users-button"
+        >
+          <Users color="#FF8C00" size={24} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -262,7 +285,7 @@ export default function SendScreen() {
                 style={styles.input}
                 value={toAddress}
                 onChangeText={setToAddress}
-                placeholder="Adresse BTC"
+                placeholder="@pseudo ou adresse BTC"
                 placeholderTextColor="#666"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -296,14 +319,25 @@ export default function SendScreen() {
         )}
 
         {!showCamera && (
-          <TouchableOpacity
-            style={styles.cameraButton}
-            onPress={handleOpenCamera}
-            testID="scan-qr-button"
-          >
-            <Camera color="#FF8C00" size={24} />
-            <Text style={styles.cameraButtonText}>Scanner QR Code</Text>
-          </TouchableOpacity>
+          <View style={styles.actionButtonsRow}>
+            <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={handleOpenCamera}
+              testID="scan-qr-button"
+            >
+              <Camera color="#FF8C00" size={24} />
+              <Text style={styles.cameraButtonText}>Scanner</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.usersButton}
+              onPress={() => router.push('/search-users')}
+              testID="search-users-button-main"
+            >
+              <Users color="#FF8C00" size={24} />
+              <Text style={styles.cameraButtonText}>Contacts</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {showCamera && (
@@ -337,7 +371,31 @@ export default function SendScreen() {
           </View>
         )}
 
-
+        {following.length > 0 && (
+          <View style={styles.followingSection}>
+            <Text style={styles.followingSectionTitle}>Accès rapide</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.followingList}
+            >
+              {following.map((user) => (
+                <TouchableOpacity
+                  key={user.username}
+                  style={styles.followingCard}
+                  onPress={() => setToAddress(`@${user.username}`)}
+                >
+                  <View style={styles.followingAvatar}>
+                    <Text style={styles.followingAvatarText}>
+                      {user.username.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={styles.followingUsername}>@{user.username}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {totalAmount > 0 && toAddress.trim() !== '' && (
           <TouchableOpacity

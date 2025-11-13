@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Alert, Pressable, useWindowDimensions, Modal, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-
+import { useUsername } from '@/contexts/UsernameContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDeveloperHierarchy } from '@/contexts/DeveloperHierarchyContext';
 import { ArrowLeft, Eye, EyeOff, Shield, LogOut, Lock, AlertCircle, X, Key, Fingerprint } from 'lucide-react-native';
@@ -13,11 +13,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function SettingsScreen() {
   const router = useRouter();
   const { mnemonic, deleteWallet, address, balance, signAndBroadcastTransaction, refreshBalance } = useWallet();
-
+  const { username, setUsername: saveUsername } = useUsername();
   const { isAuthConfigured, authType, useBiometric: biometricEnabled, isBiometricAvailable, resetAuth, toggleBiometric, changePin } = useAuth();
   const { isDeveloper } = useDeveloperHierarchy();
   const [showSeed, setShowSeed] = useState(false);
-
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [isChangingUsername, setIsChangingUsername] = useState(false);
   const [showChangePinModal, setShowChangePinModal] = useState(false);
   const [oldPin, setOldPin] = useState('');
   const [newPin, setNewPin] = useState('');
@@ -108,7 +110,33 @@ export default function SettingsScreen() {
         
 
 
-
+        <View style={styles.usernameCard}>
+          <View style={styles.usernameHeader}>
+            <Text style={styles.usernameLabel}>Pseudo</Text>
+            {username && (
+              <Pressable onPress={() => {
+                setUsernameInput('');
+                setShowUsernameModal(true);
+              }}>
+                <Text style={styles.changeText}>Modifier</Text>
+              </Pressable>
+            )}
+          </View>
+          {username ? (
+            <Text style={styles.usernameDisplay}>@{username}</Text>
+          ) : (
+            <Pressable 
+              style={styles.addUsernameButton}
+              onPress={() => {
+                setUsernameInput('');
+                setShowUsernameModal(true);
+              }}
+            >
+              <Text style={styles.addUsernameText}>Ajouter un pseudo</Text>
+            </Pressable>
+          )}
+        </View>
+        
         <View style={styles.settingsCard}>
           <View style={styles.securitySection}>
             <View style={styles.securityHeader}>
@@ -308,7 +336,137 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
 
+      <Modal
+        visible={showUsernameModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowUsernameModal(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setShowUsernameModal(false)}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Définir un pseudo</Text>
+              <Pressable onPress={() => setShowUsernameModal(false)}>
+                <X color="#999" size={24} />
+              </Pressable>
+            </View>
 
+            <View style={styles.usernameInputContainer}>
+              <Text style={styles.atSymbol}>@</Text>
+              <TextInput
+                style={styles.usernameInput}
+                value={usernameInput}
+                onChangeText={setUsernameInput}
+                placeholder="pseudo"
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                autoCorrect={false}
+                maxLength={20}
+                autoFocus
+              />
+            </View>
+
+            <Text style={styles.modalHint}>
+              {isDeveloper(address || '') 
+                ? '✨ Mode développeur : Modification gratuite' 
+                : 'Modifier votre pseudo coûte 1000 Btcon (500 Btcon + 500 Btcon de frais de réseau).'}
+            </Text>
+
+            <Pressable
+              style={[styles.modalButton, isChangingUsername && styles.modalButtonDisabled]}
+              disabled={isChangingUsername}
+              onPress={async () => {
+                const cleanUsername = usernameInput.trim().toLowerCase();
+                
+                if (!cleanUsername) {
+                  Alert.alert('Erreur', 'Le pseudo est obligatoire');
+                  return;
+                }
+
+                if (cleanUsername.length < 3) {
+                  Alert.alert('Erreur', 'Le pseudo doit contenir au moins 3 caractères');
+                  return;
+                }
+
+                if (!/^[a-z0-9_]+$/.test(cleanUsername)) {
+                  Alert.alert('Erreur', 'Le pseudo ne peut contenir que des lettres, chiffres et underscores');
+                  return;
+                }
+
+                if (!address) {
+                  Alert.alert('Erreur', 'Adresse non disponible');
+                  return;
+                }
+
+                const isDevAccount = isDeveloper(address || '');
+
+                if (!isDevAccount) {
+                  const CHANGE_COST = 1000;
+                  if (balance < CHANGE_COST) {
+                    Alert.alert('Fonds insuffisants', `Vous avez besoin de ${CHANGE_COST} Btcon (500 Btcon + 500 Btcon de frais de réseau) pour modifier votre pseudo.`);
+                    return;
+                  }
+
+                  const confirmMessage = Platform.OS === 'web'
+                    ? window.confirm(`Modifier votre pseudo coûte ${CHANGE_COST} Btcon (500 Btcon + 500 Btcon de frais de réseau). Continuer ?`)
+                    : await new Promise<boolean>((resolve) => {
+                        Alert.alert(
+                          'Confirmer le paiement',
+                          `Modifier votre pseudo coûte ${CHANGE_COST} Btcon (500 Btcon + 500 Btcon de frais de réseau). Continuer ?`,
+                          [
+                            { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+                            { text: 'Confirmer', onPress: () => resolve(true) },
+                          ]
+                        );
+                      });
+
+                  if (!confirmMessage) return;
+
+                  setIsChangingUsername(true);
+                  try {
+                    const feeAddress = 'bc1qdff8680vyy0qthr5vpe3ywzw48r8rr4jn4jvac';
+                    await signAndBroadcastTransaction(feeAddress, CHANGE_COST, 1);
+                    await refreshBalance();
+                    
+                    const success = await saveUsername(cleanUsername, address);
+                    if (success) {
+                      setShowUsernameModal(false);
+                      Alert.alert('Succès', 'Pseudo modifié avec succès');
+                    } else {
+                      Alert.alert('Erreur', 'Pseudo déjà pris');
+                    }
+                  } catch (error) {
+                    console.error('Error changing username:', error);
+                    Alert.alert('Erreur', 'Échec de la transaction');
+                  } finally {
+                    setIsChangingUsername(false);
+                  }
+                } else {
+                  setIsChangingUsername(true);
+                  try {
+                    const success = await saveUsername(cleanUsername, address);
+                    if (success) {
+                      setShowUsernameModal(false);
+                      Alert.alert('Succès', 'Pseudo modifié avec succès (gratuit pour développeurs)');
+                    } else {
+                      Alert.alert('Erreur', 'Pseudo déjà pris');
+                    }
+                  } finally {
+                    setIsChangingUsername(false);
+                  }
+                }
+              }}
+            >
+              <Text style={styles.modalButtonText}>
+                {isChangingUsername ? 'Modification...' : (username ? 'Modifier' : 'Définir')}
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal
         visible={showChangePinModal}
