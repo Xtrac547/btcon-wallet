@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, Animated
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownLeft, Settings, X, QrCode, Camera, Copy } from 'lucide-react-native';
 import { useState, useRef, useMemo, useCallback } from 'react';
+import * as Clipboard from 'expo-clipboard';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
@@ -35,6 +36,8 @@ export default function WalletScreen() {
   const [showScanner, setShowScanner] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  const [hasScanned, setHasScanned] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const euroValue = balance > 0 ? btconToEuro(balance, btcPrice) : '0.00';
   
@@ -112,14 +115,29 @@ export default function WalletScreen() {
         return;
       }
     }
+    setHasScanned(false);
     setShowScanner(true);
   };
 
   const handleShowQRCode = () => {
+    setIsCopied(false);
     setShowQRCode(true);
   };
 
+  const handleCopyAddress = async () => {
+    try {
+      await Clipboard.setStringAsync(address);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error('Error copying address:', error);
+      Alert.alert('Erreur', 'Impossible de copier l\'adresse.');
+    }
+  };
+
   const handleBarcodeScanned = useCallback((data: string) => {
+    if (hasScanned) return;
+    setHasScanned(true);
     setShowScanner(false);
     
     let address = data;
@@ -156,7 +174,7 @@ export default function WalletScreen() {
         }
       });
     }
-  }, [router]);
+  }, [hasScanned, router]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -408,7 +426,15 @@ export default function WalletScreen() {
             </View>
             
             <View style={styles.qrAddressBox}>
-              <Text style={styles.qrAddressLabel}>ADRESSE BTCON</Text>
+              <View style={styles.qrAddressHeader}>
+                <Text style={styles.qrAddressLabel}>ADRESSE BTCON</Text>
+                <TouchableOpacity onPress={handleCopyAddress} style={styles.qrCopyButton}>
+                  <Copy color={isCopied ? "#4CAF50" : "#FF8C00"} size={16} />
+                  <Text style={[styles.qrCopyButtonText, isCopied && styles.qrCopyButtonTextCopied]}>
+                    {isCopied ? 'Copié' : 'Copier'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <Text style={styles.qrAddressText}>{address}</Text>
             </View>
           </View>
@@ -863,13 +889,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 140, 0, 0.2)',
   },
+  qrAddressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   qrAddressLabel: {
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 10,
     fontWeight: '700' as const,
     letterSpacing: 1.5,
-    marginBottom: 8,
-    textAlign: 'center' as const,
+  },
+  qrCopyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 140, 0, 0.2)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.4)',
+  },
+  qrCopyButtonText: {
+    color: '#FF8C00',
+    fontSize: 10,
+    fontWeight: '700' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  qrCopyButtonTextCopied: {
+    color: '#4CAF50',
   },
   qrAddressText: {
     color: '#FFF',
