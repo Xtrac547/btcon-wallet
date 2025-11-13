@@ -137,6 +137,8 @@ export default function ReceiveScreen() {
             }} 
             style={styles.captureContainer}
           >
+            <Text style={styles.captureTitle}>Recevoir Bitcoin</Text>
+            
             <View style={styles.addressInfo}>
               <Text style={styles.addressLabel}>Adresse Btcon</Text>
               <View style={styles.addressRow}>
@@ -392,5 +394,12 @@ const styles = StyleSheet.create({
     gap: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  captureTitle: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: '700' as const,
+    textAlign: 'center' as const,
+    marginBottom: 8,
   },
 });
