@@ -135,16 +135,16 @@ export default function ReceiveScreen() {
       </View>
 
       <View style={styles.content}>
-        <ViewShot 
-          ref={viewShotRef} 
-          options={{ 
-            format: 'png', 
-            quality: 1.0,
-            result: 'tmpfile'
-          }} 
-          style={styles.captureContainer}
-        >
-          <View style={styles.qrSection}>
+        <View style={styles.qrSection}>
+          <ViewShot 
+            ref={viewShotRef} 
+            options={{ 
+              format: 'png', 
+              quality: 1.0,
+              result: 'tmpfile'
+            }} 
+            style={styles.captureContainer}
+          >
             <View style={styles.addressInfo}>
               <Text style={styles.addressLabel}>Adresse Btcon</Text>
               <View style={styles.addressRow}>
@@ -178,8 +178,8 @@ export default function ReceiveScreen() {
                 <Text style={styles.amountEuro}>{euroAmount} €</Text>
               </View>
             )}
-          </View>
-        </ViewShot>
+          </ViewShot>
+        </View>
 
         <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
           <Share2 color="#FFF" size={24} />
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
+    width: '100%',
   },
   qrCodeWrapper: {
     borderRadius: 28,
@@ -395,8 +395,10 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   captureContainer: {
-    flex: 1,
-    width: '100%',
     backgroundColor: '#000000',
+    padding: 24,
+    gap: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
