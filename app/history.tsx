@@ -118,15 +118,15 @@ export default function HistoryScreen() {
   };
 
   const getStatusColor = (status: TransactionStatus, type: TransactionType) => {
-    if (status === 'pending') return '#FFB800';
+    if (status === 'pending') return '#FFD700';
     return type === 'sent' ? '#FF8C00' : '#4CAF50';
   };
 
   const getStatusIcon = (status: TransactionStatus) => {
     if (status === 'confirmed') {
-      return <CheckCircle color="#4CAF50" size={18} strokeWidth={2.5} />;
+      return <CheckCircle color="#4CAF50" size={20} strokeWidth={2.5} />;
     }
-    return <Clock color="#FFB800" size={18} strokeWidth={2.5} />;
+    return <Clock color="#FFD700" size={20} strokeWidth={2.5} />;
   };
 
   const getStatusText = (status: TransactionStatus) => {
@@ -327,8 +327,8 @@ const styles = StyleSheet.create({
     borderColor: '#222',
   },
   transactionCardPending: {
-    borderColor: 'rgba(255, 184, 0, 0.3)',
-    backgroundColor: 'rgba(255, 184, 0, 0.05)',
+    borderColor: 'rgba(255, 215, 0, 0.5)',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
   },
   transactionCardPressed: {
     opacity: 0.8,
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
   },
   transactionAmountPending: {
-    color: '#FFB800',
+    color: '#FFD700',
   },
   statusBadge: {
     flexDirection: 'row',
