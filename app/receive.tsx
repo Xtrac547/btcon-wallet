@@ -76,7 +76,10 @@ export default function ReceiveScreen() {
   };
 
   const handleShare = async () => {
-    if (!address) return;
+    if (!address) {
+      Alert.alert('Erreur', 'Adresse non disponible');
+      return;
+    }
 
     try {
       if (Platform.OS === 'web') {
@@ -88,16 +91,14 @@ export default function ReceiveScreen() {
         return;
       }
 
-      let imageUri: string | undefined;
-      
-      if (viewShotRef.current && viewShotRef.current.capture) {
-        try {
-          imageUri = await viewShotRef.current.capture();
-          console.log('Screenshot captured:', imageUri);
-        } catch (captureError) {
-          console.error('Capture error:', captureError);
-        }
+      if (!viewShotRef.current) {
+        Alert.alert('Erreur', 'Référence de capture non disponible');
+        return;
       }
+
+      console.log('Début de la capture...');
+      const imageUri = await viewShotRef.current.capture();
+      console.log('Screenshot capturé:', imageUri);
 
       if (!imageUri) {
         Alert.alert('Erreur', 'Impossible de capturer l\'image');
@@ -105,24 +106,21 @@ export default function ReceiveScreen() {
       }
 
       const shareOptions: any = {
-        title: 'Recevoir Btcon',
+        message: `Recevoir Btcon\n\nAdresse: ${address}${requestedAmount > 0 ? `\nMontant: ${requestedAmount.toLocaleString()} Btcon (${euroAmount}€)` : ''}`,
         url: imageUri,
       };
 
+      console.log('Partage en cours...');
       const result = await Share.share(shareOptions);
 
       if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          console.log('Partagé via:', result.activityType);
-        } else {
-          console.log('Partagé avec succès');
-        }
+        console.log('Partagé avec succès');
       } else if (result.action === Share.dismissedAction) {
         console.log('Partage annulé');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors du partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager');
+      Alert.alert('Erreur', `Impossible de partager: ${error.message || 'Erreur inconnue'}`);
     }
   };
 
