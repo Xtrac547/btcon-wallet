@@ -1,15 +1,17 @@
 import '@/utils/shim';
-import { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Alert, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
 import { useUsername } from '@/contexts/UsernameContext';
 import { useQRColor } from '@/contexts/QRColorContext';
 import { useBtcPrice, btconToEuro } from '@/services/btcPrice';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Share2 } from 'lucide-react-native';
 import { useResponsive } from '@/utils/responsive';
 import { Image } from 'expo-image';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 
 
 export default function ReceiveScreen() {
@@ -22,6 +24,8 @@ export default function ReceiveScreen() {
   const { width } = useWindowDimensions();
   const responsive = useResponsive();
   const btcPrice = useBtcPrice();
+  const viewShotRef = useRef<View>(null);
+  const [isSharing, setIsSharing] = useState(false);
   
   const requestedAmount = useMemo(() => params.amount ? parseInt(params.amount) : 0, [params.amount]);
   const euroAmount = useMemo(() => requestedAmount > 0 ? btconToEuro(requestedAmount, btcPrice) : '0', [requestedAmount, btcPrice]);
@@ -60,6 +64,41 @@ export default function ReceiveScreen() {
     return `bitcoin:${address}`;
   }, [address, requestedAmount]);
 
+  const handleShare = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Non disponible', 'Le partage n\'est pas disponible sur le web.');
+      return;
+    }
+
+    if (!viewShotRef.current) {
+      console.log('View ref is not available');
+      return;
+    }
+
+    setIsSharing(true);
+    try {
+      const uri = await captureRef(viewShotRef, {
+        format: 'png',
+        quality: 1,
+      });
+
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (isAvailable) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'image/png',
+          dialogTitle: 'Partager le QR Code',
+        });
+      } else {
+        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil.');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      Alert.alert('Erreur', 'Impossible de partager l\'image.');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
@@ -72,36 +111,46 @@ export default function ReceiveScreen() {
 
       <View style={styles.content}>
         <View style={styles.qrSection}>
-          <View style={styles.addressInfo}>
-            <Text style={styles.addressLabel}>Adresse Btcon</Text>
-            <Text style={styles.addressText}>{address}</Text>
-          </View>
+          <View ref={viewShotRef} collapsable={false} style={styles.shareableContent}>
+            <View style={styles.addressInfo}>
+              <Text style={styles.addressLabel}>Adresse Btcon</Text>
+              <Text style={styles.addressText}>{address}</Text>
+            </View>
 
-          <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
-            {qrCodeUri ? (
-              <Image
-                source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&bgcolor=${currentArt.bg.replace('#', '')}&color=${currentArt.fg.replace('#', '')}&data=${encodeURIComponent(qrCodeUri)}`}
-                style={{ width: qrArtSize, height: qrArtSize }}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération...</Text>
+            <View style={[styles.qrCodeWrapper, { width: qrArtSize + padding * 2, height: qrArtSize + padding * 2, backgroundColor: currentArt.bg }]}>
+              {qrCodeUri ? (
+                <Image
+                  source={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&bgcolor=${currentArt.bg.replace('#', '')}&color=${currentArt.fg.replace('#', '')}&data=${encodeURIComponent(qrCodeUri)}`}
+                  style={{ width: qrArtSize, height: qrArtSize }}
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <Text style={[styles.qrPlaceholderText, { color: currentArt.accent }]}>Génération...</Text>
+              )}
+            </View>
+
+            {requestedAmount > 0 && (
+              <View style={styles.amountInfo}>
+                <Text style={styles.amountLabel}>Montant demandé</Text>
+                <View style={styles.amountRow}>
+                  <Text style={styles.amountValue}>{requestedAmount.toLocaleString()}</Text>
+                  <Text style={styles.amountUnit}>Btcon</Text>
+                </View>
+                <Text style={styles.amountEuro}>{euroAmount} €</Text>
+              </View>
             )}
           </View>
-
-          {requestedAmount > 0 && (
-            <View style={styles.amountInfo}>
-              <Text style={styles.amountLabel}>Montant demandé</Text>
-              <View style={styles.amountRow}>
-                <Text style={styles.amountValue}>{requestedAmount.toLocaleString()}</Text>
-                <Text style={styles.amountUnit}>Btcon</Text>
-              </View>
-              <Text style={styles.amountEuro}>{euroAmount} €</Text>
-            </View>
-          )}
         </View>
 
+        <TouchableOpacity 
+          style={[styles.shareButton, { backgroundColor: currentArt.fg }]} 
+          onPress={handleShare}
+          disabled={isSharing}
+        >
+          <Share2 color="#000" size={24} />
+          <Text style={styles.shareButtonText}>{isSharing ? 'Partage...' : 'Partager'}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -137,10 +186,15 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 32,
     justifyContent: 'space-between',
+    gap: 32,
   },
   qrSection: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  shareableContent: {
     alignItems: 'center',
     gap: 20,
   },
