@@ -105,19 +105,11 @@ export default function ReceiveScreen() {
         return;
       }
 
-      const shareOptions: any = {
-        url: Platform.OS === 'ios' ? imageUri : `file://${imageUri}`,
-        title: 'Mon QR Code Btcon',
-      };
-
-      console.log('Partage en cours avec options:', shareOptions);
-      const result = await Share.share(shareOptions);
-
-      if (result.action === Share.sharedAction) {
-        console.log('Partagé avec succès');
-      } else if (result.action === Share.dismissedAction) {
-        console.log('Partage annulé');
-      }
+      console.log('Partage en cours...');
+      await Share.share({
+        url: imageUri,
+        message: 'Mon QR Code Btcon',
+      });
     } catch (error: any) {
       console.error('Erreur lors du partage:', error);
       Alert.alert('Erreur', `Impossible de partager: ${error.message || 'Erreur inconnue'}`);
