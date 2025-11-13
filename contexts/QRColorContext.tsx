@@ -8,6 +8,29 @@ interface ColorAssignments {
   [address: string]: string;
 }
 
+const COLOR_PALETTE = [
+  '#FF6B6B',
+  '#4ECDC4',
+  '#45B7D1',
+  '#96CEB4',
+  '#FFEAA7',
+  '#DFE6E9',
+  '#00B894',
+  '#0984E3',
+  '#6C5CE7',
+  '#FD79A8',
+  '#FDCB6E',
+  '#E17055',
+  '#74B9FF',
+  '#A29BFE',
+  '#FF7675',
+  '#FF8C00',
+  '#55EFC4',
+  '#81ECEC',
+  '#FAB1A0',
+  '#FF85A2',
+];
+
 const generateColorFromAddress = (address: string): string => {
   let hash = 0;
   for (let i = 0; i < address.length; i++) {
@@ -15,11 +38,8 @@ const generateColorFromAddress = (address: string): string => {
     hash = hash & hash;
   }
   
-  const hue = Math.abs(hash) % 360;
-  const saturation = 60 + (Math.abs(hash >> 8) % 20);
-  const lightness = 40 + (Math.abs(hash >> 16) % 15);
-  
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  const colorIndex = Math.abs(hash) % COLOR_PALETTE.length;
+  return COLOR_PALETTE[colorIndex];
 };
 
 export const [QRColorProvider, useQRColor] = createContextHook(() => {
